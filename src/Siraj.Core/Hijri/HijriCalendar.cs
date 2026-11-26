@@ -243,7 +243,7 @@ public sealed class HijriCalendar
 
     private static double? SunsetAt(DateOnly date, double latitude, double longitude)
     {
-        // Kotlin's roundToInt: half rounds up.
+        // Round half upward toward positive infinity.
         int offsetSeconds = Math.Clamp((int)Math.Floor(longitude / 15.0 * 3600 + 0.5), -18 * 3600, 18 * 3600);
         // A DateTimeOffset holds whole minutes only; the offset here is to the second.
         long noonMillis = UtcMillis(date, new TimeOnly(12, 0)) - offsetSeconds * 1000L;

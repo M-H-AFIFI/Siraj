@@ -116,7 +116,7 @@ public sealed class PrayerTimes
 
             tempAsr = AtTime(solarTime.Afternoon(parameters.Madhab == Madhab.Hanafi ? 2.0 : 1.0), date);
 
-            // The night's length, to the millisecond as the original counts it.
+            // Night length in whole milliseconds, matching adhan-java.
             long night = (long)(tomorrowSunrise!.Value - sunsetComponents!.Value).TotalMilliseconds;
 
             tempFajr = AtTime(solarTime.HourAngle(-parameters.FajrAngle, false), date);

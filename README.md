@@ -19,7 +19,7 @@
 
 ---
 
-Siraj is a local-first WinUI 3 desktop app for Windows 10 (1809+) and Windows 11. Prayer times, Hijri dates, and background Adhan alerts are all calculated on your PC with no account and no tracking. It stays light in the system tray so Adhan notifications, desktop widgets, and the taskbar prayer bar keep working even when the main window is closed.
+Siraj is a WinUI 3 desktop app for Windows 10 (1809+) and Windows 11. Prayer times, Hijri dates, and background Adhan alerts are all calculated locally on your PC with no account and no tracking. It stays light in the system tray so Adhan notifications, desktop widgets, and the taskbar prayer bar keep working even when the main window is closed.
 
 ## Features
 
@@ -34,7 +34,7 @@ Siraj is a local-first WinUI 3 desktop app for Windows 10 (1809+) and Windows 11
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/prayer.png" alt="Prayer dashboard and celestial sky card" /></td>
+    <td><img src="docs/screenshots/prayer.png" alt="Prayer dashboard and sky card" /></td>
     <td><img src="docs/screenshots/quran.png" alt="Madinah Mushaf two-page Quran reader" /></td>
   </tr>
   <tr>
