@@ -24,6 +24,7 @@ public sealed partial class WidgetsPage : Page
     public WidgetsPage()
     {
         InitializeComponent();
+        NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Required;
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
         var loc = Loc.Current;
@@ -70,7 +71,7 @@ public sealed partial class WidgetsPage : Page
         var loc = Loc.Current;
         var cfg = App.Settings.Current.TaskbarWidget;
         TaskbarSection.Children.Clear();
-        TaskbarSection.Children.Add(Ui.SectionWithIcon(loc["win_taskbar_title"], glyph: "\uE7F4"));
+        TaskbarSection.Children.Add(Ui.SectionWithIcon(loc["win_taskbar_title"], "desktop_windows"));
 
         // Live preview on a miniature Windows 11 taskbar strip where the pill moves across the full width.
         _tbPreview = new TaskbarPillView(cfg, live: true) { VerticalAlignment = VerticalAlignment.Center };
@@ -357,7 +358,6 @@ public sealed partial class WidgetsPage : Page
     {
         bool light = Win32.IsTaskbarLightTheme();
         var fg = new SolidColorBrush(light ? Color.FromArgb(220, 24, 28, 36) : Color.FromArgb(220, 240, 244, 252));
-        var iconFont = (FontFamily)Application.Current.Resources["SirajIcons"];
         var textFont = (FontFamily)Application.Current.Resources["SirajFont"];
 
         var container = new Grid { Height = 54, FlowDirection = FlowDirection.LeftToRight };
@@ -388,8 +388,8 @@ public sealed partial class WidgetsPage : Page
             VerticalAlignment = VerticalAlignment.Center,
             Opacity = 0.38,
         };
-        foreach (string glyph in new[] { "\uE80F", "\uE8A5", "\uE774", "\uE7BF" })
-            apps.Children.Add(new FontIcon { FontFamily = iconFont, Glyph = glyph, FontSize = 15, Foreground = fg });
+        foreach (string key in new[] { "apps", "folder", "language", "star" })
+            apps.Children.Add(SirajVectorIcon.Make(key, 16, fg));
         chrome.Children.Add(apps);
 
         var tray = new StackPanel
@@ -400,9 +400,9 @@ public sealed partial class WidgetsPage : Page
             VerticalAlignment = VerticalAlignment.Center,
             Opacity = 0.78,
         };
-        tray.Children.Add(new FontIcon { FontFamily = iconFont, Glyph = "\uE70E", FontSize = 11, Foreground = fg });
-        tray.Children.Add(new FontIcon { FontFamily = iconFont, Glyph = "\uE839", FontSize = 13, Foreground = fg });
-        tray.Children.Add(new FontIcon { FontFamily = iconFont, Glyph = "\uE767", FontSize = 13, Foreground = fg });
+        tray.Children.Add(SirajVectorIcon.Make("expand_less", 14, fg));
+        tray.Children.Add(SirajVectorIcon.Make("wifi", 15, fg));
+        tray.Children.Add(SirajVectorIcon.Make("volume_up", 15, fg));
         tray.Children.Add(new TextBlock
         {
             Text = Loc.Current.Time(App.Clock.Now),

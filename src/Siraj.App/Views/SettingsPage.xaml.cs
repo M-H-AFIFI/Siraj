@@ -35,6 +35,7 @@ public sealed partial class SettingsPage : Page
     public SettingsPage()
     {
         InitializeComponent();
+        NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Required;
         Loaded += (_, _) =>
         {
             App.Settings.Changed += OnSettingsChanged;
@@ -88,7 +89,7 @@ public sealed partial class SettingsPage : Page
 
         Body.Children.Add(BuildIdentityHeader());
 
-        Body.Children.Add(Ui.SectionWithIcon(loc["live_theme_appearance_title"], "emblem"));
+        Body.Children.Add(Ui.SectionWithIcon(loc["live_theme_appearance_title"], "palette"));
 
         _previewSlot = new ContentControl { HorizontalContentAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 0, 0, 12) };
         BuildPreviewCard();
@@ -131,7 +132,7 @@ public sealed partial class SettingsPage : Page
             Ui.Row(loc["settings_reduce_motion"], loc["win_motion_desc"],
                 Ui.Toggle(S.ReduceMotion, v => Set(s => s with { ReduceMotion = v })))));
 
-        var locSec = Ui.SectionWithIcon(loc["settings_location"], glyph: "\uE707");
+        var locSec = Ui.SectionWithIcon(loc["settings_location"], "location_on");
         _locationAnchor = locSec;
         Body.Children.Add(locSec);
         _placeText = Ui.Text("", "SirajHeading");
@@ -139,7 +140,7 @@ public sealed partial class SettingsPage : Page
         var search = new AutoSuggestBox
         {
             PlaceholderText = loc["settings_search_city_hint"],
-            QueryIcon = new SymbolIcon(Symbol.Find),
+            QueryIcon = SirajVectorIcon.MakePathIcon("search"),
             MinWidth = 280,
         };
         search.TextChanged += (box, args) =>
@@ -200,7 +201,7 @@ public sealed partial class SettingsPage : Page
         rows.Add(BuildOffsets());
         Body.Children.Add(Ui.Card([.. rows]));
 
-        Body.Children.Add(Ui.SectionWithIcon(loc["settings_reminders"], glyph: "\uEA8F"));
+        Body.Children.Add(Ui.SectionWithIcon(loc["settings_reminders"], "notifications"));
         Body.Children.Add(Ui.Card(BuildAlerts().ToArray()));
 
         Body.Children.Add(Ui.SectionWithIcon(loc["hijri_setting_title"], "hijri_calendar"));
@@ -233,7 +234,7 @@ public sealed partial class SettingsPage : Page
             Ui.Row(loc["win_continuous"], null,
                 Ui.Toggle(S.QuranContinuous, v => Set(s => s with { QuranContinuous = v })))));
 
-        Body.Children.Add(Ui.SectionWithIcon(loc["settings_section_language"], glyph: "\uF2B7"));
+        Body.Children.Add(Ui.SectionWithIcon(loc["settings_section_language"], "translate"));
         Body.Children.Add(Ui.Card(
             Ui.Row(loc["settings_language"], null,
                 Ui.Choice<string>([("en", "English"), ("ar", "العربية"), ("tr", "Türkçe"), ("ur", "اردو")], S.Language,
@@ -245,7 +246,7 @@ public sealed partial class SettingsPage : Page
                 Ui.Segments<string>([("System", loc["settings_hour_system"]), ("12", loc["settings_hour_12_sample"]), ("24", loc["settings_hour_24_sample"])],
                     S.HourFormat, v => Set(s => s with { HourFormat = v })))));
 
-        Body.Children.Add(Ui.SectionWithIcon(loc["win_settings_windows"], glyph: "\uE7F4"));
+        Body.Children.Add(Ui.SectionWithIcon(loc["win_settings_windows"], "desktop_windows"));
         Body.Children.Add(Ui.Card(
             Ui.Row(loc["win_start_with_windows"], loc["win_start_with_windows_desc"],
                 Ui.Toggle(S.StartWithWindows, v => Set(s => s with { StartWithWindows = v }))),
@@ -254,7 +255,7 @@ public sealed partial class SettingsPage : Page
             Ui.Row(loc["win_nav_widgets"], null,
                 Ui.Button(loc["win_nav_widgets"], () => App.MainWindowInstance?.Navigate("widgets")))));
 
-        Body.Children.Add(Ui.SectionWithIcon(loc["win_update_section"], glyph: "\uE895"));
+        Body.Children.Add(Ui.SectionWithIcon(loc["win_update_section"], "system_update"));
         _updateStatusSlot = new ContentControl { HorizontalContentAlignment = HorizontalAlignment.Stretch };
         RefreshUpdateCard();
         Body.Children.Add(Ui.Card(
@@ -262,7 +263,7 @@ public sealed partial class SettingsPage : Page
                 Ui.Toggle(S.AutoCheckUpdates, v => Set(s => s with { AutoCheckUpdates = v }))),
             _updateStatusSlot));
 
-        Body.Children.Add(Ui.SectionWithIcon(loc["settings_support_header"], glyph: "\uE946"));
+        Body.Children.Add(Ui.SectionWithIcon(loc["settings_support_header"], "info"));
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
         Body.Children.Add(Ui.Card(
             Ui.Row(loc["win_about_windows"], loc.Format("about_version", loc.Digitize(version)), null),
@@ -434,14 +435,13 @@ public sealed partial class SettingsPage : Page
         top.Children.Add(verPill);
         stack.Children.Add(top);
 
-        // 3 Quick-Action Glass Tiles (Location, Color Mode, Language)
         var tiles = new Grid { ColumnSpacing = 10 };
         for (int i = 0; i < 3; i++) tiles.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
         string cityLabel = S.Location?.DisplayName(loc.Language) ?? loc["settings_not_set"];
         _quickPlaceSub = Kit.Text(cityLabel, "SirajCaption", 12);
         _quickPlaceSub.MaxLines = 1;
-        tiles.Children.Add(QuickTile("\uE707", loc["settings_location"], _quickPlaceSub, () =>
+        tiles.Children.Add(QuickTile("location_on", loc["settings_location"], _quickPlaceSub, () =>
         {
             if (_locationAnchor is FrameworkElement fe) fe.StartBringIntoView();
         }));
@@ -452,7 +452,13 @@ public sealed partial class SettingsPage : Page
             "Dark" => loc["live_theme_mode_dark"],
             _ => loc["live_theme_mode_system"],
         };
-        var modeTile = QuickTile("\uE793", loc["live_theme_mode_title"], Kit.Text(modeLabel, "SirajCaption", 12), () =>
+        string modeIcon = S.ThemeMode switch
+        {
+            "Light" => "light_mode",
+            "Dark" => "dark_mode",
+            _ => "brightness_auto",
+        };
+        var modeTile = QuickTile(modeIcon, loc["live_theme_mode_title"], Kit.Text(modeLabel, "SirajCaption", 12), () =>
         {
             string next = S.ThemeMode switch { "System" => "Light", "Light" => "Dark", _ => "System" };
             Set(s => s with { ThemeMode = next });
@@ -461,7 +467,7 @@ public sealed partial class SettingsPage : Page
         tiles.Children.Add(modeTile);
 
         string langLabel = S.Language switch { "ar" => "العربية", "tr" => "Türkçe", "ur" => "اردو", _ => "English" };
-        var langTile = QuickTile("\uF2B7", loc["settings_language"], Kit.Text(langLabel, "SirajCaption", 12), () =>
+        var langTile = QuickTile("translate", loc["settings_language"], Kit.Text(langLabel, "SirajCaption", 12), () =>
         {
             string[] langs = ["en", "ar", "tr", "ur"];
             int nextIdx = (Array.IndexOf(langs, S.Language) + 1) % langs.Length;
@@ -474,11 +480,11 @@ public sealed partial class SettingsPage : Page
         return Kit.Card(stack, new Thickness(20, 18, 20, 18));
     }
 
-    private static Button QuickTile(string glyph, string title, TextBlock sub, Action click)
+    private static Button QuickTile(string iconKey, string title, TextBlock sub, Action click)
     {
         var inner = new StackPanel { Spacing = 4 };
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7 };
-        row.Children.Add(Kit.Icon(glyph, 14, Kit.B("SirajPrimaryBrush")));
+        row.Children.Add(Kit.Icon(iconKey, 16, Kit.B("SirajPrimaryBrush")));
         row.Children.Add(Kit.Text(title, "SirajBody", 13, bold: true));
         inner.Children.Add(row);
         inner.Children.Add(sub);
@@ -504,7 +510,6 @@ public sealed partial class SettingsPage : Page
 
         var stage = new Grid();
 
-        // Base atmospheric gradient so plain mode or dark-top scenes look warm and cohesive.
         var plainTop = Core.Sky.Argb.Lerp(scheme.Surface, scheme.PrimaryContainer, isDark ? 0.45f : 0.72f);
         var plainBot = isDark ? scheme.SurfaceContainerLow : scheme.Surface;
         stage.Children.Add(new Border
@@ -580,11 +585,11 @@ public sealed partial class SettingsPage : Page
         header.Children.Add(pills);
         content.Children.Add(header);
 
-        // Centered Liquid Glass sample card showing live GPU blur over the scene behind it
         var sampleInner = new StackPanel { Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center };
         var sampleTop = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7, HorizontalAlignment = HorizontalAlignment.Center };
-        sampleTop.Children.Add(Kit.Icon("\uE823", 13, Kit.B("SirajPrimaryBrush")));
-        sampleTop.Children.Add(Kit.Text($"{loc[scene.TitleKey]}{loc.Sep}{loc["appearance_preview_badge"]}", "SirajCaption", 12.5, bold: true, brush: Kit.B("SirajPrimaryBrush")));
+        sampleTop.Children.Add(Kit.Icon("schedule", 15, Kit.B("SirajPrimaryBrush")));
+        string sceneLabel = S.LiveBackground ? loc[scene.TitleKey] : loc["looks_background_plain"];
+        sampleTop.Children.Add(Kit.Text($"{sceneLabel}{loc.Sep}{loc["appearance_preview_badge"]}", "SirajCaption", 12.5, bold: true, brush: Kit.B("SirajPrimaryBrush")));
         sampleInner.Children.Add(sampleTop);
         var ayahTb = Kit.Text(loc["appearance_preview_ayah"], "SirajBody", 14);
         ayahTb.TextAlignment = TextAlignment.Center;
@@ -616,87 +621,93 @@ public sealed partial class SettingsPage : Page
     {
         if (_sceneGridSlot == null) return;
         var loc = Loc.Current;
-        var items = new List<UIElement>(LiveScenes.All.Count);
+        var scheme = App.Theme.Scheme;
+        string activeSceneId = LiveScenes.NormalizeId(S.LiveScene);
+        var items = new List<UIElement>(LiveScenes.All.Count + 1);
+
+        {
+            bool plainChosen = !S.LiveBackground;
+            var plainTop = Core.Sky.Argb.Lerp(scheme.Surface, scheme.PrimaryContainer, scheme.IsDark ? 0.36f : 0.62f);
+            var plainBot = scheme.IsDark ? scheme.SurfaceContainerLow : scheme.Surface;
+            var plainFill = new LinearGradientBrush
+            {
+                StartPoint = new Windows.Foundation.Point(0, 0),
+                EndPoint = new Windows.Foundation.Point(1, 1),
+                GradientStops =
+                {
+                    new GradientStop { Color = ThemeService.ToColor(plainTop), Offset = 0 },
+                    new GradientStop { Color = ThemeService.ToColor(plainBot), Offset = 1 },
+                },
+            };
+            items.Add(BuildSceneTile(loc["looks_background_plain"], thumb: null, fallbackFill: plainFill, plainChosen,
+                lightLabel: scheme.IsDark, () => Set(s => s with { LiveBackground = false })));
+        }
 
         foreach (var scene in LiveScenes.All)
         {
-            bool chosen = string.Equals(S.LiveScene, scene.Id, StringComparison.OrdinalIgnoreCase);
-
-            var tile = new Grid { Height = 88 };
+            bool chosen = S.LiveBackground && string.Equals(activeSceneId, scene.Id, StringComparison.OrdinalIgnoreCase);
             var thumb = SceneThumbCache.Get(scene.Id);
-            if (thumb != null)
-            {
-                tile.Children.Add(new Image { Source = thumb, Stretch = Stretch.UniformToFill });
-            }
-            else
-            {
-                tile.Children.Add(new Border { Background = Kit.B("SirajSurfaceContainerHighBrush") });
-            }
-
-            // Bottom gradient scrim for readable label over any scene
-            tile.Children.Add(new Border
-            {
-                VerticalAlignment = VerticalAlignment.Bottom,
-                Height = 46,
-                Background = new LinearGradientBrush
-                {
-                    StartPoint = new Windows.Foundation.Point(0, 0), EndPoint = new Windows.Foundation.Point(0, 1),
-                    GradientStops =
-                    {
-                        new GradientStop { Color = ColorHelper.FromArgb(0, 0, 0, 0), Offset = 0 },
-                        new GradientStop { Color = ColorHelper.FromArgb(195, 8, 12, 18), Offset = 1 },
-                    },
-                },
-            });
-
-            if (chosen)
-            {
-                tile.Children.Add(new Border
-                {
-                    Width = 22, Height = 22, CornerRadius = new CornerRadius(11),
-                    Background = Kit.B("SirajPrimaryBrush"),
-                    HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top,
-                    Margin = new Thickness(0, 6, 6, 0),
-                    Child = Kit.Icon("\uE73E", 11, Kit.B("SirajOnPrimaryBrush")),
-                });
-            }
-
-            var nameTb = new TextBlock
-            {
-                Text = loc[scene.TitleKey],
-                FontFamily = (FontFamily)Application.Current.Resources["SirajFont"],
-                FontSize = 11.5, FontWeight = chosen ? FontWeights.Bold : FontWeights.SemiBold,
-                Foreground = new SolidColorBrush(Colors.White),
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                VerticalAlignment = VerticalAlignment.Bottom,
-                Margin = new Thickness(8, 0, 8, 6),
-            };
-            tile.Children.Add(nameTb);
-
-            var frame = new Border
-            {
-                CornerRadius = new CornerRadius(14),
-                BorderBrush = Kit.B(chosen ? "SirajPrimaryBrush" : "SirajGlassBorderBrush"),
-                BorderThickness = new Thickness(chosen ? 2.5 : 1),
-                Child = tile,
-            };
-
             string sceneId = scene.Id;
-            var btn = new Button
-            {
-                Content = frame, Padding = new Thickness(0), CornerRadius = new CornerRadius(14),
-                Background = new SolidColorBrush(Colors.Transparent), BorderThickness = new Thickness(0),
-                HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                UseSystemFocusVisuals = false,
-            };
-            AutomationProperties.SetName(btn, loc[scene.TitleKey]);
-            ToolTipService.SetToolTip(btn, loc[scene.SubtitleKey]);
-            btn.Click += (_, _) => Set(s => s with { LiveBackground = true, LiveScene = sceneId });
-            Kit.Lift(btn);
-            items.Add(btn);
+            items.Add(BuildSceneTile(loc[scene.TitleKey], thumb: thumb, fallbackFill: Kit.B("SirajSurfaceContainerHighBrush"),
+                chosen, lightLabel: true, () => Set(s => s with { LiveBackground = true, LiveScene = sceneId })));
         }
 
         _sceneGridSlot.Content = Kit.Columns(136, 10, items);
+    }
+
+    private static Button BuildSceneTile(string title, Microsoft.UI.Xaml.Media.ImageSource? thumb, Brush fallbackFill,
+        bool chosen, bool lightLabel, Action click)
+    {
+        var tile = new Grid { Height = 88 };
+
+        if (thumb != null)
+            tile.Children.Add(new Image { Source = thumb, Stretch = Stretch.UniformToFill });
+        else
+            tile.Children.Add(new Border { Background = fallbackFill });
+
+        if (chosen)
+        {
+            tile.Children.Add(new Border
+            {
+                Width = 22, Height = 22, CornerRadius = new CornerRadius(11),
+                Background = Kit.B("SirajPrimaryBrush"),
+                HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(0, 6, 6, 0),
+                Child = Kit.Icon("check", 13, Kit.B("SirajOnPrimaryBrush")),
+            });
+        }
+
+        var nameTb = new TextBlock
+        {
+            Text = title,
+            FontFamily = (FontFamily)Application.Current.Resources["SirajFont"],
+            FontSize = 11.5, FontWeight = chosen ? FontWeights.Bold : FontWeights.SemiBold,
+            Foreground = lightLabel ? new SolidColorBrush(Colors.White) : Kit.B("SirajOnSurfaceBrush"),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Margin = new Thickness(8, 0, 8, 6),
+        };
+        tile.Children.Add(nameTb);
+
+        var frame = new Border
+        {
+            CornerRadius = new CornerRadius(14),
+            BorderBrush = Kit.B(chosen ? "SirajPrimaryBrush" : "SirajGlassBorderBrush"),
+            BorderThickness = new Thickness(chosen ? 2.5 : 1),
+            Child = tile,
+        };
+
+        var btn = new Button
+        {
+            Content = frame, Padding = new Thickness(0), CornerRadius = new CornerRadius(14),
+            Background = new SolidColorBrush(Colors.Transparent), BorderThickness = new Thickness(0),
+            HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            UseSystemFocusVisuals = false,
+        };
+        AutomationProperties.SetName(btn, title);
+        btn.Click += (_, _) => click();
+        Kit.Lift(btn);
+        return btn;
     }
 
     private UIElement BuildOffsets()

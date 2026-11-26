@@ -11,7 +11,7 @@ namespace Siraj.App.Controls;
 
 public sealed class RollingText : UserControl
 {
-    private const int RollMs = 260;
+    private const int RollMs = 175;
 
     private readonly StackPanel _line = new() { Orientation = Orientation.Horizontal, FlowDirection = FlowDirection.LeftToRight };
     private readonly List<Slot> _slots = [];

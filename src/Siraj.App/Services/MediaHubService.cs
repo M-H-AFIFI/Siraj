@@ -382,8 +382,6 @@ internal sealed class MediaHubService : IDisposable
         Changed?.Invoke();
     }
 
-    // ---- Ambient sound mixer ----
-
     public async void SetAmbient(string? soundId)
     {
         if (string.IsNullOrEmpty(soundId) || soundId == ActiveAmbientId)

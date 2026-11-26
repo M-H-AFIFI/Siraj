@@ -34,7 +34,6 @@ internal static class AdhanSkyRenderer
 
         bool active = sounding && motion;
         float t = (float)seconds;
-        // Smooth ping-pong phases for continuous gentle motion
         float twinkle = active ? 0.5f - 0.5f * MathF.Cos(t * MathF.PI / 7.5f) : 0.5f;
         float motePhase = active ? (t / 18f) % 1f : 0.32f;
         float wavePhase = active ? (t / 3.6f) % 1f : -1f;
@@ -61,7 +60,6 @@ internal static class AdhanSkyRenderer
             ds.FillRectangle(0, 0, w, h, bg);
         }
 
-        // Broad elliptical horizon bloom anchored softly behind the focal band
         var bloomCenter = new Vector2(w * 0.50f, h * 0.52f);
         using (var bloom = new CanvasRadialGradientBrush(rc, [
             new CanvasGradientStop { Position = 0.00f, Color = ThemeService.ToColor(spec.HorizonGlowColor, spec.HorizonGlowAlpha) },
@@ -72,7 +70,7 @@ internal static class AdhanSkyRenderer
             ds.FillEllipse(bloomCenter, w * 1.04f, w * 0.56f, bloom);
         }
 
-        // Gentle legibility feather behind central white typography on bright daytime skies
+        // Subtle dark veil behind white text on bright daytime skies.
         if (spec.IsDaytime)
         {
             var titleAnchor = new Vector2(w * 0.50f, h * 0.56f);
@@ -84,7 +82,6 @@ internal static class AdhanSkyRenderer
             ds.FillEllipse(titleAnchor, w * 0.90f, w * 0.42f, veil);
         }
 
-        // Twinkling zenith stars (night & twilight skies)
         float starVis = Math.Clamp(MathF.Max(spec.SkyTheme.StarAlpha, spec.ShowStars ? spec.StarDensity * 0.85f : 0f), 0f, 1f);
         if (starVis > 0.05f)
         {
@@ -111,7 +108,6 @@ internal static class AdhanSkyRenderer
             }
         }
 
-        // Suspended golden light motes drifting gently upward in warm skies
         if (spec.MoteStrength > 0.08f)
         {
             var moteCol = Argb.Lerp(spec.SkyTheme.OrbCore, Argb.Hex(0xFFFFE4A8), 0.5f);
@@ -149,7 +145,6 @@ internal static class AdhanSkyRenderer
                 ? Argb.Hex(0xFFFFE0BE)
                 : Argb.Hex(0xFFE2E8F0);
 
-        // Outer Mie atmospheric bloom (only the halo breathes while the orb stays calm)
         float bloomStrength = 0.90f + 0.20f * breath;
         float glowRadius = maxRipple * (0.96f + 0.06f * breath);
         using (var glow = new CanvasRadialGradientBrush(rc, [
@@ -162,7 +157,6 @@ internal static class AdhanSkyRenderer
             ds.FillCircle(center, glowRadius, glow);
         }
 
-        // Three calm expanding wavefront ripples with smooth cubic ease-out
         for (int i = 0; i < 3; i++)
         {
             float p = wavePhase >= 0f ? (wavePhase + i / 3f) % 1f : (i + 1) / 4f;
@@ -176,7 +170,6 @@ internal static class AdhanSkyRenderer
 
         if (spec.IsDaytime)
         {
-            // Warm inner chromosphere melting the solar limb naturally into the sky
             float chromo = orbRadius * 2.15f;
             var midTint = Argb.Lerp(Argb.Hex(0xFFFFFFFF), spec.SkyTheme.OrbGlow, 0.35f);
             using (var ch = new CanvasRadialGradientBrush(rc, [

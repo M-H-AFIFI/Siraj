@@ -57,7 +57,6 @@
 
             <!-- Outfit, the UI face; Arabic and Urdu fall back cleanly to Segoe UI. -->
             <FontFamily x:Key="SirajFont">ms-appx:///Assets/Fonts/Outfit.ttf#Outfit, Segoe UI Variable Text, Segoe UI</FontFamily>
-            <FontFamily x:Key="SirajIcons">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
             <FontFamily x:Key="SirajArabicFont">ms-appx:///Assets/Quran/quran_amiri.ttf#Amiri</FontFamily>
             <FontFamily x:Key="SirajQuranFont">ms-appx:///Assets/Quran/quran_digitalkhatt_v2.otf#DigitalKhatt New Madina</FontFamily>
 

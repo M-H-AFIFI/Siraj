@@ -9,13 +9,18 @@ using Path = Microsoft.UI.Xaml.Shapes.Path;
 
 namespace Siraj.App.Controls;
 
-internal sealed class SirajVectorIcon : UserControl
+public sealed class SirajVectorIcon : UserControl
 {
     public static readonly DependencyProperty IconKeyProperty = DependencyProperty.Register(
-        nameof(IconKey), typeof(string), typeof(SirajVectorIcon), new PropertyMetadata("", (d, _) => ((SirajVectorIcon)d).Build()));
+        nameof(IconKey), typeof(string), typeof(SirajVectorIcon),
+        new PropertyMetadata("", (d, _) => ((SirajVectorIcon)d).UpdateIcon()));
 
     public static readonly DependencyProperty BrushProperty = DependencyProperty.Register(
-        nameof(Brush), typeof(Brush), typeof(SirajVectorIcon), new PropertyMetadata(null, (d, _) => ((SirajVectorIcon)d).Build()));
+        nameof(Brush), typeof(Brush), typeof(SirajVectorIcon),
+        new PropertyMetadata(null, (d, _) => ((SirajVectorIcon)d).UpdateBrush()));
+
+    private readonly List<(Path Path, bool IsStroke)> _paths = [];
+    private string _builtKey = "";
 
     public string IconKey
     {
@@ -33,6 +38,9 @@ internal sealed class SirajVectorIcon : UserControl
     {
         Width = 22;
         Height = 22;
+        IsHitTestVisible = false;
+        IsTabStop = false;
+        FlowDirection = FlowDirection.LeftToRight;
     }
 
     public static SirajVectorIcon Make(string key, double size = 22, Brush? brush = null) => new()
@@ -40,9 +48,49 @@ internal sealed class SirajVectorIcon : UserControl
         IconKey = key, Width = size, Height = size, Brush = brush ?? Kit.B("SirajPrimaryBrush"),
     };
 
-    private void Build()
+    public static string OccasionIconKey(string occasionId) => occasionId switch
     {
-        if (!SirajIcons.All.TryGetValue(IconKey ?? "", out var data)) { Content = null; return; }
+        "islamic_new_year" => "occasion_islamic_new_year",
+        "ashura" => "occasion_ashura",
+        "isra_miraj" => "occasion_isra_miraj",
+        "mid_shaban" => "occasion_mid_shaban",
+        "ramadan" or "ramadan_start" => "occasion_ramadan",
+        "last_ten_ramadan" => "occasion_laylat_qadr",
+        "eid_al_fitr" => "occasion_eid_al_fitr",
+        "day_of_arafah" => "occasion_day_of_arafah",
+        "eid_al_adha" => "occasion_eid_al_adha",
+        _ => "occasion_default",
+    };
+
+    public static PathIcon MakePathIcon(string key)
+    {
+        var icon = new PathIcon();
+        if (SirajIcons.All.TryGetValue(key, out var data) && data.Parts.Length > 0)
+        {
+            try
+            {
+                icon.Data = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), data.Parts[0].Data);
+            }
+            catch (Exception e) { Log.Error($"pathicon {key}", e); }
+        }
+        return icon;
+    }
+
+    private void UpdateIcon()
+    {
+        string key = IconKey ?? "";
+        if (key == _builtKey && _paths.Count > 0)
+        {
+            UpdateBrush();
+            return;
+        }
+        _builtKey = key;
+        _paths.Clear();
+        if (!SirajIcons.All.TryGetValue(key, out var data))
+        {
+            Content = null;
+            return;
+        }
         var canvas = new Canvas { Width = data.Width, Height = data.Height };
         var brush = Brush ?? Kit.B("SirajOnSurfaceBrush");
         foreach (var part in data.Parts)
@@ -54,7 +102,8 @@ internal sealed class SirajVectorIcon : UserControl
                     Data = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), part.Data),
                     Opacity = part.Opacity,
                 };
-                if (part.Stroke > 0)
+                bool isStroke = part.Stroke > 0;
+                if (isStroke)
                 {
                     path.Stroke = brush;
                     path.StrokeThickness = part.Stroke;
@@ -66,11 +115,27 @@ internal sealed class SirajVectorIcon : UserControl
                 {
                     path.Fill = brush;
                 }
+                _paths.Add((path, isStroke));
                 canvas.Children.Add(path);
             }
-            catch (Exception e) { Log.Error($"icon {IconKey}", e); }
+            catch (Exception e) { Log.Error($"icon {key}", e); }
         }
         Content = new Viewbox { Child = canvas, Stretch = Stretch.Uniform };
+    }
+
+    private void UpdateBrush()
+    {
+        if (_paths.Count == 0)
+        {
+            if (!string.IsNullOrEmpty(IconKey)) UpdateIcon();
+            return;
+        }
+        var brush = Brush ?? Kit.B("SirajOnSurfaceBrush");
+        foreach (var (path, isStroke) in _paths)
+        {
+            if (isStroke) path.Stroke = brush;
+            else path.Fill = brush;
+        }
     }
 }
 

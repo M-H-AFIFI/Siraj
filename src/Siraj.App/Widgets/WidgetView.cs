@@ -51,7 +51,6 @@ internal sealed class WidgetView : UserControl
 
     private static readonly FontFamily Amiri = new("ms-appx:///Assets/Quran/quran_amiri.ttf#Amiri");
     private static readonly FontFamily Numerals = new("Segoe UI Variable Display, Segoe UI");
-    private static readonly FontFamily Icons = new("Segoe Fluent Icons, Segoe MDL2 Assets");
 
     public WidgetFace Face { get; private set; }
 
@@ -118,8 +117,6 @@ internal sealed class WidgetView : UserControl
             _seconds = null;
         }
     }
-
-    // ---- The card ------------------------------------------------------------------------------
 
     private sealed record Inks(Brush Ink, Brush Muted, Brush Accent, Brush Pill, Brush OnPill, Brush Track, Brush Tile, Color InkColor, bool Shadows)
     {
@@ -195,7 +192,7 @@ internal sealed class WidgetView : UserControl
         var (card, sheen, rim, motif) = Dress();
         _s = _config.Scale;
         double s = _s, width = Face.Width * s, height = Face.Height * s;
-        // Glass uses DWM acrylic which rounds at 8 px; solid/soft cards use a larger 16 px radius.
+        // Glass is the window's own acrylic, which Windows rounds at 8 px; the other cards follow
         double radius = _config.Background == "glass" ? (_live ? 8 : 8 * s) : 16 * s;
         var root = new Grid
         {
@@ -268,8 +265,6 @@ internal sealed class WidgetView : UserControl
         return new Path { Data = group, Stroke = new SolidColorBrush(color), StrokeThickness = 1.25, IsHitTestVisible = false };
     }
 
-    // ---- Pieces --------------------------------------------------------------------------------
-
     private TextBlock T(double size, bool strong = false, bool muted = false) => new()
     {
         FontFamily = (FontFamily)Application.Current.Resources["SirajFont"],
@@ -307,14 +302,8 @@ internal sealed class WidgetView : UserControl
         return text;
     }
 
-    private TextBlock Glyph(string glyph, double size, Brush? brush = null)
-    {
-        var text = T(size);
-        text.FontFamily = Icons;
-        text.Text = glyph;
-        text.Foreground = brush ?? _ink.Accent;
-        return text;
-    }
+    private SirajVectorIcon VectorIcon(string iconKey, double size, Brush? brush = null) =>
+        SirajVectorIcon.Make(iconKey, size * _s, brush ?? _ink.Accent);
 
     private PrayerGlyph Icon(double size, Brush? brush = null) => new() { Width = size * _s, Height = size * _s, Brush = brush ?? _ink.Accent };
 
@@ -441,9 +430,7 @@ internal sealed class WidgetView : UserControl
         }
     }
 
-    private const string StopwatchGlyph = "\uE916";
-
-    // ---- Faces ---------------------------------------------------------------------------------
+    private const string StopwatchIconKey = "timer";
 
     private Action BuildNoPlace(Grid body)
     {
@@ -451,7 +438,7 @@ internal sealed class WidgetView : UserControl
         text.TextWrapping = TextWrapping.WrapWholeWords;
         text.TextAlignment = TextAlignment.Center;
         text.Text = Loc.Current["widget_no_location"];
-        var icon = Glyph("\uE707", 22); // MapPin
+        var icon = VectorIcon("location_on", 24);
         icon.HorizontalAlignment = HorizontalAlignment.Center;
         body.Children.Add(Down(8 * _s, icon, text).Also(p => p.VerticalAlignment = VerticalAlignment.Center));
         return () => { };
@@ -482,7 +469,7 @@ internal sealed class WidgetView : UserControl
         var label = Label();
         label.VerticalAlignment = VerticalAlignment.Bottom;
         label.Margin = new Thickness(0, 0, 0, 5 * s);
-        var stopwatch = Glyph(StopwatchGlyph, 15);
+        var stopwatch = VectorIcon(StopwatchIconKey, 16);
         stopwatch.VerticalAlignment = VerticalAlignment.Bottom;
         stopwatch.Margin = new Thickness(0, 0, 0, 5 * s);
         var countdown = At(Figures(26), 0, 1);
@@ -667,7 +654,7 @@ internal sealed class WidgetView : UserControl
         var name = T(24, strong: true);
         var callig = Calligraphy(28);
         var countdown = T(14);
-        var stopwatch = Glyph(StopwatchGlyph, 12);
+        var stopwatch = VectorIcon(StopwatchIconKey, 13);
         stopwatch.VerticalAlignment = VerticalAlignment.Center;
         var countRow = Across(5 * s, stopwatch, countdown);
         foreach (var e in new FrameworkElement[] { head, name, callig, countRow }) e.HorizontalAlignment = HorizontalAlignment.Center;

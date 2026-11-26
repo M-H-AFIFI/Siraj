@@ -20,14 +20,17 @@ public sealed partial class PrayerPage : Page
 {
     private sealed record RowParts(
         Border Row, Border Badge, ContentControl BadgeContent, TextBlock Name,
-        TextBlock Time, TextBlock Iqama, Button Bell, FontIcon BellIcon);
+        TextBlock Time, TextBlock Iqama, Button Bell, SirajVectorIcon BellIcon);
 
     private readonly Dictionary<PrayerType, RowParts> _rows = new();
     private readonly MoonDisc _moon = new();
+    private bool _entered;
+    private string _lastDynamicKey = "";
 
     public PrayerPage()
     {
         InitializeComponent();
+        NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Required;
         OpenQuranIcon.Content = SirajVectorIcon.Make("quick_quran", 24, Kit.B("SirajOnPrimaryBrush"));
         PlaceButton.UseSystemFocusVisuals = false;
         OpenQuranBtn.UseSystemFocusVisuals = false;
@@ -43,26 +46,32 @@ public sealed partial class PrayerPage : Page
         {
             App.Clock.DayChanged += Refresh;
             App.Clock.Tick += RefreshMarks;
-            App.Theme.Changed += Refresh;
+            App.Theme.Changed += OnThemeChanged;
             App.Settings.Changed += OnSettings;
-            App.Quran.Changed += Refresh;
+            App.Quran.Changed += OnQuranChanged;
             Refresh();
-            Kit.PopIn(QuickActions, 0);
-            Kit.PopIn(PrimaryColumn, 1);
-            Kit.PopIn(Side, 2);
+            if (!_entered)
+            {
+                _entered = true;
+                Kit.PopIn(QuickActions, 0);
+                Kit.PopIn(PrimaryColumn, 1);
+                Kit.PopIn(Side, 2);
+            }
         };
         Unloaded += (_, _) =>
         {
             App.Clock.DayChanged -= Refresh;
             App.Clock.Tick -= RefreshMarks;
-            App.Theme.Changed -= Refresh;
+            App.Theme.Changed -= OnThemeChanged;
             App.Settings.Changed -= OnSettings;
-            App.Quran.Changed -= Refresh;
+            App.Quran.Changed -= OnQuranChanged;
         };
         SizeChanged += (_, e) => Arrange(e.NewSize.Width);
     }
 
-    private void OnSettings(Core.Settings.AppSettings old, Core.Settings.AppSettings updated) => DispatcherQueue.TryEnqueue(Refresh);
+    private void OnThemeChanged() { _lastDynamicKey = ""; Refresh(); }
+    private void OnQuranChanged() { _lastDynamicKey = ""; Refresh(); }
+    private void OnSettings(Core.Settings.AppSettings old, Core.Settings.AppSettings updated) => DispatcherQueue.TryEnqueue(() => { _lastDynamicKey = ""; Refresh(); });
 
     private void Arrange(double width)
     {
@@ -116,7 +125,7 @@ public sealed partial class PrayerPage : Page
             var name = new TextBlock { Style = (Style)Application.Current.Resources["SirajBody"], FontSize = 16, VerticalAlignment = VerticalAlignment.Center };
             var iqama = new TextBlock { Style = (Style)Application.Current.Resources["SirajCaption"], FontSize = 12, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
             var time = new TextBlock { Style = (Style)Application.Current.Resources["SirajBody"], FontSize = 16, FontWeight = FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center };
-            var bellIcon = new FontIcon { FontFamily = (FontFamily)Application.Current.Resources["SirajIcons"], FontSize = 14 };
+            var bellIcon = SirajVectorIcon.Make("notifications", 16, Kit.B("SirajPrimaryBrush"));
             var bell = new Button
             {
                 Width = 34, Height = 34, Padding = new Thickness(0), CornerRadius = new CornerRadius(11),
@@ -179,22 +188,27 @@ public sealed partial class PrayerPage : Page
             r.Time.Text = prayer != null ? loc.Time(prayer.Time) : "--:--";
             r.Iqama.Text = prayer?.Iqama is { } iq ? $"{loc["iqama"]} {loc.Time(iq)}" : "";
             bool on = settings.AlertOn(type);
-            r.BellIcon.Glyph = on ? "\uEA8F" : "\uE7ED";
-            r.BellIcon.Foreground = Kit.B(on ? "SirajPrimaryBrush" : "SirajOnSurfaceVariantBrush");
+            r.BellIcon.IconKey = on ? "notifications" : "notifications_off";
+            r.BellIcon.Brush = Kit.B(on ? "SirajPrimaryBrush" : "SirajOnSurfaceVariantBrush");
             r.Bell.Background = on ? Kit.B("SirajPrimarySoftBrush") : new SolidColorBrush(Colors.Transparent);
             r.Bell.Opacity = on ? 1.0 : 0.55;
             ToolTipService.SetToolTip(r.Bell, loc.Format("dashboard_adhan_toggle", loc.PrayerName(type)));
             AutomationProperties.SetName(r.Bell, loc.Format("dashboard_adhan_toggle", loc.PrayerName(type)));
         }
 
-        BuildDynamicCards(today, eastern);
+        string dynKey = $"{today}|{eastern}|{settings.ShowContinueReadingOnHome}|{settings.LastRead?.Page}:{settings.LastRead?.Surah}:{settings.LastRead?.Ayah}|{settings.Bookmarks.Count}|{App.Quran.Status}|{App.Theme.Scheme.Primary}|{App.Theme.IsDark}|{App.Theme.IsGlass}";
+        if (dynKey != _lastDynamicKey)
+        {
+            _lastDynamicKey = dynKey;
+            BuildDynamicCards(today, eastern);
+        }
 
         var moon = MoonPhase.At(clock.Now);
         _moon.Phase = moon;
         MoonTitle.Text = loc["moon_tonight"];
         MoonPhaseText.Text = loc[MoonDisc.NameKey(moon.Name)];
         MoonText.Text = MoonDisc.Line(loc, moon, today, eastern);
-        MoonChevron.Glyph = loc.IsRtl ? "\uE76B" : "\uE76C";
+        MoonChevron.IconKey = loc.IsRtl ? "chevron_left" : "chevron_right";
 
         WidgetsTitle.Text = loc["win_widgets_card_title"];
         WidgetsText.Text = loc["win_widgets_card_body"];
@@ -209,7 +223,6 @@ public sealed partial class PrayerPage : Page
         DynamicPrimarySlot.Children.Clear();
         DailyCardsSlot.Children.Clear();
 
-        // 1. Islamic Occasions Banner (when within 30 days)
         var upcoming = IslamicOccasions.Upcoming(today, HijriCalendars.Current).FirstOrDefault();
         if (upcoming != null && upcoming.DaysUntil <= 30)
             DynamicPrimarySlot.Children.Add(BuildOccasionBanner(upcoming, eastern));
@@ -217,31 +230,18 @@ public sealed partial class PrayerPage : Page
         if (s.ShowContinueReadingOnHome)
             DynamicPrimarySlot.Children.Add(BuildContinueReadingCard());
 
-        // 3. Ayah of the Day Card
         DailyCardsSlot.Children.Add(BuildDailyAyahCard(today));
-
-        // 4. Hadith of the Day Card
         DailyCardsSlot.Children.Add(BuildDailyHadithCard(today));
     }
 
     private UIElement BuildOccasionBanner(DatedOccasion occ, bool eastern)
     {
         var loc = Loc.Current;
-        string iconKey = occ.Occasion.Id switch
-        {
-            "ramadan_start" or "last_ten_ramadan" => "lantern",
-            "eid_al_fitr" or "eid_al_adha" => "eid_mosque",
-            "day_of_arafah" => "arafah",
-            "ashura" => "parted_sea",
-            "isra_miraj" => "dome_of_rock",
-            "mid_shaban" => "full_moon",
-            _ => "crescent_star",
-        };
         var row = new Grid { ColumnSpacing = 14 };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        row.Children.Add(Kit.IconBadge(iconKey, 44, 22, "SirajGoldSoftBrush", "SirajGoldBrush", 14));
+        row.Children.Add(Kit.OccasionBadge(occ.Occasion.Id, 44, occ.IsToday));
 
         var texts = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
         texts.Children.Add(Kit.Text(occ.Occasion.Title(loc.Language), "SirajHeading", 15.5));
@@ -288,13 +288,12 @@ public sealed partial class PrayerPage : Page
         {
             Width = 46, Height = 46, CornerRadius = new CornerRadius(23),
             Background = Kit.B("SirajPrimaryBrush"), VerticalAlignment = VerticalAlignment.Center,
-            Child = Kit.Icon(loc.IsRtl ? "\uE72B" : "\uE72A", 16, Kit.B("SirajOnPrimaryBrush")),
+            Child = Kit.Icon(loc.IsRtl ? "arrow_back" : "arrow_forward", 19, Kit.B("SirajOnPrimaryBrush")),
         };
         Grid.SetColumn(arrowCircle, 1);
         top.Children.Add(arrowCircle);
         stack.Children.Add(top);
 
-        // 3 progress gauges: Page, Juz, Surah
         var gauges = new Grid { ColumnSpacing = 10 };
         for (int i = 0; i < 3; i++) gauges.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         gauges.Children.Add(Gauge((double)page / QuranDatabase.PageCount, loc.Number(page), loc["last_read_page_gauge"]));
@@ -304,12 +303,11 @@ public sealed partial class PrayerPage : Page
         Grid.SetColumn(gSurah, 2); gauges.Children.Add(gSurah);
         stack.Children.Add(gauges);
 
-        // Latest bookmark row if present
         if (App.Settings.Current.Bookmarks.FirstOrDefault() is { } bm && (bm.Surah != surahNum || bm.Ayah != ayahNum))
         {
             stack.Children.Add(new Border { Height = 1, Background = Kit.B("SirajDividerBrush") });
             var bmRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-            bmRow.Children.Add(Kit.Icon("\uE734", 14, Kit.B("SirajGoldBrush")));
+            bmRow.Children.Add(Kit.Icon("bookmark", 15, Kit.B("SirajGoldBrush")));
             bmRow.Children.Add(Kit.Text(loc.Format("dashboard_reading_bookmark", MediaHubService.SurahTitle(bm.Surah, loc.Language), loc.Number(bm.Ayah)), "SirajCaption", 13, bold: true));
             var bmBtn = new Button
             {
@@ -471,7 +469,7 @@ public sealed partial class PrayerPage : Page
                 : new SolidColorBrush(Colors.Transparent);
             r.Badge.Background = isFocus ? Kit.B("SirajPrimaryBrush") : Kit.B("SirajGlassPillBrush");
             r.BadgeContent.Content = past
-                ? Kit.Icon("\uE73E", 15, Kit.B("SirajPrimaryBrush"))
+                ? Kit.Icon("check", 16, Kit.B("SirajPrimaryBrush"))
                 : new PrayerGlyph { Prayer = type, Width = 21, Height = 21, Brush = Kit.B(isFocus ? "SirajOnPrimaryBrush" : "SirajPrimaryBrush") };
 
             var fg = Kit.B(isFocus ? "SirajPrimaryBrush" : "SirajOnSurfaceBrush");

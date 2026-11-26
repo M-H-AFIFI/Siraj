@@ -54,7 +54,7 @@ public sealed partial class ReaderPage : Page
         {
             _page = last.Page;
         }
-        BackIcon.Glyph = loc.IsRtl ? "" : "";
+        BackIcon.IconKey = loc.IsRtl ? "arrow_forward" : "arrow_back";
         // The icon-only controls carry their names for the tooltip and for screen readers alike.
         Label(BackButton, loc["win_back"]);
         Label(SpreadToggle, loc["win_two_pages"]);
@@ -170,8 +170,6 @@ public sealed partial class ReaderPage : Page
 
     private void OnBack(object sender, RoutedEventArgs e) => App.MainWindowInstance?.Navigate("quran", force: true);
 
-    // ---- The chosen ayah ---------------------------------------------------------------------
-
     private void Select((int Surah, int Ayah) ayah, int page)
     {
         _selected = ayah;
@@ -229,8 +227,6 @@ public sealed partial class ReaderPage : Page
     {
         if (_selected is { } s) App.QuranPlayer.Play(s.Surah, s.Ayah);
     }
-
-    // ---- The recitation ----------------------------------------------------------------------
 
     private void BuildReciters()
     {
@@ -307,7 +303,7 @@ public sealed partial class ReaderPage : Page
     {
         var player = App.QuranPlayer;
         var loc = Loc.Current;
-        PlayIcon.Glyph = player.IsPlaying ? "" : "";
+        PlayIcon.IconKey = player.IsPlaying ? "pause" : "play";
         Label(PlayButton, loc[player.IsPlaying ? "pause" : "play"]);
         if (player.Error != null) NowText.Text = player.Error;
         else if (player.Current is { } at)
@@ -324,8 +320,6 @@ public sealed partial class ReaderPage : Page
         LeftPage.SetHighlights(playing, _selected);
         RightPage.SetHighlights(playing, _selected);
     }
-
-    // ---- Paper -------------------------------------------------------------------------------
 
     private void BuildPaperMenu()
     {

@@ -5,7 +5,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Background="Transparent">
     <Grid MaxWidth="1120" Padding="28,12,28,0">
-        <!-- Before the first read: download prompt -->
         <Border x:Name="DownloadCard" Style="{StaticResource SirajCard}" VerticalAlignment="Top" MaxWidth="720" HorizontalAlignment="Left" Padding="28" Visibility="Collapsed">
             <StackPanel Spacing="14">
                 <TextBlock x:Name="DownloadTitle" Style="{StaticResource SirajHeading}" FontSize="22" />
@@ -19,7 +18,6 @@
             </StackPanel>
         </Border>
 
-        <!-- Unified scrolling Quran index: header (title, search, continue hero, khatma, tabs) + virtualized list -->
         <ListView x:Name="List" SelectionMode="None" IsItemClickEnabled="True" ItemClick="OnItemClick"
                   Padding="0,0,0,96" Visibility="Collapsed" ShowsScrollingPlaceholders="False">
             <ListView.Header>
@@ -33,13 +31,12 @@
                         <Button x:Name="ListenShortcut" Grid.Column="1" Style="{StaticResource SirajButton}" Click="OnOpenListen" VerticalAlignment="Center" />
                     </Grid>
 
-                    <!-- Glass search bar + quick tab toggle -->
                     <Grid ColumnSpacing="10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <AutoSuggestBox x:Name="SearchBox" QueryIcon="Find" TextChanged="OnSearchChanged" QuerySubmitted="OnSearchSubmitted"
+                        <AutoSuggestBox x:Name="SearchBox" TextChanged="OnSearchChanged" QuerySubmitted="OnSearchSubmitted"
                                         CornerRadius="22" VerticalAlignment="Center">
                             <AutoSuggestBox.TextBoxStyle>
                                 <Style TargetType="TextBox" BasedOn="{StaticResource AutoSuggestBoxTextBoxStyle}">
@@ -53,11 +50,9 @@
                                 Style="{StaticResource SirajButton}" Click="OnQuickToggleJuz" />
                     </Grid>
 
-                    <!-- Hero Continue Reading + Your Khatma cards -->
                     <ContentControl x:Name="ContinueSlot" HorizontalContentAlignment="Stretch" />
                     <ContentControl x:Name="KhatmaSlot" HorizontalContentAlignment="Stretch" />
 
-                    <!-- Sliding segmented tabs -->
                     <ContentControl x:Name="TabsSlot" HorizontalContentAlignment="Left" />
                 </StackPanel>
             </ListView.Header>

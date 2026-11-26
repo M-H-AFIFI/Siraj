@@ -36,12 +36,12 @@
                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                     <TextBlock x:Name="PhaseText" FontFamily="{StaticResource SirajFont}" FontSize="11.5" FontWeight="Bold"
                                Foreground="#F2FFFFFF" VerticalAlignment="Center" TextWrapping="NoWrap" />
-                    <FontIcon x:Name="PhaseIcon" FontFamily="{StaticResource SirajIcons}" Glyph="&#xE706;" FontSize="13"
-                              Foreground="#FFFFD54F" RenderTransformOrigin="0.5,0.5" VerticalAlignment="Center">
-                        <FontIcon.RenderTransform>
+                    <local:SirajVectorIcon x:Name="PhaseIcon" IconKey="wb_sunny" Width="14" Height="14"
+                                           Brush="#FFFFD54F" RenderTransformOrigin="0.5,0.5" VerticalAlignment="Center">
+                        <local:SirajVectorIcon.RenderTransform>
                             <RotateTransform x:Name="PhaseIconRotation" />
-                        </FontIcon.RenderTransform>
-                    </FontIcon>
+                        </local:SirajVectorIcon.RenderTransform>
+                    </local:SirajVectorIcon>
                 </StackPanel>
             </Border>
         </Grid>
@@ -75,8 +75,8 @@
                 <Border x:Name="CountdownPill" HorizontalAlignment="Center" CornerRadius="20" Padding="16,7"
                         Background="#61000000" BorderBrush="#66FFD54F" BorderThickness="1">
                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                        <FontIcon x:Name="CountdownIcon" FontFamily="{StaticResource SirajIcons}" Glyph="&#xE916;" FontSize="16"
-                                  Foreground="#FFE5B558" VerticalAlignment="Center" />
+                        <local:SirajVectorIcon x:Name="CountdownIcon" IconKey="timer" Width="16" Height="16"
+                                               Brush="#FFE5B558" VerticalAlignment="Center" />
                         <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                             <TextBlock x:Name="CountdownBefore" FontFamily="{StaticResource SirajFont}" FontSize="12.5" FontWeight="Black"
                                        LineStackingStrategy="MaxHeight" Foreground="White" VerticalAlignment="Center"

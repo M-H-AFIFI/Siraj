@@ -83,8 +83,10 @@ internal sealed class SlidingPills<T> : UserControl
                 MinWidth = 0,
                 UseSystemFocusVisuals = false,
             };
-            btn.Resources["ButtonBackgroundPointerOver"] = Kit.Clone("SirajPrimarySoftBrush");
-            btn.Resources["ButtonBackgroundPressed"] = Kit.Clone("SirajPrimarySoftBrush");
+            var hover = new SolidColorBrush(ThemeService.ToColor(App.Theme.Scheme.OnSurface, 0.06f));
+            var pressed = new SolidColorBrush(ThemeService.ToColor(App.Theme.Scheme.OnSurface, 0.10f));
+            btn.Resources["ButtonBackgroundPointerOver"] = idx == _selected ? new SolidColorBrush(Colors.Transparent) : hover;
+            btn.Resources["ButtonBackgroundPressed"] = idx == _selected ? new SolidColorBrush(Colors.Transparent) : pressed;
             AutomationProperties.SetName(btn, text);
             btn.Click += (_, _) =>
             {
@@ -106,11 +108,15 @@ internal sealed class SlidingPills<T> : UserControl
     {
         if (index < 0 || index >= _items.Count) return;
         _selected = index;
+        var hoverColor = ThemeService.ToColor(App.Theme.Scheme.OnSurface, 0.06f);
+        var pressedColor = ThemeService.ToColor(App.Theme.Scheme.OnSurface, 0.10f);
         for (int i = 0; i < _items.Count; i++)
         {
             bool active = i == _selected;
             _items[i].Label.FontWeight = active ? FontWeights.SemiBold : FontWeights.Normal;
             _items[i].Label.Foreground = Kit.B(active ? "SirajOnPrimaryBrush" : "SirajOnSurfaceVariantBrush");
+            _items[i].Button.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(active ? Colors.Transparent : hoverColor);
+            _items[i].Button.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(active ? Colors.Transparent : pressedColor);
         }
         PositionPill(animate && _laidOut && Kit.Motion);
     }
@@ -148,7 +154,7 @@ internal sealed class SlidingPills<T> : UserControl
             }
             else
             {
-                Kit.SpringTo(_pill, new Vector3((float)left, 0, 0), damping: 0.90f, periodMs: 120);
+                Kit.GlideTo(_pill, new Vector3((float)left, 0, 0), 150);
             }
             _laidOut = true;
         }
@@ -256,7 +262,7 @@ internal sealed class WavyProgressBar : UserControl
             _timer.Tick += (_, _) => _canvas.Invalidate();
             UpdateTimer();
         };
-        Unloaded += (_, _) => { _timer?.Stop(); _timer = null; _canvas.RemoveFromVisualTree(); };
+        Unloaded += (_, _) => { _timer?.Stop(); _timer = null; };
     }
 
     private void UpdateTimer()

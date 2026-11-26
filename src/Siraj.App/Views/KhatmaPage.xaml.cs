@@ -53,7 +53,6 @@ public sealed partial class KhatmaPage : Page
         headRow.Children.Add(headText);
         hero.Children.Add(headRow);
 
-        // Preset duration cards (7, 15, 30, 60 days)
         var presets = new List<UIElement>();
         foreach (int days in KhatmaPlanner.Presets)
         {
@@ -77,7 +76,6 @@ public sealed partial class KhatmaPage : Page
         }
         hero.Children.Add(Kit.Columns(150, 10, presets));
 
-        // Custom days slider / number box
         var customBox = new NumberBox
         {
             Minimum = 1, Maximum = 365, Value = _chosenDays, Width = 140,
@@ -125,7 +123,6 @@ public sealed partial class KhatmaPage : Page
         bool eastern = Digits.UseEastern(App.Settings.Current.NumeralSystem, loc.Language);
         var summary = KhatmaPlanner.Summarize(state, today);
 
-        // 1. Overview progress card with circular Ring + stats
         var topGrid = new Grid { ColumnSpacing = 24 };
         topGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         topGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -158,7 +155,6 @@ public sealed partial class KhatmaPage : Page
         Kit.PopIn(overviewCard, 0);
         _body.Children.Add(overviewCard);
 
-        // 2. Today's portion hero card (or finished celebration card)
         var portion = summary.TodayPortion;
         var portionStack = new StackPanel { Spacing = 12 };
         var portionHeader = new Grid();
@@ -193,7 +189,6 @@ public sealed partial class KhatmaPage : Page
         Kit.PopIn(todayCard, 1);
         _body.Children.Add(todayCard);
 
-        // 3. Schedule grid
         var schedHeader = new Grid { Margin = new Thickness(4, 6, 4, 0) };
         schedHeader.Children.Add(Kit.Text(loc["kh_schedule"], "SirajHeading", 16, bold: true));
         if (summary.Portions.Count > 15)
@@ -222,7 +217,7 @@ public sealed partial class KhatmaPage : Page
                 Width = 30, Height = 30, CornerRadius = new CornerRadius(15),
                 Background = Kit.B(p.Completed ? "SirajPrimaryBrush" : p.IsToday ? "SirajPrimarySoftBrush" : "SirajSurfaceContainerHighBrush"),
                 Child = p.Completed
-                    ? Kit.Icon("\uE73E", 13, Kit.B("SirajOnPrimaryBrush"))
+                    ? Kit.Icon("check", 15, Kit.B("SirajOnPrimaryBrush"))
                     : Kit.Text(loc.Number(p.DayNumber), "SirajCaption", 12, bold: true,
                         brush: Kit.B(p.IsToday ? "SirajPrimaryBrush" : "SirajOnSurfaceVariantBrush")),
             };
@@ -257,7 +252,6 @@ public sealed partial class KhatmaPage : Page
         Kit.PopIn(grid, 2);
         _body.Children.Add(grid);
 
-        // 4. End Khatma action
         var endBtn = Ui.Button(loc["kh_end"], async () =>
         {
             if (await Kit.Confirm(XamlRoot, loc["kh_end"], loc["kh_end_confirm"], loc["kh_end_action"]))

@@ -24,17 +24,38 @@ public sealed partial class ListenPage : Page
     private StackPanel? _surahListHost;
     private TextBlock? _ambientLabel;
     private Button? _ambientBtn;
+    private string _builtStateKey = "";
 
     public ListenPage()
     {
         InitializeComponent();
-        Loaded += (_, _) => { App.Media.Changed += OnMediaChanged; App.Theme.Changed += RebuildView; RebuildView(); };
-        Unloaded += (_, _) => { App.Media.Changed -= OnMediaChanged; App.Theme.Changed -= RebuildView; };
+        NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Required;
+        Loaded += (_, _) =>
+        {
+            App.Media.Changed += OnMediaChanged;
+            App.Theme.Changed += OnThemeChanged;
+            string stateKey = CurrentStateKey();
+            if (Content == null || stateKey != _builtStateKey)
+                RebuildView();
+            else
+                UpdateAmbientChip();
+        };
+        Unloaded += (_, _) =>
+        {
+            App.Media.Changed -= OnMediaChanged;
+            App.Theme.Changed -= OnThemeChanged;
+        };
     }
+
+    private string CurrentStateKey() =>
+        $"{App.Theme.Scheme.Primary}|{App.Theme.IsDark}|{App.Theme.IsGlass}|{App.Media.Kind}|{App.Media.CurrentTrack?.Id}|{App.Media.IsPlaying}|{App.Media.ActiveAmbientId}|{_selectedReciter?.Id}|{_selectedRare?.Id}";
+
+    private void OnThemeChanged() { _builtStateKey = ""; RebuildView(); }
 
     private void OnMediaChanged()
     {
         if (!IsLoaded) return;
+        _builtStateKey = CurrentStateKey();
         UpdateAmbientChip();
         if (_selectedReciter != null) FillReciterSurahs(_selectedReciter);
         else if (_selectedRare != null) ShowRareDetail(_selectedRare);
@@ -44,6 +65,7 @@ public sealed partial class ListenPage : Page
     private void RebuildView()
     {
         if (!IsLoaded) return;
+        _builtStateKey = CurrentStateKey();
         if (_selectedReciter != null) ShowReciterDetail(_selectedReciter);
         else if (_selectedRare != null) ShowRareDetail(_selectedRare);
         else ShowHub();
@@ -119,7 +141,7 @@ public sealed partial class ListenPage : Page
 
             if (matchingRare.Count > 0)
             {
-                _hubListHost.Children.Add(Ui.SectionWithIcon(loc["listen_rare_title"], "lantern"));
+                _hubListHost.Children.Add(Ui.SectionWithIcon(loc["listen_rare_title"], "library_music"));
                 foreach (var rare in matchingRare)
                 {
                     var grid = new Grid { ColumnSpacing = 16 };
@@ -140,7 +162,7 @@ public sealed partial class ListenPage : Page
 
                     var playRare = new Button
                     {
-                        Content = Kit.Icon("\uE768", 16, Kit.B("SirajOnPrimaryBrush")),
+                        Content = Kit.Icon("play", 20, Kit.B("SirajOnPrimaryBrush")),
                         Width = 44, Height = 44, Padding = new Thickness(0), CornerRadius = new CornerRadius(22),
                         Background = Kit.B("SirajPrimaryBrush"), BorderThickness = new Thickness(0),
                         VerticalAlignment = VerticalAlignment.Center,
@@ -206,7 +228,7 @@ public sealed partial class ListenPage : Page
 
             var play = new Button
             {
-                Content = Kit.Icon(playingHere ? "\uE769" : "\uE768", 13,
+                Content = Kit.Icon(playingHere ? "pause" : "play", 16,
                     Kit.B(playingHere ? "SirajOnPrimaryBrush" : "SirajPrimaryBrush")),
                 Width = 36, Height = 36, Padding = new Thickness(0), CornerRadius = new CornerRadius(18),
                 Background = Kit.B(playingHere ? "SirajPrimaryBrush" : "SirajPrimarySoftBrush"),
@@ -324,7 +346,7 @@ public sealed partial class ListenPage : Page
 
             var trailing = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, VerticalAlignment = VerticalAlignment.Center };
             if (playingThis) trailing.Children.Add(new EqualizerBars(14) { IsActive = true });
-            trailing.Children.Add(Kit.Icon(playingThis ? "\uE769" : "\uE768", 14, Kit.B("SirajPrimaryBrush")));
+            trailing.Children.Add(Kit.Icon(playingThis ? "pause" : "play", 17, Kit.B("SirajPrimaryBrush")));
             Grid.SetColumn(trailing, 2);
             row.Children.Add(trailing);
 
@@ -386,7 +408,7 @@ public sealed partial class ListenPage : Page
 
             var trailing = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, VerticalAlignment = VerticalAlignment.Center };
             if (playingThis) trailing.Children.Add(new EqualizerBars(14) { IsActive = true });
-            trailing.Children.Add(Kit.Icon(playingThis ? "\uE769" : "\uE768", 15, Kit.B("SirajPrimaryBrush")));
+            trailing.Children.Add(Kit.Icon(playingThis ? "pause" : "play", 18, Kit.B("SirajPrimaryBrush")));
             Grid.SetColumn(trailing, 1);
             row.Children.Add(trailing);
 

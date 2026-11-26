@@ -88,7 +88,7 @@ public sealed partial class RadioPage : Page
 
         if (pinned.Count > 0)
         {
-            _listHost.Children.Add(Ui.SectionWithIcon(loc["radio_section_pinned"], glyph: "\uE718"));
+            _listHost.Children.Add(Ui.SectionWithIcon(loc["radio_section_pinned"], "push_pin"));
             _listHost.Children.Add(Kit.Columns(330, 12, pinned.Select(s => StationCard(s, true)).ToList()));
         }
 
@@ -154,7 +154,7 @@ public sealed partial class RadioPage : Page
 
         var pinBtn = new Button
         {
-            Content = Kit.Icon(pinned ? "\uE840" : "\uE718", 13, Kit.B(pinned ? "SirajGoldBrush" : "SirajOnSurfaceVariantBrush")),
+            Content = Kit.Icon(pinned ? "push_pin" : "push_pin_outlined", 15, Kit.B(pinned ? "SirajGoldBrush" : "SirajOnSurfaceVariantBrush")),
             Width = 34, Height = 34, Padding = new Thickness(0), CornerRadius = new CornerRadius(17),
             Background = Kit.B(pinned ? "SirajGoldSoftBrush" : "SirajGlassPillBrush"), BorderThickness = new Thickness(0),
         };
@@ -165,7 +165,7 @@ public sealed partial class RadioPage : Page
 
         var playBtn = new Button
         {
-            Content = Kit.Icon(playing ? "\uE769" : "\uE768", 14, Kit.B(active ? "SirajOnPrimaryBrush" : "SirajPrimaryBrush")),
+            Content = Kit.Icon(playing ? "pause" : "play", 18, Kit.B(active ? "SirajOnPrimaryBrush" : "SirajPrimaryBrush")),
             Width = 40, Height = 40, Padding = new Thickness(0), CornerRadius = new CornerRadius(20),
             Background = Kit.B(active ? "SirajPrimaryBrush" : "SirajPrimarySoftBrush"), BorderThickness = new Thickness(0),
         };

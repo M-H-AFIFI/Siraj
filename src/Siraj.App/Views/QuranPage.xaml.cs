@@ -20,16 +20,20 @@ public sealed partial class QuranPage : Page
     private CancellationTokenSource? _search;
     private bool _loaded;
     private bool _warming;
+    private string _builtKey = "";
+    private bool _tabsBuilt;
 
     public QuranPage()
     {
         InitializeComponent();
+        NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Required;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
 
         var loc = Loc.Current;
         TitleText.Text = loc["nav_quran"];
         SearchBox.PlaceholderText = loc["quran_index_search_hint"];
+        SearchBox.QueryIcon = SirajVectorIcon.MakePathIcon("search");
         DownloadTitle.Text = loc["win_quran_download_title"];
         DownloadBody.Text = loc.Format("win_quran_download_body", loc.Format("win_megabytes", loc.Number(QuranService.DownloadBytes / 1_000_000)));
         CancelButton.Content = loc["settings_cancel"];
@@ -44,6 +48,13 @@ public sealed partial class QuranPage : Page
         AutomationProperties.SetName(QuickJuzBtn, loc["quran_index_tab_juz"]);
     }
 
+    private string CurrentKey()
+    {
+        var s = App.Settings.Current;
+        var kh = App.Journal.Current.Khatma;
+        return $"{App.Quran.Status}|{_tab}|{s.LastRead?.Page}:{s.LastRead?.Surah}:{s.LastRead?.Ayah}|{s.Bookmarks.Count}|{kh?.CompletedDays.Count}:{kh?.TargetDays}|{App.Theme.Scheme.Primary}|{App.Theme.IsDark}|{App.Theme.IsGlass}";
+    }
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         App.Quran.Changed += OnQuranChanged;
@@ -51,8 +62,10 @@ public sealed partial class QuranPage : Page
         App.Journal.Changed += OnJournalChanged;
         App.Theme.Changed += OnThemeChanged;
         _loaded = true;
-        BuildTabs();
-        Refresh();
+        if (!_tabsBuilt) { BuildTabs(); _tabsBuilt = true; }
+        string key = CurrentKey();
+        if (key != _builtKey || App.Quran.Status != QuranService.State.Ready)
+            Refresh();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -65,16 +78,16 @@ public sealed partial class QuranPage : Page
         App.Theme.Changed -= OnThemeChanged;
     }
 
-    private void OnQuranChanged() => DispatcherQueue.TryEnqueue(Refresh);
+    private void OnQuranChanged() => DispatcherQueue.TryEnqueue(() => { _builtKey = ""; Refresh(); });
 
-    private void OnThemeChanged() => DispatcherQueue.TryEnqueue(() => { if (_loaded) { BuildTabs(); Refresh(); } });
+    private void OnThemeChanged() => DispatcherQueue.TryEnqueue(() => { _builtKey = ""; if (_loaded) { BuildTabs(); Refresh(); } });
 
-    private void OnJournalChanged() => DispatcherQueue.TryEnqueue(() => { if (_loaded) BuildKhatmaCard(); });
+    private void OnJournalChanged() => DispatcherQueue.TryEnqueue(() => { _builtKey = ""; if (_loaded) BuildKhatmaCard(); });
 
     private void OnSettingsChanged(Core.Settings.AppSettings old, Core.Settings.AppSettings updated)
     {
         if (old.Bookmarks != updated.Bookmarks || old.LastRead != updated.LastRead)
-            DispatcherQueue.TryEnqueue(Refresh);
+            DispatcherQueue.TryEnqueue(() => { _builtKey = ""; Refresh(); });
     }
 
     private void BuildTabs()
@@ -142,6 +155,7 @@ public sealed partial class QuranPage : Page
         }
         if (!_loaded) return;
 
+        _builtKey = CurrentKey();
         BuildContinueHero();
         BuildKhatmaCard();
         if (string.IsNullOrWhiteSpace(SearchBox.Text)) ShowTab();
@@ -196,7 +210,7 @@ public sealed partial class QuranPage : Page
             Width = 44, Height = 44, CornerRadius = new CornerRadius(22),
             Background = new SolidColorBrush(Colors.White),
             VerticalAlignment = VerticalAlignment.Center,
-            Child = Kit.Icon(loc.IsRtl ? "\uE72B" : "\uE72A", 16, new SolidColorBrush(primary)),
+            Child = Kit.Icon(loc.IsRtl ? "arrow_back" : "arrow_forward", 19, new SolidColorBrush(primary)),
         };
         Grid.SetColumn(arrowCircle, 2);
         grid.Children.Add(arrowCircle);
@@ -278,7 +292,7 @@ public sealed partial class QuranPage : Page
         Grid.SetColumn(info, 1);
         grid.Children.Add(info);
 
-        var chevron = Kit.Icon(loc.IsRtl ? "\uE76B" : "\uE76C", 13, Kit.B("SirajOnSurfaceVariantBrush"));
+        var chevron = Kit.Icon(loc.IsRtl ? "chevron_left" : "chevron_right", 18, Kit.B("SirajOnSurfaceVariantBrush"));
         chevron.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(chevron, 2);
         grid.Children.Add(chevron);
@@ -313,8 +327,6 @@ public sealed partial class QuranPage : Page
             foreach (var row in SurahRows(App.Quran.Database.Surahs())) List.Items.Add(row);
         }
     }
-
-    // ---- Rows ----
 
     private static Border Row(object target, UIElement leading, string title, string? subtitle, string trailing)
     {
@@ -502,7 +514,7 @@ public sealed partial class QuranPage : Page
             {
                 Width = 40, Height = 40, CornerRadius = new CornerRadius(13),
                 Background = Kit.B("SirajGoldSoftBrush"),
-                Child = Kit.Icon("\uE734", 16, Kit.B("SirajGoldBrush")),
+                Child = Kit.Icon("bookmark", 17, Kit.B("SirajGoldBrush")),
             };
             yield return Row(new ReaderArgs(b.Page, (b.Surah, b.Ayah)), icon,
                 $"{(loc.IsRtl ? surah.Name : surah.EnglishName)} {loc.Number(b.Surah)}:{loc.Number(b.Ayah)}",
@@ -548,8 +560,6 @@ public sealed partial class QuranPage : Page
     {
         if (e.ClickedItem is FrameworkElement { Tag: ReaderArgs args }) Open(args);
     }
-
-    // ---- Search ----
 
     private void OnSearchChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {

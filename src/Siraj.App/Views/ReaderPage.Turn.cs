@@ -255,8 +255,6 @@ public sealed partial class ReaderPage
         }
     }
 
-    // ---- The hand on the page ----------------------------------------------------------------
-
     private void OnPagesPressed(object sender, PointerRoutedEventArgs e)
     {
         var point = e.GetCurrentPoint(Pages);

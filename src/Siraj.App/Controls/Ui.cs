@@ -20,20 +20,17 @@ internal static class Ui
 
     public static TextBlock Section(string title) => Text(title, "SirajSectionHeader");
 
-    public static StackPanel SectionWithIcon(string title, string? iconKey = null, string? glyph = null)
+    public static StackPanel SectionWithIcon(string title, string? iconKey = null)
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(4, 22, 4, 8), VerticalAlignment = VerticalAlignment.Center };
-        if (iconKey != null || glyph != null)
+        if (!string.IsNullOrEmpty(iconKey))
         {
-            UIElement icon = iconKey != null
-                ? SirajVectorIcon.Make(iconKey, 15, Brush("SirajPrimaryBrush"))
-                : Kit.Icon(glyph!, 14, Brush("SirajPrimaryBrush"));
             row.Children.Add(new Border
             {
                 Width = 28, Height = 28, CornerRadius = new CornerRadius(10),
                 Background = Brush("SirajPrimarySoftBrush"),
                 BorderBrush = Brush("SirajPrimaryBorderBrush"), BorderThickness = new Thickness(1),
-                Child = icon,
+                Child = SirajVectorIcon.Make(iconKey, 15, Brush("SirajPrimaryBrush")),
             });
         }
         var label = Text(title, "SirajSectionHeader");
@@ -133,12 +130,10 @@ internal static class Ui
             var dotInner = new Grid();
             if (chosen)
             {
-                dotInner.Children.Add(new FontIcon
-                {
-                    Glyph = "\uE73E", FontFamily = (FontFamily)R["SirajIcons"], FontSize = 13,
-                    Foreground = new SolidColorBrush(Microsoft.UI.Colors.White),
-                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
-                });
+                var check = SirajVectorIcon.Make("check", 15, new SolidColorBrush(Microsoft.UI.Colors.White));
+                check.HorizontalAlignment = HorizontalAlignment.Center;
+                check.VerticalAlignment = VerticalAlignment.Center;
+                dotInner.Children.Add(check);
             }
             var dot = new Border
             {

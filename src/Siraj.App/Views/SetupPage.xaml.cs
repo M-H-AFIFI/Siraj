@@ -50,7 +50,7 @@ public sealed partial class SetupPage : Page
         var anim = new Microsoft.UI.Xaml.Media.Animation.DoubleAnimation
         {
             To = target,
-            Duration = TimeSpan.FromMilliseconds(280),
+            Duration = TimeSpan.FromMilliseconds(155),
             EnableDependentAnimation = true,
             EasingFunction = new Microsoft.UI.Xaml.Media.Animation.CubicEase { EasingMode = Microsoft.UI.Xaml.Media.Animation.EasingMode.EaseOut },
         };
@@ -126,7 +126,7 @@ public sealed partial class SetupPage : Page
                 _placeStatus.Style = (Style)Application.Current.Resources["SirajCaption"];
             }
         }, primary: S.Location == null);
-        var search = new AutoSuggestBox { PlaceholderText = loc["settings_search_city_hint"], QueryIcon = new SymbolIcon(Symbol.Find) };
+        var search = new AutoSuggestBox { PlaceholderText = loc["settings_search_city_hint"], QueryIcon = SirajVectorIcon.MakePathIcon("search") };
         search.TextChanged += (box, args) =>
         {
             if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput) return;

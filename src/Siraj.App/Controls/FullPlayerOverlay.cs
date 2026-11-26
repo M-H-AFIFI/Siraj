@@ -28,7 +28,8 @@ public sealed class FullPlayerOverlay : UserControl
     private readonly Grid _scrubberBlock = new() { RowSpacing = 4 };
     private readonly StackPanel _transport = new() { Orientation = Orientation.Horizontal, Spacing = 14, HorizontalAlignment = HorizontalAlignment.Center, FlowDirection = FlowDirection.LeftToRight };
     private readonly Button _shuffleBtn, _prevBtn, _back10Btn, _playBtn, _fwd10Btn, _nextBtn, _repeatBtn;
-    private readonly FontIcon _playIcon;
+    private readonly SirajVectorIcon _playIcon;
+    private readonly SirajVectorIcon _repeatIcon;
     private readonly StackPanel _extrasRow = new() { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Center };
     private readonly Button _speedBtn, _sleepBtn, _ambientBtn;
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? _breathe;
@@ -49,25 +50,23 @@ public sealed class FullPlayerOverlay : UserControl
         _sourceHeading.HorizontalAlignment = HorizontalAlignment.Center;
         _sourceName.HorizontalAlignment = HorizontalAlignment.Center;
 
-        // Top bar
         var topBar = new Grid();
         topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        var closeBtn = CircleBtn("\uE70D", 40, Close);
+        var closeBtn = CircleBtn("expand_more", 40, Close);
         topBar.Children.Add(closeBtn);
         var headingStack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         headingStack.Children.Add(_sourceHeading);
         headingStack.Children.Add(_sourceName);
         Grid.SetColumn(headingStack, 1);
         topBar.Children.Add(headingStack);
-        _ambientBtn = CircleBtn("\uE995", 40, () => { });
+        _ambientBtn = CircleBtn("ambient_fountain", 40, () => { });
         _ambientBtn.Flyout = BuildAmbientFlyout();
         Grid.SetColumn(_ambientBtn, 2);
         topBar.Children.Add(_ambientBtn);
 
-        // Wavy scrubber + times
         _scrubber.SeekRequested += f =>
         {
             if (App.Media.Duration > TimeSpan.Zero)
@@ -83,11 +82,10 @@ public sealed class FullPlayerOverlay : UserControl
         Grid.SetRow(timeRow, 1);
         _scrubberBlock.Children.Add(timeRow);
 
-        // Transport deck
-        _shuffleBtn = CircleBtn("\uE8B1", 40, () => App.Media.ToggleShuffle());
-        _prevBtn = CircleBtn("\uE892", 44, () => App.Media.Previous());
-        _back10Btn = CircleBtn("\uED3C", 40, () => App.Media.SeekBy(-10));
-        _playIcon = Kit.Icon("\uE768", 24, Kit.B("SirajOnPrimaryBrush"));
+        _shuffleBtn = CircleBtn("shuffle", 40, () => App.Media.ToggleShuffle());
+        _prevBtn = CircleBtn("skip_previous", 44, () => App.Media.Previous());
+        _back10Btn = CircleBtn("replay_10", 40, () => App.Media.SeekBy(-10));
+        _playIcon = Kit.Icon("play", 28, Kit.B("SirajOnPrimaryBrush"));
         _playBtn = new Button
         {
             Content = _playIcon, Width = 64, Height = 64, Padding = new Thickness(0), CornerRadius = new CornerRadius(32),
@@ -96,9 +94,15 @@ public sealed class FullPlayerOverlay : UserControl
         };
         _playBtn.Click += (_, _) => App.Media.TogglePlayPause();
         Kit.Lift(_playBtn);
-        _fwd10Btn = CircleBtn("\uED3D", 40, () => App.Media.SeekBy(30));
-        _nextBtn = CircleBtn("\uE893", 44, () => App.Media.Next());
-        _repeatBtn = CircleBtn("\uE8EE", 40, () => App.Media.CycleRepeat());
+        _fwd10Btn = CircleBtn("forward_30", 40, () => App.Media.SeekBy(30));
+        _nextBtn = CircleBtn("skip_next", 44, () => App.Media.Next());
+        _repeatIcon = Kit.Icon("repeat", 18, Kit.B("SirajOnSurfaceBrush"));
+        _repeatBtn = new Button
+        {
+            Content = _repeatIcon, Width = 40, Height = 40, Padding = new Thickness(0), CornerRadius = new CornerRadius(20),
+            Background = Kit.B("SirajGlassPillBrush"), BorderBrush = Kit.B("SirajGlassBorderBrush"), BorderThickness = new Thickness(1),
+        };
+        _repeatBtn.Click += (_, _) => App.Media.CycleRepeat();
 
         _transport.Children.Add(_shuffleBtn);
         _transport.Children.Add(_prevBtn);
@@ -108,7 +112,6 @@ public sealed class FullPlayerOverlay : UserControl
         _transport.Children.Add(_nextBtn);
         _transport.Children.Add(_repeatBtn);
 
-        // Speed & Sleep timer pills
         _speedBtn = PillAction("1x", BuildSpeedFlyout());
         _sleepBtn = PillAction("", BuildSleepFlyout());
         _extrasRow.Children.Add(_speedBtn);
@@ -210,8 +213,8 @@ public sealed class FullPlayerOverlay : UserControl
         Visibility = Visibility.Visible;
         Refresh();
         OpenChanged?.Invoke(true);
-        Kit.AnimateIn(_backdrop, 0, 0, 1f, 130);
-        Kit.AnimateIn(_card, 0, 20, 0.96f, 170);
+        Kit.AnimateIn(_backdrop, 0, 0, 1f, 105);
+        Kit.AnimateIn(_card, 0, 14, 0.975f, 135);
         if (App.Media.IsPlaying && Kit.Motion) _breathe?.Start();
     }
 
@@ -223,8 +226,8 @@ public sealed class FullPlayerOverlay : UserControl
         _artHalo.Scale = Vector3.One;
         OpenChanged?.Invoke(false);
         int token = ++_animToken;
-        Kit.FadeTo(_backdrop, 0f, 110);
-        Kit.AnimateOut(_card, 0, 16, 0.96f, 110, () =>
+        Kit.FadeTo(_backdrop, 0f, 95);
+        Kit.AnimateOut(_card, 0, 12, 0.975f, 95, () =>
         {
             if (_animToken == token && !_isOpen) Visibility = Visibility.Collapsed;
         });
@@ -266,7 +269,7 @@ public sealed class FullPlayerOverlay : UserControl
             _pills.Children.Add(Kit.Pill(label, "SirajGoldSoftBrush", "SirajGoldBrush"));
         }
 
-        _playIcon.Glyph = App.Media.IsPlaying ? "\uE769" : "\uE768";
+        _playIcon.IconKey = App.Media.IsPlaying ? "pause" : "play";
         _scrubber.IsPlaying = App.Media.IsPlaying;
         if (Visibility == Visibility.Visible && App.Media.IsPlaying && Kit.Motion) _breathe?.Start();
         else { _breathe?.Stop(); _artHalo.Scale = Vector3.One; }
@@ -281,7 +284,7 @@ public sealed class FullPlayerOverlay : UserControl
 
         _shuffleBtn.Background = Kit.B(App.Media.Shuffle ? "SirajPrimarySoftBrush" : "SirajGlassPillBrush");
         _repeatBtn.Background = Kit.B(App.Media.Repeat != RepeatMode.Off ? "SirajPrimarySoftBrush" : "SirajGlassPillBrush");
-        ((FontIcon)_repeatBtn.Content).Glyph = App.Media.Repeat == RepeatMode.One ? "\uE8ED" : "\uE8EE";
+        _repeatIcon.IconKey = App.Media.Repeat == RepeatMode.One ? "repeat_one" : "repeat";
         _ambientBtn.Background = Kit.B(App.Media.ActiveAmbientId != null ? "SirajPrimarySoftBrush" : "SirajGlassPillBrush");
         _speedBtn.Content = $"{App.Media.Speed:0.##}×";
         _sleepBtn.Content = loc["player_sleep_timer"];
@@ -302,11 +305,11 @@ public sealed class FullPlayerOverlay : UserControl
     private static string FormatClock(TimeSpan ts) =>
         ts.TotalHours >= 1 ? $"{(int)ts.TotalHours}:{ts.Minutes:D2}:{ts.Seconds:D2}" : $"{ts.Minutes}:{ts.Seconds:D2}";
 
-    private static Button CircleBtn(string glyph, double size, Action click)
+    private static Button CircleBtn(string iconKey, double size, Action click)
     {
         var b = new Button
         {
-            Content = Kit.Icon(glyph, 16, Kit.B("SirajOnSurfaceBrush")),
+            Content = Kit.Icon(iconKey, 18, Kit.B("SirajOnSurfaceBrush")),
             Width = size, Height = size, Padding = new Thickness(0), CornerRadius = new CornerRadius(size / 2),
             Background = Kit.B("SirajGlassPillBrush"), BorderBrush = Kit.B("SirajGlassBorderBrush"), BorderThickness = new Thickness(1),
         };

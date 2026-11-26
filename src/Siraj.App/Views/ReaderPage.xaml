@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:quran="using:Siraj.App.Quran"
+    xmlns:controls="using:Siraj.App.Controls"
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     Background="Transparent"
     KeyDown="OnKeyDown">
@@ -28,7 +29,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Button x:Name="BackButton" Style="{StaticResource SirajButton}" Click="OnBack" Padding="10,6" CornerRadius="14">
-                    <FontIcon x:Name="BackIcon" FontFamily="{StaticResource SirajIcons}" Glyph="&#xE72B;" FontSize="14" />
+                    <controls:SirajVectorIcon x:Name="BackIcon" IconKey="arrow_back" Width="18" Height="18" Brush="{ThemeResource SirajOnSurfaceBrush}" />
                 </Button>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="0">
                     <TextBlock x:Name="TitleText" Style="{StaticResource SirajHeading}" FontSize="18" />
@@ -37,10 +38,10 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                     <NumberBox x:Name="PageBox" Minimum="1" Maximum="604" Width="110" SpinButtonPlacementMode="Compact" ValueChanged="OnPageBox" />
                     <ToggleButton x:Name="SpreadToggle" Style="{StaticResource DefaultToggleButtonStyle}" CornerRadius="12" Click="OnSpread">
-                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE736;" FontSize="15" />
+                        <controls:SirajVectorIcon IconKey="menu_book" Width="18" Height="18" Brush="{ThemeResource SirajOnSurfaceBrush}" />
                     </ToggleButton>
                     <DropDownButton x:Name="PaperButton" CornerRadius="12">
-                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE790;" FontSize="15" />
+                        <controls:SirajVectorIcon IconKey="palette" Width="18" Height="18" Brush="{ThemeResource SirajOnSurfaceBrush}" />
                         <DropDownButton.Flyout>
                             <MenuFlyout x:Name="PaperMenu" Placement="BottomEdgeAlignedRight" />
                         </DropDownButton.Flyout>
@@ -72,7 +73,7 @@
                 <Grid Padding="18,14,10,6">
                     <TextBlock x:Name="SideTitle" Style="{StaticResource SirajHeading}" VerticalAlignment="Center" />
                     <Button x:Name="CloseSideButton" HorizontalAlignment="Right" Click="OnCloseSide" Padding="8,6" Background="Transparent" BorderThickness="0">
-                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE711;" FontSize="12" />
+                        <controls:SirajVectorIcon IconKey="close" Width="16" Height="16" Brush="{ThemeResource SirajOnSurfaceVariantBrush}" />
                     </Button>
                 </Grid>
                 <ScrollViewer Grid.Row="1" Padding="18,0,18,0">
@@ -111,16 +112,16 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" Spacing="6" FlowDirection="LeftToRight" VerticalAlignment="Center">
                     <Button x:Name="PreviousButton" Click="OnPrevious" Padding="10,8" CornerRadius="14">
-                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE892;" FontSize="14" />
+                        <controls:SirajVectorIcon IconKey="skip_previous" Width="18" Height="18" Brush="{ThemeResource SirajOnSurfaceBrush}" />
                     </Button>
                     <Button x:Name="PlayButton" Click="OnPlay" Style="{StaticResource AccentButtonStyle}" Padding="14,8" CornerRadius="18">
-                        <FontIcon x:Name="PlayIcon" FontFamily="{StaticResource SirajIcons}" Glyph="&#xE768;" FontSize="14" />
+                        <controls:SirajVectorIcon x:Name="PlayIcon" IconKey="play" Width="18" Height="18" Brush="{ThemeResource SirajOnPrimaryBrush}" />
                     </Button>
                     <Button x:Name="NextButton" Click="OnNext" Padding="10,8" CornerRadius="14">
-                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE893;" FontSize="14" />
+                        <controls:SirajVectorIcon IconKey="skip_next" Width="18" Height="18" Brush="{ThemeResource SirajOnSurfaceBrush}" />
                     </Button>
                     <Button x:Name="StopButton" Click="OnStop" Padding="10,8" CornerRadius="14">
-                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE71A;" FontSize="14" />
+                        <controls:SirajVectorIcon IconKey="stop" Width="18" Height="18" Brush="{ThemeResource SirajOnSurfaceBrush}" />
                     </Button>
                 </StackPanel>
                 <TextBlock x:Name="NowText" Grid.Column="1" Style="{StaticResource SirajCaption}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />

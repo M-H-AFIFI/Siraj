@@ -623,8 +623,6 @@ internal static class SkyRenderer
         (1.50f, 0.46f, 1f / 300f, -7f, 0.14f, 0.60f),
     ];
 
-    // ---- Layer 1: Static sky, twilight bands, Milky Way, dust, non-twinkling stars & cubic arc ----
-
     public static void DrawBack(CanvasDrawingSession ds, ICanvasResourceCreator rc, SkyGeometry geo, float w, float h, SkyFrame f, bool showArc)
     {
         var c = f.Moment.Colors;
@@ -699,8 +697,6 @@ internal static class SkyRenderer
         }
     }
 
-    // ---- Layer 2: Twinkling stars, meteor, sun rays, milestones, sun/moon, and two volumetric cloud decks ----
-
     public static void DrawLive(CanvasDrawingSession ds, ICanvasResourceCreator rc, SkyGeometry geo, float w, float h, SkyFrame f, bool showArc)
     {
         var c = f.Moment.Colors;
@@ -763,8 +759,6 @@ internal static class SkyRenderer
             drift: 0.42f + cloudT * SkyClouds.CloudLoop / SkyClouds.NearLoopSeconds,
             orb.X, orb.Y, nightness, cloudFade * 0.82f, w, h);
     }
-
-    // ---- Layer 3: Static skyline, dunes, mosque lights, and still reflecting pool ----
 
     public static void DrawFront(CanvasDrawingSession ds, ICanvasResourceCreator rc, SkyGeometry geo, float w, float h, SkyFrame f)
     {
@@ -839,8 +833,6 @@ internal static class SkyRenderer
         DrawStillWater(ds, rc, geo, c, f.Arc, f.Moon, w, h, orbX);
     }
 
-    // ---- Layer 4: Live water reflection, glints, lamp halos, mist, crescent glints & birds ----
-
     public static void DrawLiveForeground(CanvasDrawingSession ds, ICanvasResourceCreator rc, SkyGeometry geo, float w, float h, SkyFrame f)
     {
         var c = f.Moment.Colors;
@@ -868,8 +860,6 @@ internal static class SkyRenderer
             DrawBirds(ds, rc, geo, c, t, flight, cycle, tw.Birds, f.Motion, w, h);
         }
     }
-
-    // ---- Layer 5: Edge vignette and dynamic light caught along the rounded glass rim ----
 
     public static void DrawGlass(CanvasDrawingSession ds, ICanvasResourceCreator rc, SkyGeometry geo, float w, float h, SkyFrame f, float cornerRadius)
     {
@@ -916,8 +906,6 @@ internal static class SkyRenderer
         DrawEdge(5f, 0.22f);
         DrawEdge(1.3f, 1f);
     }
-
-    // ---- Scene helpers ----
 
     private static void DrawTwilight(CanvasDrawingSession ds, ICanvasResourceCreator rc, SkyTwilight tw, float w, float h, float horizonY)
     {
@@ -1615,7 +1603,7 @@ internal static class SkyRenderer
         }
     }
 
-    // ---- Sun rays & meteors ----
+    // Sun rays and meteors
 
     private const int RaySize = 256;
     private static float[]? _rayMask;

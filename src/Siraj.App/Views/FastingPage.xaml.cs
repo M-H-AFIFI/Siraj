@@ -81,8 +81,8 @@ public sealed partial class FastingPage : Page
             var times = new Grid { ColumnSpacing = 12 };
             times.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             times.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            times.Children.Add(TimeTile("", loc["tools_fasting_suhoor"], loc.Time(day[PrayerType.Fajr].Time)));
-            var iftar = TimeTile("", loc["tools_fasting_iftar"], loc.Time(day[PrayerType.Maghrib].Time));
+            times.Children.Add(TimeTile("nights_stay", loc["tools_fasting_suhoor"], loc.Time(day[PrayerType.Fajr].Time)));
+            var iftar = TimeTile("wb_twilight", loc["tools_fasting_iftar"], loc.Time(day[PrayerType.Maghrib].Time));
             Grid.SetColumn(iftar, 1);
             times.Children.Add(iftar);
             stack.Children.Add(times);
@@ -91,7 +91,7 @@ public sealed partial class FastingPage : Page
 
         bool fasting = Log.ContainsKey(Fasting.Key(today));
         var label = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
-        label.Children.Add(Kit.Icon(fasting ? "" : "", 16, Kit.B(fasting ? "SirajOnPrimaryBrush" : "SirajOnSurfaceBrush")));
+        label.Children.Add(Kit.Icon(fasting ? "check" : "add", 18, Kit.B(fasting ? "SirajOnPrimaryBrush" : "SirajOnSurfaceBrush")));
         label.Children.Add(Kit.Text(fasting ? loc["fasting_today_yes"] : loc["fasting_today_question"], "SirajBody", bold: true,
             brush: Kit.B(fasting ? "SirajOnPrimaryBrush" : "SirajOnSurfaceBrush")));
         var toggle = new ToggleButton
@@ -111,11 +111,11 @@ public sealed partial class FastingPage : Page
         _today.Content = Kit.Accent(stack, new Thickness(24, 20, 24, 22));
     }
 
-    private static Border TimeTile(string glyph, string label, string time)
+    private static Border TimeTile(string iconKey, string label, string time)
     {
         var stack = new StackPanel { Spacing = 4 };
         var top = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        top.Children.Add(Kit.Icon(glyph, 14, Kit.B("SirajPrimaryBrush")));
+        top.Children.Add(Kit.Icon(iconKey, 16, Kit.B("SirajPrimaryBrush")));
         top.Children.Add(Kit.Text(label, "SirajCaption"));
         stack.Children.Add(top);
         stack.Children.Add(Kit.Text(time, "SirajTitle", 26));
@@ -132,17 +132,17 @@ public sealed partial class FastingPage : Page
         int ramadan = Log.Values.Count(v => v == "ramadan");
         int sunnah = Log.Count - ramadan;
         var grid = new Grid { ColumnSpacing = 8, VerticalAlignment = VerticalAlignment.Center };
-        var stats = new (string Glyph, int Value, string Label)[]
+        var stats = new (string IconKey, int Value, string Label)[]
         {
-            ("", streak, loc["fasting_stat_streak"]),
-            ("", ramadan, loc["fasting_stat_ramadan"]),
-            ("", sunnah, loc["fasting_stat_sunnah"]),
+            ("local_fire_department", streak, loc["fasting_stat_streak"]),
+            ("occasion_ramadan", ramadan, loc["fasting_stat_ramadan"]),
+            ("star", sunnah, loc["fasting_stat_sunnah"]),
         };
         for (int i = 0; i < stats.Length; i++)
         {
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             var s = new StackPanel { Spacing = 4, HorizontalAlignment = HorizontalAlignment.Center };
-            var icon = Kit.Icon(stats[i].Glyph, 18, Kit.B("SirajGoldBrush"));
+            var icon = Kit.Icon(stats[i].IconKey, 20, Kit.B("SirajGoldBrush"));
             icon.HorizontalAlignment = HorizontalAlignment.Center;
             s.Children.Add(icon);
             var n = Kit.Text(loc.Number(stats[i].Value), "SirajTitle", 34, brush: Kit.B("SirajPrimaryBrush"));
@@ -282,7 +282,7 @@ public sealed partial class FastingPage : Page
         bool right = forward != Loc.Current.IsRtl;
         var button = new Button
         {
-            Content = Kit.Icon(right ? "" : "", 14), Width = 36, Height = 36, Padding = new Thickness(0),
+            Content = Kit.Icon(right ? "chevron_right" : "chevron_left", 18), Width = 36, Height = 36, Padding = new Thickness(0),
             CornerRadius = new CornerRadius(18), Background = Kit.B("SirajSurfaceContainerBrush"), BorderThickness = new Thickness(0),
         };
         AutomationProperties.SetName(button, name);

@@ -5,7 +5,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Siraj.App.Controls">
     <Grid x:Name="Root" Background="{ThemeResource SirajBackgroundBrush}">
-        <!-- Full-bleed live animated backdrop & ambient glass pools behind the entire window. -->
         <controls:LiveBackdropControl x:Name="Backdrop" />
 
         <Grid>
@@ -14,7 +13,6 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Custom transparent title bar drag region. -->
             <Grid x:Name="TitleBar" Grid.Row="0" Padding="18,0,144,0" Background="Transparent" FlowDirection="LeftToRight">
                 <StackPanel Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
                     <Image Source="ms-appx:///Assets/Siraj.png" Width="17" Height="17" />
@@ -23,14 +21,12 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Main shell: floating glass navigation dock + content canvas. -->
             <Grid x:Name="Shell" Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition x:Name="RailColumn" Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Floating glass navigation rail with sliding pill indicator. -->
                 <Border x:Name="NavDock" Grid.Column="0" Margin="14,4,8,16" Padding="10,14,10,12"
                         CornerRadius="26" Width="216"
                         Background="{ThemeResource SirajGlassElevatedBrush}"
@@ -43,7 +39,6 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <!-- Brand mark header inside the dock. -->
                         <Grid x:Name="BrandHeader" Padding="8,4,8,16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -60,7 +55,6 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Primary navigation items + animated sliding active pill. -->
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                             <Grid x:Name="NavItemsHost">
                                 <Border x:Name="ActivePill" Height="44" CornerRadius="16"
@@ -72,7 +66,6 @@
                             </Grid>
                         </ScrollViewer>
 
-                        <!-- Footer items: Desktop Widgets & Settings. -->
                         <StackPanel Grid.Row="2" Spacing="4" Margin="0,10,0,0">
                             <Border Height="1" Background="{ThemeResource SirajDividerBrush}" Margin="8,0,8,8" />
                             <StackPanel x:Name="FooterNavList" Spacing="4" />
@@ -80,7 +73,6 @@
                     </Grid>
                 </Border>
 
-                <!-- Content frame + optional in-app update banner + floating mini-player. -->
                 <Grid Grid.Column="1">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -96,11 +88,9 @@
                 </Grid>
             </Grid>
 
-            <!-- First run: setup takes the whole window over the live backdrop. -->
             <Frame x:Name="SetupFrame" Grid.Row="1" Visibility="Collapsed" Background="Transparent" />
         </Grid>
 
-        <!-- Full-screen Listening & Radio player overlay (keeps underlying page mounted & live). -->
         <controls:FullPlayerOverlay x:Name="FullPlayer" />
     </Grid>
 </Window>

@@ -78,25 +78,43 @@ internal static class Kit
         ElementCompositionPreview.SetIsTranslationEnabled(element, true);
         var visual = ElementCompositionPreview.GetElementVisual(element);
         var c = visual.Compositor;
-        var ease = c.CreateCubicBezierEasingFunction(new Vector2(0.16f, 1f), new Vector2(0.3f, 1f));
-        var delay = TimeSpan.FromMilliseconds(Math.Min(order, 3) * 18);
-        var dur = TimeSpan.FromMilliseconds(150);
+        var ease = c.CreateCubicBezierEasingFunction(new Vector2(0.05f, 0.7f), new Vector2(0.1f, 1f));
+        var delay = TimeSpan.FromMilliseconds(Math.Min(order, 2) * 14);
+        var dur = TimeSpan.FromMilliseconds(120);
 
         var move = c.CreateVector3KeyFrameAnimation();
-        move.InsertKeyFrame(0, new Vector3(0, 8, 0));
+        move.InsertKeyFrame(0, new Vector3(0, 6, 0));
         move.InsertKeyFrame(1, Vector3.Zero, ease);
         move.Duration = dur; move.DelayTime = delay; move.DelayBehavior = AnimationDelayBehavior.SetInitialValueBeforeDelay;
 
         var fade = c.CreateScalarKeyFrameAnimation();
         fade.InsertKeyFrame(0, 0);
         fade.InsertKeyFrame(1, 1, ease);
-        fade.Duration = TimeSpan.FromMilliseconds(120); fade.DelayTime = delay; fade.DelayBehavior = AnimationDelayBehavior.SetInitialValueBeforeDelay;
+        fade.Duration = TimeSpan.FromMilliseconds(95); fade.DelayTime = delay; fade.DelayBehavior = AnimationDelayBehavior.SetInitialValueBeforeDelay;
 
         visual.StartAnimation("Translation", move);
         visual.StartAnimation("Opacity", fade);
     }
 
-    public static void SpringTo(UIElement element, Vector3 target, float damping = 0.88f, int periodMs = 125)
+    public static void GlideTo(UIElement element, Vector3 target, int ms = 160)
+    {
+        ElementCompositionPreview.SetIsTranslationEnabled(element, true);
+        var visual = ElementCompositionPreview.GetElementVisual(element);
+        if (!Motion || ms <= 0)
+        {
+            visual.StopAnimation("Translation");
+            visual.Properties.InsertVector3("Translation", target);
+            return;
+        }
+        var c = visual.Compositor;
+        var ease = c.CreateCubicBezierEasingFunction(new Vector2(0.05f, 0.7f), new Vector2(0.1f, 1f));
+        var anim = c.CreateVector3KeyFrameAnimation();
+        anim.InsertKeyFrame(1f, target, ease);
+        anim.Duration = TimeSpan.FromMilliseconds(ms);
+        visual.StartAnimation("Translation", anim);
+    }
+
+    public static void SpringTo(UIElement element, Vector3 target, float damping = 0.90f, int periodMs = 75)
     {
         ElementCompositionPreview.SetIsTranslationEnabled(element, true);
         var visual = ElementCompositionPreview.GetElementVisual(element);
@@ -112,7 +130,7 @@ internal static class Kit
         visual.StartAnimation("Translation", spring);
     }
 
-    public static void FadeTo(UIElement element, float opacity, int ms = 110)
+    public static void FadeTo(UIElement element, float opacity, int ms = 90)
     {
         var visual = ElementCompositionPreview.GetElementVisual(element);
         if (!Motion || ms <= 0)
@@ -135,24 +153,24 @@ internal static class Kit
         switch (kind)
         {
             case PageTransitionKind.TabDown:
-                AnimateIn(page, 0, 10, 1f, 140);
+                AnimateIn(page, 0, 7, 1f, 120);
                 break;
             case PageTransitionKind.TabUp:
-                AnimateIn(page, 0, -10, 1f, 140);
+                AnimateIn(page, 0, -7, 1f, 120);
                 break;
             case PageTransitionKind.DrillIn:
-                AnimateIn(page, 18 * dir, 0, 0.992f, 150);
+                AnimateIn(page, 14 * dir, 0, 0.994f, 135);
                 break;
             case PageTransitionKind.Back:
-                AnimateIn(page, -16 * dir, 0, 1f, 135);
+                AnimateIn(page, -12 * dir, 0, 1f, 120);
                 break;
             default:
-                AnimateIn(page, 0, 6, 1f, 130);
+                AnimateIn(page, 0, 5, 1f, 110);
                 break;
         }
     }
 
-    public static void AnimateIn(UIElement element, float fromDx = 0, float fromDy = 10, float fromScale = 1f, int ms = 150, int delayMs = 0)
+    public static void AnimateIn(UIElement element, float fromDx = 0, float fromDy = 8, float fromScale = 1f, int ms = 125, int delayMs = 0)
     {
         ElementCompositionPreview.SetIsTranslationEnabled(element, true);
         var visual = ElementCompositionPreview.GetElementVisual(element);
@@ -176,7 +194,7 @@ internal static class Kit
         }
 
         var c = visual.Compositor;
-        var ease = c.CreateCubicBezierEasingFunction(new Vector2(0.16f, 1f), new Vector2(0.3f, 1f));
+        var ease = c.CreateCubicBezierEasingFunction(new Vector2(0.05f, 0.7f), new Vector2(0.1f, 1f));
         var delay = TimeSpan.FromMilliseconds(delayMs);
 
         var move = c.CreateVector3KeyFrameAnimation();
@@ -189,7 +207,7 @@ internal static class Kit
         var fade = c.CreateScalarKeyFrameAnimation();
         fade.InsertKeyFrame(0f, 0f);
         fade.InsertKeyFrame(1f, 1f, ease);
-        fade.Duration = TimeSpan.FromMilliseconds(Math.Max(150, (int)(ms * 0.78)));
+        fade.Duration = TimeSpan.FromMilliseconds(Math.Max(70, (int)(ms * 0.75)));
         fade.DelayTime = delay;
         fade.DelayBehavior = AnimationDelayBehavior.SetInitialValueBeforeDelay;
 
@@ -268,11 +286,43 @@ internal static class Kit
         Child = SirajVectorIcon.Make(iconKey, iconSize, B(fgKey)),
     };
 
-    public static void Entrance(Panel panel)
+    public static Border OccasionBadge(string occasionId, double size = 44, bool highlighted = false)
     {
-        if (!Motion) return;
-        panel.ChildrenTransitions = [new EntranceThemeTransition { IsStaggeringEnabled = true, FromVerticalOffset = 24 }];
+        var scheme = App.Theme.Scheme;
+        var gold = Core.Sky.Argb.Hex(0xFFE5B558);
+        Brush bg = highlighted
+            ? B("SirajPrimaryBrush")
+            : new LinearGradientBrush
+            {
+                StartPoint = new Windows.Foundation.Point(0, 0),
+                EndPoint = new Windows.Foundation.Point(1, 1),
+                GradientStops =
+                {
+                    new GradientStop { Color = ThemeService.ToColor(scheme.Primary, 0.16f), Offset = 0 },
+                    new GradientStop { Color = ThemeService.ToColor(gold, 0.14f), Offset = 1 },
+                },
+            };
+        Brush border = highlighted
+            ? new SolidColorBrush(Microsoft.UI.Colors.Transparent)
+            : new SolidColorBrush(ThemeService.ToColor(gold, 0.32f));
+        return new Border
+        {
+            Width = size,
+            Height = size,
+            CornerRadius = new CornerRadius(size * 0.32),
+            Background = bg,
+            BorderBrush = border,
+            BorderThickness = new Thickness(highlighted ? 0 : 1),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = SirajVectorIcon.Make(
+                SirajVectorIcon.OccasionIconKey(occasionId),
+                Math.Round(size * 0.50),
+                B(highlighted ? "SirajOnPrimaryBrush" : "SirajPrimaryBrush")),
+        };
     }
+
+    public static void Entrance(Panel panel) { }
 
     public static TextBlock Text(string text, string style = "SirajBody", double? size = null, bool bold = false, Brush? brush = null)
     {
@@ -297,11 +347,8 @@ internal static class Kit
         IsTextSelectionEnabled = false,
     };
 
-    public static FontIcon Icon(string glyph, double size = 18, Brush? brush = null) => new()
-    {
-        Glyph = glyph, FontSize = size, FontFamily = (FontFamily)R["SirajIcons"],
-        Foreground = brush ?? B("SirajPrimaryBrush"),
-    };
+    public static SirajVectorIcon Icon(string iconKey, double size = 18, Brush? brush = null) =>
+        SirajVectorIcon.Make(iconKey, size, brush ?? B("SirajPrimaryBrush"));
 
     public static Border Card(UIElement child, Thickness? padding = null, string background = "SirajGlassCardBrush") => new()
     {
@@ -375,16 +422,16 @@ internal static class Kit
     public static void Lift(UIElement card)
     {
         if (!Motion) return;
-        card.TranslationTransition = new Vector3Transition { Duration = TimeSpan.FromMilliseconds(150) };
-        card.ScaleTransition = new Vector3Transition { Duration = TimeSpan.FromMilliseconds(90) };
+        card.TranslationTransition = new Vector3Transition { Duration = TimeSpan.FromMilliseconds(100) };
+        card.ScaleTransition = new Vector3Transition { Duration = TimeSpan.FromMilliseconds(65) };
         if (card is FrameworkElement fe)
             fe.SizeChanged += (_, e) => card.CenterPoint = new Vector3((float)e.NewSize.Width / 2, (float)e.NewSize.Height / 2, 0);
-        card.PointerEntered += (_, _) => card.Translation = new Vector3(0, -2.5f, 0);
+        card.PointerEntered += (_, _) => card.Translation = new Vector3(0, -2f, 0);
         card.PointerExited += (_, _) => { card.Translation = Vector3.Zero; card.Scale = Vector3.One; };
         card.PointerCanceled += (_, _) => { card.Translation = Vector3.Zero; card.Scale = Vector3.One; };
         card.PointerCaptureLost += (_, _) => card.Scale = Vector3.One;
         // A button marks the press handled; listen anyway.
-        card.AddHandler(UIElement.PointerPressedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler((_, _) => card.Scale = new Vector3(0.98f, 0.98f, 1)), true);
+        card.AddHandler(UIElement.PointerPressedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler((_, _) => card.Scale = new Vector3(0.985f, 0.985f, 1)), true);
         card.AddHandler(UIElement.PointerReleasedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler((_, _) => card.Scale = Vector3.One), true);
     }
 
@@ -464,7 +511,7 @@ internal static class Kit
     {
         var button = new Button
         {
-            Content = Icon(Loc.Current.IsRtl ? "" : "", 16, B("SirajOnSurfaceBrush")),
+            Content = Icon(Loc.Current.IsRtl ? "arrow_forward" : "arrow_back", 18, B("SirajOnSurfaceBrush")),
             Width = 40, Height = 40, Padding = new Thickness(0), CornerRadius = new CornerRadius(20),
             Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent), BorderThickness = new Thickness(0),
             VerticalAlignment = VerticalAlignment.Center,
@@ -484,11 +531,11 @@ internal static class Kit
         var animation = compositor.CreateVector3KeyFrameAnimation();
         animation.InsertKeyFrame(0.35f, new Vector3(to, to, 1));
         animation.InsertKeyFrame(1f, Vector3.One);
-        animation.Duration = TimeSpan.FromMilliseconds(260);
+        animation.Duration = TimeSpan.FromMilliseconds(150);
         visual.StartAnimation("Scale", animation);
     }
 
-    public static void Rise(UIElement element, int delayMs = 0, float from = 14, int ms = 560)
+    public static void Rise(UIElement element, int delayMs = 0, float from = 10, int ms = 240)
     {
         if (!Motion) return;
         ElementCompositionPreview.SetIsTranslationEnabled(element, true);

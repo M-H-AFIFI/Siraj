@@ -129,7 +129,7 @@ public sealed partial class HadithPage : Page
             if (!h.HasOwnTranslation(lang)) stack.Children.Add(Kit.Text(loc["translation_pending_notice"], "SirajCaption"));
         }
         var source = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        source.Children.Add(Kit.Icon("", 14, Kit.B("SirajOnSurfaceVariantBrush")));
+        source.Children.Add(Kit.Icon("menu_book", 16, Kit.B("SirajOnSurfaceVariantBrush")));
         source.Children.Add(Kit.Text(h.Reference(lang), "SirajCaption"));
         stack.Children.Add(source);
 

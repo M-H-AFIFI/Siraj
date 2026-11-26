@@ -84,7 +84,6 @@ public sealed partial class AdhanAlertWindow : Window
             p.IsResizable = false;
         }
 
-        // Top Gregorian + Hijri date line & city label
         var today = App.Clock.Place?.Today(time) ?? DateOnly.FromDateTime(time.LocalDateTime);
         var hijri = App.Clock.Hijri.Year == 0 ? HijriCalendars.Current.ToHijri(today) : App.Clock.Hijri;
         GregText.Text = HijriText.Gregorian(today, loc.Language, eastern);
@@ -94,7 +93,6 @@ public sealed partial class AdhanAlertWindow : Window
         PlaceText.Text = place ?? "";
         PlaceText.Visibility = string.IsNullOrEmpty(place) ? Visibility.Collapsed : Visibility.Visible;
 
-        // Focused prayer heading, hour-tinted gradient lettering, time, Iqama & Muezzin badge
         NowText.Text = loc["adhan_screen_now"];
         NameText.Text = loc.PrayerName(new PrayerTime(prayer, time));
         NameText.Foreground = BuildTitleBrush();
@@ -123,7 +121,6 @@ public sealed partial class AdhanAlertWindow : Window
         CallerText.Text = voice.Name(loc.Language);
         CallerEqSlot.Content = _callerEq;
 
-        // Translucent frosted glass stop pill
         StopLabel.Text = loc["adhan_screen_stop"];
         HintText.Text = loc["win_alert_hint"];
         StyleStopButton(finished: false);
@@ -218,10 +215,10 @@ public sealed partial class AdhanAlertWindow : Window
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         UpdateCenterpieceAnchor();
-        Kit.AnimateIn(Root, 0, 6, 0.99f, 160);
-        Kit.Rise(TopMeta, 25, 8, 220);
-        Kit.Rise(HeroStack, 60, 10, 240);
-        Kit.Rise(ActionStack, 95, 10, 240);
+        Kit.AnimateIn(Root, 0, 5, 0.992f, 130);
+        Kit.Rise(TopMeta, 15, 6, 155);
+        Kit.Rise(HeroStack, 35, 8, 170);
+        Kit.Rise(ActionStack, 55, 8, 170);
 
         if (_sounding && Kit.Motion)
         {

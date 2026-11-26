@@ -16,60 +16,67 @@ namespace Siraj.App.Views;
 public sealed partial class WorshipPage : Page
 {
     private readonly StackPanel _body;
+    private bool _entered;
+    private string _builtKey = "";
 
     public WorshipPage()
     {
         InitializeComponent();
+        NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Required;
         var (root, body) = Kit.Page(Loc.Current["azkar_screen_title"], Loc.Current["azkar_screen_verse"], 1120);
         _body = body;
         Content = root;
         Loaded += (_, _) =>
         {
-            App.Journal.Changed += Refresh;
-            App.Media.Changed += Refresh;
-            App.Theme.Changed += Refresh;
-            App.Quran.Changed += Refresh;
-            Refresh();
+            App.Journal.Changed += OnDirty;
+            App.Media.Changed += OnDirty;
+            App.Theme.Changed += OnDirty;
+            App.Quran.Changed += OnDirty;
+            string key = CurrentKey();
+            if (_body.Children.Count == 0 || key != _builtKey) Refresh();
         };
         Unloaded += (_, _) =>
         {
-            App.Journal.Changed -= Refresh;
-            App.Media.Changed -= Refresh;
-            App.Theme.Changed -= Refresh;
-            App.Quran.Changed -= Refresh;
+            App.Journal.Changed -= OnDirty;
+            App.Media.Changed -= OnDirty;
+            App.Theme.Changed -= OnDirty;
+            App.Quran.Changed -= OnDirty;
         };
     }
+
+    private string CurrentKey() =>
+        $"{Today}|{AdhkarGroups.Suggested(TimeOnly.FromDateTime(App.Clock.Now.DateTime))}|{App.Media.Kind}:{App.Media.IsPlaying}:{App.Media.CurrentStation?.Id}:{App.Media.CurrentTrack?.Id}|{App.Theme.Scheme.Primary}|{App.Theme.IsDark}|{App.Theme.IsGlass}|{App.Journal.Current.Tasbih.Today}";
+
+    private void OnDirty() { _builtKey = ""; Refresh(); }
 
     private static DateOnly Today => App.Clock.Place?.Today(App.Clock.Now) ?? DateOnly.FromDateTime(App.Clock.Now.LocalDateTime);
 
     private void Refresh()
     {
         if (!IsLoaded) return;
+        _builtKey = CurrentKey();
         _body.Children.Clear();
+        bool animate = !_entered;
+        _entered = true;
         int order = 0;
 
-        // 1. Time-of-day Adhkar Hero Card
         var hero = BuildAdhkarHero();
-        Kit.PopIn(hero, order++);
+        if (animate) Kit.PopIn(hero, order++);
         _body.Children.Add(hero);
 
-        // 2. Explore section header
         _body.Children.Add(Ui.SectionWithIcon(Loc.Current["hub_section_title"], "nav_worship"));
 
-        // 3. Continue Listening + Quran Radio 24/7 side by side on wide screens
         var audioCards = Kit.Columns(400, 14, [BuildListenCard(), BuildRadioCard()]);
-        Kit.PopIn(audioCards, order++);
+        if (animate) Kit.PopIn(audioCards, order++);
         _body.Children.Add(audioCards);
 
-        // 4. Worship Tools Grid (Tasbih, Calendar, 99 Names, 40 Hadith, Fasting, Zakat)
         var tools = BuildToolsGrid();
-        Kit.PopIn(tools, order++);
+        if (animate) Kit.PopIn(tools, order++);
         _body.Children.Add(tools);
 
-        // 5. Daily Adhkar & Hisn al-Muslim quick section
         _body.Children.Add(Ui.SectionWithIcon(Loc.Current["azkar_chapters_title"], "dua_hands"));
         var adhkar = BuildDailyAdhkarRow();
-        Kit.PopIn(adhkar, order++);
+        if (animate) Kit.PopIn(adhkar, order++);
         _body.Children.Add(adhkar);
     }
 
@@ -91,12 +98,17 @@ public sealed partial class WorshipPage : Page
         };
         string badge = loc[$"azkar_card_{tag}_badge"];
         string desc = loc[$"azkar_card_{tag}_desc"];
-        string iconKey = group == AdhkarGroup.Evening || group == AdhkarGroup.Sleep ? "crescent_star" : "full_moon";
+        string iconKey = group switch
+        {
+            AdhkarGroup.Morning => "wb_sunny",
+            AdhkarGroup.Evening => "nights_stay",
+            AdhkarGroup.AfterPrayer => "azkar_carpet",
+            _ => "bedtime",
+        };
 
         var onAccent = Kit.B("SirajOnPrimaryContainerBrush");
 
         var root = new Grid();
-        // Decorative subtle watermark icon on the far corner
         var watermark = SirajVectorIcon.Make(iconKey, 130, Kit.B("SirajPrimaryBrush"));
         watermark.Opacity = 0.10;
         watermark.HorizontalAlignment = HorizontalAlignment.Right;
@@ -184,7 +196,7 @@ public sealed partial class WorshipPage : Page
 
         var playBtn = new Button
         {
-            Content = Kit.Icon(playing ? "\uE769" : "\uE768", 16, Kit.B("SirajOnPrimaryBrush")),
+            Content = Kit.Icon(playing ? "pause" : "play", 20, Kit.B("SirajOnPrimaryBrush")),
             Width = 44, Height = 44, Padding = new Thickness(0), CornerRadius = new CornerRadius(22),
             Background = Kit.B("SirajPrimaryBrush"), BorderThickness = new Thickness(0),
             VerticalAlignment = VerticalAlignment.Center,
@@ -246,7 +258,7 @@ public sealed partial class WorshipPage : Page
 
         var playBtn = new Button
         {
-            Content = Kit.Icon(liveHere ? "\uE769" : "\uE768", 16, Kit.B("SirajOnPrimaryBrush")),
+            Content = Kit.Icon(liveHere ? "pause" : "play", 20, Kit.B("SirajOnPrimaryBrush")),
             Width = 44, Height = 44, Padding = new Thickness(0), CornerRadius = new CornerRadius(22),
             Background = Kit.B("SirajPrimaryBrush"), BorderThickness = new Thickness(0),
             VerticalAlignment = VerticalAlignment.Center,
@@ -284,7 +296,7 @@ public sealed partial class WorshipPage : Page
             var stack = new StackPanel { Spacing = 10 };
             var head = new Grid();
             head.Children.Add(Kit.IconBadge(item.Icon, 44, 22));
-            var arrow = Kit.Icon(loc.IsRtl ? "\uE76B" : "\uE76C", 12, Kit.B("SirajOnSurfaceVariantBrush"));
+            var arrow = Kit.Icon(loc.IsRtl ? "chevron_left" : "chevron_right", 18, Kit.B("SirajOnSurfaceVariantBrush"));
             arrow.HorizontalAlignment = HorizontalAlignment.Right;
             arrow.VerticalAlignment = VerticalAlignment.Center;
             head.Children.Add(arrow);
@@ -315,10 +327,10 @@ public sealed partial class WorshipPage : Page
             int total = items.Count;
             string iconKey = group switch
             {
-                AdhkarGroup.Morning => "full_moon",
-                AdhkarGroup.Evening => "crescent_star",
+                AdhkarGroup.Morning => "wb_sunny",
+                AdhkarGroup.Evening => "nights_stay",
                 AdhkarGroup.AfterPrayer => "azkar_carpet",
-                _ => "night_of_power",
+                _ => "bedtime",
             };
 
             var stack = new StackPanel { Spacing = 8 };

@@ -40,6 +40,7 @@ public sealed partial class SkyCard : UserControl
     private bool _layersHasDay;
     private Size _layersSize;
     private string? _shownPrayer, _shownPhase;
+    private bool _entered;
     private bool _isSunIcon = true;
     private bool _pulsingPill;
     private bool _duringAzan;
@@ -124,7 +125,11 @@ public sealed partial class SkyCard : UserControl
         _lastDaytimeBrush = null;
         _lastBorderKey = 0;
         OnTick();
-        Enter();
+        if (!_entered)
+        {
+            _entered = true;
+            Enter();
+        }
     }
 
     private void OnThemeChanged()
@@ -138,11 +143,11 @@ public sealed partial class SkyCard : UserControl
     private void Enter()
     {
         if (!Kit.Motion) return;
-        Kit.Rise(LabelBadge, 0, 8, 180);
-        Kit.Rise(NameHost, 30, 8, 180);
-        Kit.Rise(TimeHost, 60, 8, 180);
-        Kit.Rise(CountdownHost, 90, 8, 180);
-        Kit.Rise(CalendarFooter, 120, 8, 180);
+        Kit.Rise(LabelBadge, 0, 6, 130);
+        Kit.Rise(NameHost, 20, 6, 130);
+        Kit.Rise(TimeHost, 40, 6, 130);
+        Kit.Rise(CountdownHost, 60, 6, 130);
+        Kit.Rise(CalendarFooter, 80, 6, 130);
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -156,12 +161,7 @@ public sealed partial class SkyCard : UserControl
         Views.MainWindow.ActiveChanged -= UpdateMotion;
         _frames?.Stop();
         _frames = null;
-        _back?.Dispose();
-        _front?.Dispose();
-        _glass?.Dispose();
-        _back = _front = _glass = null;
-        _geo.Dispose();
-        Canvas.RemoveFromVisualTree();
+        // Keep the Win2D Canvas and cached render targets intact so revisiting cached PrayerPage renders immediately.
     }
 
     private void OnXamlRootChanged(XamlRoot sender, XamlRootChangedEventArgs args) => UpdateMotion();
@@ -234,8 +234,8 @@ public sealed partial class SkyCard : UserControl
 
         PhaseText.Text = loc[arc.PhaseKey];
         _isSunIcon = arc.IsDaytime;
-        PhaseIcon.Glyph = _isSunIcon ? "\uE706" : "\uE708";
-        PhaseIcon.Foreground = new SolidColorBrush(ThemeService.ToColor(skyTheme.OrbGlow));
+        PhaseIcon.IconKey = _isSunIcon ? "wb_sunny" : "nights_stay";
+        PhaseIcon.Brush = new SolidColorBrush(ThemeService.ToColor(skyTheme.OrbGlow));
 
         bool isDuringAzan = state is PrayerState.AzanCalled;
         bool isWaitingForIqama = state is PrayerState.WaitingForIqama;
@@ -370,8 +370,8 @@ public sealed partial class SkyCard : UserControl
                 },
             };
         }
-        CountdownIcon.Foreground = new SolidColorBrush(iconTint);
-        CountdownIcon.Glyph = isDuringAzan ? "\uEA8F" : "\uE916";
+        CountdownIcon.Brush = new SolidColorBrush(iconTint);
+        CountdownIcon.IconKey = isDuringAzan ? "notifications" : "timer";
 
         var textLight = arc.IsDaytime ? Argb.Lerp(skyTheme.OrbCore, skyTheme.OrbGlow, 0.55f) : MoonlitText;
         uint tintKey = (uint)(textLight.R << 16 | textLight.G << 8 | textLight.B);

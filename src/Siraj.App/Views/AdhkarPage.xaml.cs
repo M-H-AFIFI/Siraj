@@ -48,8 +48,6 @@ public sealed partial class AdhkarPage : Page
         return (items.Count(d => counts.GetValueOrDefault(d.Id) >= d.Count), items.Count);
     }
 
-    // ---- The hub ------------------------------------------------------------------------------
-
     private void ShowHub()
     {
         _open = null;
@@ -150,7 +148,7 @@ public sealed partial class AdhkarPage : Page
         top.Children.Add(GroupIcon(group));
         if (done == total && total > 0)
         {
-            var check = Kit.Icon("", 14);
+            var check = Kit.Icon("check", 16);
             check.HorizontalAlignment = HorizontalAlignment.Right;
             top.Children.Add(check);
         }
@@ -175,27 +173,25 @@ public sealed partial class AdhkarPage : Page
 
     private static FrameworkElement GroupIcon(AdhkarGroup group)
     {
-        PrayerType? prayer = group switch
-        {
-            AdhkarGroup.Morning => PrayerType.Sunrise, AdhkarGroup.Evening => PrayerType.Maghrib, AdhkarGroup.Sleep => PrayerType.Isha,
-            AdhkarGroup.WakeUp => PrayerType.Fajr, _ => null,
-        };
         var fg = Kit.B("SirajPrimaryBrush");
-        FrameworkElement icon = prayer is { } p
-            ? new PrayerGlyph { Prayer = p, Width = 22, Height = 22, Brush = fg }
-            : group switch
-            {
-                AdhkarGroup.AfterPrayer => SirajVectorIcon.Make("azkar_carpet", 21, fg),
-                AdhkarGroup.Hajj => SirajVectorIcon.Make("kaaba", 21, fg),
-                AdhkarGroup.Mosque => SirajVectorIcon.Make("masjid", 21, fg),
-                AdhkarGroup.Grief => SirajVectorIcon.Make("azkar_grief", 20, fg),
-                AdhkarGroup.Debt => SirajVectorIcon.Make("azkar_debt", 20, fg),
-                AdhkarGroup.Essential => SirajVectorIcon.Make("dua_hands", 21, fg),
-                AdhkarGroup.Rabbana => SirajVectorIcon.Make("quick_quran", 20, fg),
-                AdhkarGroup.Travel => Kit.Icon("\uE709", 18, fg),
-                AdhkarGroup.Ruqiya => SirajVectorIcon.Make("crescent_star", 20, fg),
-                _ => SirajVectorIcon.Make("azkar_missed", 20, fg),
-            };
+        string key = group switch
+        {
+            AdhkarGroup.Morning => "wb_sunny",
+            AdhkarGroup.Evening => "nights_stay",
+            AdhkarGroup.Sleep => "bedtime",
+            AdhkarGroup.WakeUp => "wb_twilight",
+            AdhkarGroup.AfterPrayer => "azkar_carpet",
+            AdhkarGroup.Mosque => "eid_mosque",
+            AdhkarGroup.Ruqiya => "shield",
+            AdhkarGroup.Grief => "azkar_grief",
+            AdhkarGroup.Debt => "azkar_debt",
+            AdhkarGroup.Travel => "flight",
+            AdhkarGroup.Hajj => "kaaba",
+            AdhkarGroup.Rabbana => "dua_hands",
+            AdhkarGroup.Essential => "favorite",
+            _ => "azkar_missed",
+        };
+        FrameworkElement icon = SirajVectorIcon.Make(key, 21, fg);
         icon.HorizontalAlignment = HorizontalAlignment.Center;
         icon.VerticalAlignment = VerticalAlignment.Center;
         return new Border
@@ -281,8 +277,6 @@ public sealed partial class AdhkarPage : Page
 
     private void OpenGroup(AdhkarGroup group) =>
         ShowSet(group.Key(), group.Title(Loc.Current.Language), Loc.Current[PurposeKey(group)], AdhkarBook.Of(group));
-
-    // ---- A set, opened -------------------------------------------------------------------------
 
     private void ShowSet(string key, string title, string? subtitle, IReadOnlyList<Dhikr> items)
     {
@@ -400,7 +394,7 @@ public sealed partial class AdhkarPage : Page
         Add("settings_show_virtues", s.AdhkarVirtues, (x, v) => x with { AdhkarVirtues = v });
         var button = new Button
         {
-            Content = Kit.Icon("", 16, Kit.B("SirajOnSurfaceBrush")), Width = 40, Height = 40, Padding = new Thickness(0),
+            Content = Kit.Icon("more_vert", 18, Kit.B("SirajOnSurfaceBrush")), Width = 40, Height = 40, Padding = new Thickness(0),
             CornerRadius = new CornerRadius(20), Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             BorderThickness = new Thickness(0), Flyout = menu, VerticalAlignment = VerticalAlignment.Center,
         };
@@ -419,7 +413,7 @@ public sealed partial class AdhkarPage : Page
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         top.Children.Add(Kit.Pill(loc.Number(number), "SirajSurfaceContainerHighBrush", "SirajOnSurfaceVariantBrush"));
         var countText = new TextBlock { FontSize = 13, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
-        var countIcon = Kit.Icon("", 12, Kit.B("SirajOnPrimaryBrush"));
+        var countIcon = Kit.Icon("check", 14, Kit.B("SirajOnPrimaryBrush"));
         var countRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
         countRow.Children.Add(countIcon);
         countRow.Children.Add(countText);

@@ -20,7 +20,7 @@ public sealed class NowPlayingBar : UserControl
     private readonly Border _progressFill;
     private readonly Button _prevBtn;
     private readonly Button _playBtn;
-    private readonly FontIcon _playIcon;
+    private readonly SirajVectorIcon _playIcon;
     private readonly Button _nextBtn;
     private readonly Button _closeBtn;
     private bool _visible;
@@ -41,12 +41,12 @@ public sealed class NowPlayingBar : UserControl
         _subtitle.FontFamily = font;
         _subtitle.Foreground = Kit.B("SirajOnSurfaceVariantBrush");
 
-        _prevBtn = MiniIconBtn("\uE892", () =>
+        _prevBtn = MiniIconBtn("skip_previous", () =>
         {
             if (App.Media.HasMedia) App.Media.Previous();
             else App.QuranPlayer.Previous();
         });
-        _playIcon = Kit.Icon("\uE768", 15, Kit.B("SirajOnPrimaryBrush"));
+        _playIcon = Kit.Icon("play", 18, Kit.B("SirajOnPrimaryBrush"));
         _playBtn = new Button
         {
             Content = _playIcon, Width = 38, Height = 38, Padding = new Thickness(0), CornerRadius = new CornerRadius(19),
@@ -60,12 +60,12 @@ public sealed class NowPlayingBar : UserControl
             else App.QuranPlayer.Resume();
         };
         Kit.Lift(_playBtn);
-        _nextBtn = MiniIconBtn("\uE893", () =>
+        _nextBtn = MiniIconBtn("skip_next", () =>
         {
             if (App.Media.HasMedia) App.Media.Next();
             else App.QuranPlayer.Next();
         });
-        _closeBtn = MiniIconBtn("\uE711", () =>
+        _closeBtn = MiniIconBtn("close", () =>
         {
             if (App.Media.HasMedia) App.Media.Stop();
             else App.QuranPlayer.Stop();
@@ -200,7 +200,7 @@ public sealed class NowPlayingBar : UserControl
             _subtitle.Text = App.Media.IsBuffering ? loc["adhkar_radio_connecting"] : (st.HasPlace ? $"{loc["radio_live_badge"]}{loc.Sep}{st.Location(loc.Language)}" : loc["radio_live_badge"]);
             _eq.IsActive = App.Media.IsPlaying;
             _eq.Visibility = App.Media.IsPlaying ? Visibility.Visible : Visibility.Collapsed;
-            _playIcon.Glyph = App.Media.IsPlaying ? "\uE769" : "\uE768";
+            _playIcon.IconKey = App.Media.IsPlaying ? "pause" : "play";
             _prevBtn.Visibility = Visibility.Collapsed;
             _nextBtn.Visibility = Visibility.Collapsed;
             _progressTrack.Visibility = Visibility.Collapsed;
@@ -212,7 +212,7 @@ public sealed class NowPlayingBar : UserControl
             _subtitle.Text = App.Media.IsBuffering ? loc["adhkar_radio_connecting"] : tr.Subtitle;
             _eq.IsActive = App.Media.IsPlaying;
             _eq.Visibility = App.Media.IsPlaying ? Visibility.Visible : Visibility.Collapsed;
-            _playIcon.Glyph = App.Media.IsPlaying ? "\uE769" : "\uE768";
+            _playIcon.IconKey = App.Media.IsPlaying ? "pause" : "play";
             _prevBtn.Visibility = Visibility.Visible;
             _nextBtn.Visibility = Visibility.Visible;
             _progressTrack.Visibility = Visibility.Visible;
@@ -227,7 +227,7 @@ public sealed class NowPlayingBar : UserControl
             _subtitle.Text = reciter.Name(loc.Language);
             _eq.IsActive = App.QuranPlayer.IsPlaying;
             _eq.Visibility = App.QuranPlayer.IsPlaying ? Visibility.Visible : Visibility.Collapsed;
-            _playIcon.Glyph = App.QuranPlayer.IsPlaying ? "\uE769" : "\uE768";
+            _playIcon.IconKey = App.QuranPlayer.IsPlaying ? "pause" : "play";
             _prevBtn.Visibility = Visibility.Visible;
             _nextBtn.Visibility = Visibility.Visible;
             _progressTrack.Visibility = Visibility.Collapsed;
@@ -243,11 +243,11 @@ public sealed class NowPlayingBar : UserControl
         _progressFill.Width = _progressTrack.ActualWidth * frac;
     }
 
-    private static Button MiniIconBtn(string glyph, Action click)
+    private static Button MiniIconBtn(string iconKey, Action click)
     {
         var b = new Button
         {
-            Content = Kit.Icon(glyph, 14, Kit.B("SirajOnSurfaceBrush")),
+            Content = Kit.Icon(iconKey, 16, Kit.B("SirajOnSurfaceBrush")),
             Width = 34, Height = 34, Padding = new Thickness(0), CornerRadius = new CornerRadius(17),
             Background = new SolidColorBrush(Colors.Transparent), BorderThickness = new Thickness(0),
             UseSystemFocusVisuals = false,

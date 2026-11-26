@@ -82,7 +82,6 @@ public sealed partial class TasbihPage : Page
         var loc = Loc.Current;
         var stack = new StackPanel { Spacing = 14, HorizontalAlignment = HorizontalAlignment.Stretch };
 
-        // The phrase, with the arrows to the one before and after.
         var phraseRow = new Grid { ColumnSpacing = 8 };
         phraseRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         phraseRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -105,14 +104,13 @@ public sealed partial class TasbihPage : Page
         }
         Grid.SetColumn(words, 1);
         phraseRow.Children.Add(words);
-        var prev = Round(loc.IsRtl ? "" : "", loc["tools_tasbih_choose_dhikr"], () => Step(-1));
-        var next = Round(loc.IsRtl ? "" : "", loc["tools_tasbih_choose_dhikr"], () => Step(1));
+        var prev = Round(loc.IsRtl ? "chevron_right" : "chevron_left", loc["tools_tasbih_choose_dhikr"], () => Step(-1));
+        var next = Round(loc.IsRtl ? "chevron_left" : "chevron_right", loc["tools_tasbih_choose_dhikr"], () => Step(1));
         Grid.SetColumn(next, 2);
         phraseRow.Children.Add(prev);
         phraseRow.Children.Add(next);
         stack.Children.Add(phraseRow);
 
-        // The ring, which is the button: ambient inner halo + smooth animated progress arc.
         var ringWrap = new Grid { Width = 272, Height = 272 };
         var scheme = App.Theme.Scheme;
         ringWrap.Children.Add(new Microsoft.UI.Xaml.Shapes.Ellipse
@@ -167,7 +165,7 @@ public sealed partial class TasbihPage : Page
         stack.Children.Add(hint);
 
         var tools = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Center };
-        tools.Children.Add(Round("", loc["tools_tasbih_reset"], async () =>
+        tools.Children.Add(Round("refresh", loc["tools_tasbih_reset"], async () =>
         {
             if (!await Kit.Confirm(XamlRoot, loc["tasbih_reset_title"], loc["tools_tasbih_reset_body"], loc["tools_tasbih_reset_confirm"])) return;
             App.Journal.Update(j => j.Tasbih.Count = 0);
@@ -181,7 +179,7 @@ public sealed partial class TasbihPage : Page
     private Button SoundButton()
     {
         var loc = Loc.Current;
-        var icon = Kit.Icon(State.Sound ? "" : "", 16, Kit.B("SirajOnSurfaceBrush"));
+        var icon = Kit.Icon(State.Sound ? "volume_up" : "volume_off", 18, Kit.B("SirajOnSurfaceBrush"));
         var button = Round("", "", () => { });
         button.Content = icon;
         void Label() => AutomationProperties.SetName(button, State.Sound ? loc["tools_tasbih_sound_off"] : loc["tools_tasbih_sound_on"]);
@@ -190,18 +188,19 @@ public sealed partial class TasbihPage : Page
         button.Click += (_, _) =>
         {
             App.Journal.Update(j => j.Tasbih.Sound = !j.Tasbih.Sound);
-            icon.Glyph = State.Sound ? "" : "";
+            icon.IconKey = State.Sound ? "volume_up" : "volume_off";
             Label();
             ToolTipService.SetToolTip(button, AutomationProperties.GetName(button));
         };
         return button;
     }
 
-    private static Button Round(string glyph, string name, Action click)
+    private static Button Round(string iconKey, string name, Action click)
     {
         var button = new Button
         {
-            Content = Kit.Icon(glyph, 16, Kit.B("SirajOnSurfaceBrush")), Width = 44, Height = 44, Padding = new Thickness(0),
+            Content = string.IsNullOrEmpty(iconKey) ? null : Kit.Icon(iconKey, 18, Kit.B("SirajOnSurfaceBrush")),
+            Width = 44, Height = 44, Padding = new Thickness(0),
             CornerRadius = new CornerRadius(22), VerticalAlignment = VerticalAlignment.Center,
             Background = Kit.B("SirajSurfaceContainerHighBrush"), BorderThickness = new Thickness(0),
         };
@@ -219,7 +218,6 @@ public sealed partial class TasbihPage : Page
         var loc = Loc.Current;
         var side = new StackPanel { Spacing = 16 };
 
-        // Today, and the goal for this phrase.
         var stats = new StackPanel { Spacing = 12 };
         _today = Kit.Text("", "SirajTitle", 22, brush: Kit.B("SirajOnPrimaryContainerBrush"));
         stats.Children.Add(_today);
@@ -239,7 +237,6 @@ public sealed partial class TasbihPage : Page
         stats.Children.Add(goalRow);
         side.Children.Add(Kit.Accent(stats, new Thickness(22)));
 
-        // Every phrase, the chosen one marked.
         var list = new StackPanel { Spacing = 2 };
         list.Children.Add(Kit.Text(loc["tools_tasbih_choose_dhikr"], "SirajHeading"));
         var phrases = Phrases;
@@ -258,7 +255,7 @@ public sealed partial class TasbihPage : Page
             row.Children.Add(texts);
             if (index == State.Phrase)
             {
-                var check = Kit.Icon("", 14);
+                var check = Kit.Icon("check", 16);
                 check.VerticalAlignment = VerticalAlignment.Center;
                 Grid.SetColumn(check, 1);
                 row.Children.Add(check);
@@ -270,7 +267,6 @@ public sealed partial class TasbihPage : Page
             list.Children.Add(button);
         }
 
-        // The reader's own.
         var add = new StackPanel { Spacing = 8, Margin = new Thickness(0, 10, 0, 0) };
         var box = new TextBox
         {

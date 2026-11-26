@@ -18,7 +18,7 @@ namespace Siraj.App.Views;
 
 public sealed partial class MainWindow : Window
 {
-    private sealed record NavSpec(string Tag, string LabelKey, string OutlineIcon, string FilledIcon, bool IsFooter = false, string? SegoeGlyph = null);
+    private sealed record NavSpec(string Tag, string LabelKey, string OutlineIcon, string FilledIcon, bool IsFooter = false);
 
     private static readonly NavSpec[] PrimaryNav =
     [
@@ -30,8 +30,8 @@ public sealed partial class MainWindow : Window
 
     private static readonly NavSpec[] FooterNav =
     [
-        new("widgets", "win_nav_widgets", "", "", IsFooter: true, SegoeGlyph: "\uF0E2"),
-        new("settings", "settings_title", "", "", IsFooter: true, SegoeGlyph: "\uE713"),
+        new("widgets", "win_nav_widgets", "nav_widgets_outlined", "nav_widgets_filled", IsFooter: true),
+        new("settings", "settings_title", "nav_settings_outlined", "nav_settings", IsFooter: true),
     ];
 
     private string _page = "prayer";
@@ -40,7 +40,7 @@ public sealed partial class MainWindow : Window
 #if DEBUG
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? _shotTimer;
 #endif
-    private readonly Dictionary<string, (Button Btn, ContentControl IconSlot, TextBlock Label, EqualizerBars? Eq, NavSpec Spec, int PrimaryIndex)> _navButtons = new();
+    private readonly Dictionary<string, (Button Btn, SirajVectorIcon Icon, TextBlock Label, EqualizerBars? Eq, NavSpec Spec, int PrimaryIndex)> _navButtons = new();
 
     public static bool IsActive { get; private set; }
     public static event Action? ActiveChanged;
@@ -67,7 +67,8 @@ public sealed partial class MainWindow : Window
         ElementCompositionPreview.SetIsTranslationEnabled(ActivePill, true);
         ElementCompositionPreview.SetIsTranslationEnabled(Shell, true);
         ElementCompositionPreview.SetIsTranslationEnabled(SetupFrame, true);
-        MiniPlayer.OpacityTransition = new ScalarTransition { Duration = TimeSpan.FromMilliseconds(200) };
+        ContentFrame.CacheSize = 10;
+        MiniPlayer.OpacityTransition = new ScalarTransition { Duration = TimeSpan.FromMilliseconds(140) };
 
         MiniPlayer.ExpandRequested += () => FullPlayer.Open();
         FullPlayer.OpenChanged += open =>
@@ -178,6 +179,9 @@ public sealed partial class MainWindow : Window
         SetupFrame.Visibility = Visibility.Collapsed;
         SetupFrame.Content = null;
         Shell.Visibility = Visibility.Visible;
+        // Flush cached pages when rebuilding (e.g., language change) so every tab re-localizes cleanly.
+        ContentFrame.CacheSize = 0;
+        ContentFrame.CacheSize = 10;
         RefreshUpdateBanner();
         if (_page == "reader" && App.Settings.Current.LastRead is { } last) OpenReader(new ReaderArgs(last.Page));
         else Navigate(_page, force: true);
@@ -191,7 +195,7 @@ public sealed partial class MainWindow : Window
 
         if (snap.JustUpdated && snap.State == UpdateState.Idle)
         {
-            var row = BuildBannerShell("\uE73E",
+            var row = BuildBannerShell("check",
                 loc.Format("win_update_completed", $"v{loc.Digitize(App.Updates.CurrentVersion.ToString())}"),
                 null,
                 null,
@@ -215,7 +219,7 @@ public sealed partial class MainWindow : Window
                 string? firstNote = rel.Notes.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim();
                 string subtitle = string.IsNullOrEmpty(firstNote) ? loc["win_update_available_body"] : firstNote;
                 var action = Ui.Button(loc["win_update_now"], () => _ = App.Updates.DownloadAndInstallAsync(), primary: true);
-                UpdateBanner.Child = BuildBannerShell("\uE896",
+                UpdateBanner.Child = BuildBannerShell("system_update",
                     loc.Format("win_update_available_title", ver),
                     subtitle,
                     action,
@@ -236,7 +240,7 @@ public sealed partial class MainWindow : Window
                     Margin = new Thickness(0, 6, 0, 0),
                 };
                 var cancel = Ui.Button(loc["win_update_cancel"], () => App.Updates.CancelDownload());
-                UpdateBanner.Child = BuildBannerShell("\uE896",
+                UpdateBanner.Child = BuildBannerShell("system_update",
                     loc.Format("win_update_downloading", ver, pct),
                     null,
                     cancel,
@@ -247,7 +251,7 @@ public sealed partial class MainWindow : Window
             case UpdateState.Verifying:
             {
                 var bar = new ProgressBar { IsIndeterminate = true, Margin = new Thickness(0, 6, 0, 0) };
-                UpdateBanner.Child = BuildBannerShell("\uE895", loc["win_update_verifying"], null, null, extraMiddle: bar);
+                UpdateBanner.Child = BuildBannerShell("system_update", loc["win_update_verifying"], null, null, extraMiddle: bar);
                 UpdateBanner.Visibility = Visibility.Visible;
                 break;
             }
@@ -255,7 +259,7 @@ public sealed partial class MainWindow : Window
             {
                 string ver = $"v{loc.Digitize(rel.Version.ToString())}";
                 var install = Ui.Button(loc["win_update_install_restart"], () => App.Updates.InstallNow(), primary: true);
-                UpdateBanner.Child = BuildBannerShell("\uE896",
+                UpdateBanner.Child = BuildBannerShell("system_update",
                     loc.Format("win_update_ready_title", ver),
                     loc["win_update_available_body"],
                     install);
@@ -265,7 +269,7 @@ public sealed partial class MainWindow : Window
             case UpdateState.Installing:
             {
                 var ring = new ProgressRing { Width = 20, Height = 20, IsActive = true };
-                UpdateBanner.Child = BuildBannerShell("\uE895", loc["win_update_installing"], null, ring);
+                UpdateBanner.Child = BuildBannerShell("system_update", loc["win_update_installing"], null, ring);
                 UpdateBanner.Visibility = Visibility.Visible;
                 break;
             }
@@ -275,7 +279,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private static Grid BuildBannerShell(string glyph, string title, string? subtitle, FrameworkElement? action,
+    private static Grid BuildBannerShell(string iconKey, string title, string? subtitle, FrameworkElement? action,
         FrameworkElement? extraMiddle = null, Action? dismissAction = null)
     {
         var grid = new Grid { ColumnSpacing = 12 };
@@ -290,7 +294,7 @@ public sealed partial class MainWindow : Window
             BorderBrush = Kit.B("SirajPrimaryBorderBrush"),
             BorderThickness = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
-            Child = Kit.Icon(glyph, 16, Kit.B("SirajPrimaryBrush")),
+            Child = Kit.Icon(iconKey, 18, Kit.B("SirajPrimaryBrush")),
         };
         grid.Children.Add(badge);
 
@@ -316,7 +320,7 @@ public sealed partial class MainWindow : Window
         {
             var close = new Button
             {
-                Content = Kit.Icon("\uE711", 12, Kit.B("SirajOnSurfaceVariantBrush")),
+                Content = Kit.Icon("close", 15, Kit.B("SirajOnSurfaceVariantBrush")),
                 Width = 30, Height = 30, Padding = new Thickness(0),
                 CornerRadius = new CornerRadius(15),
                 Background = new SolidColorBrush(Colors.Transparent),
@@ -357,7 +361,9 @@ public sealed partial class MainWindow : Window
     {
         var loc = Loc.Current;
         string text = loc[spec.LabelKey];
-        var iconSlot = new ContentControl { Width = 22, Height = 22, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center };
+        var icon = SirajVectorIcon.Make(spec.OutlineIcon, 21, Kit.B("SirajOnSurfaceVariantBrush"));
+        icon.HorizontalAlignment = HorizontalAlignment.Center;
+        icon.VerticalAlignment = VerticalAlignment.Center;
         var label = new TextBlock
         {
             Text = text, FontFamily = (FontFamily)Application.Current.Resources["SirajFont"],
@@ -367,10 +373,10 @@ public sealed partial class MainWindow : Window
         EqualizerBars? eq = spec.Tag == "listen" ? new EqualizerBars(12) { Visibility = Visibility.Collapsed, VerticalAlignment = VerticalAlignment.Center } : null;
 
         var row = new Grid { ColumnSpacing = 12, HorizontalAlignment = HorizontalAlignment.Stretch };
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(22) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        row.Children.Add(iconSlot);
+        row.Children.Add(icon);
         Grid.SetColumn(label, 1);
         row.Children.Add(label);
         if (eq != null) { Grid.SetColumn(eq, 2); row.Children.Add(eq); }
@@ -386,13 +392,11 @@ public sealed partial class MainWindow : Window
             AllowFocusOnInteraction = false,
             UseSystemFocusVisuals = false,
         };
-        btn.Resources["ButtonBackgroundPointerOver"] = Kit.Clone("SirajPrimarySoftBrush");
-        btn.Resources["ButtonBackgroundPressed"] = Kit.Clone("SirajPrimarySoftBrush");
         ToolTipService.SetToolTip(btn, text);
         AutomationProperties.SetName(btn, text);
         btn.Click += (_, _) => Navigate(spec.Tag);
         host.Children.Add(btn);
-        _navButtons[spec.Tag] = (btn, iconSlot, label, eq, spec, primaryIndex);
+        _navButtons[spec.Tag] = (btn, icon, label, eq, spec, primaryIndex);
     }
 
     private string ActiveRailTag() => _page switch
@@ -406,26 +410,45 @@ public sealed partial class MainWindow : Window
     private static bool IsSubpage(string page) => page is
         "reader" or "khatma" or "radio" or "adhkar" or "tasbih" or "hadith" or "names" or "fasting" or "zakat" or "calendar";
 
+    private int PrimaryIndexOf(string page)
+    {
+        string tag = page switch
+        {
+            "reader" or "khatma" => "quran",
+            "radio" => "listen",
+            "adhkar" or "tasbih" or "hadith" or "names" or "fasting" or "zakat" or "calendar" => "worship",
+            _ => page,
+        };
+        for (int i = 0; i < PrimaryNav.Length; i++)
+            if (PrimaryNav[i].Tag == tag) return i;
+        return -1;
+    }
+
     private void UpdateNavVisuals(bool animatePill)
     {
         string activeTag = ActiveRailTag();
         int primaryIndex = -1;
-        ContentControl? activeIcon = null;
+        SirajVectorIcon? activeIcon = null;
+        var hoverColor = ThemeService.ToColor(App.Theme.Scheme.OnSurface, 0.055f);
+        var pressedColor = ThemeService.ToColor(App.Theme.Scheme.OnSurface, 0.095f);
+
         foreach (var (tag, item) in _navButtons)
         {
             bool active = tag == activeTag;
             if (active)
             {
-                activeIcon = item.IconSlot;
+                activeIcon = item.Icon;
                 if (item.PrimaryIndex >= 0) primaryIndex = item.PrimaryIndex;
             }
             var fg = Kit.B(active ? "SirajPrimaryBrush" : "SirajOnSurfaceVariantBrush");
             item.Label.Foreground = fg;
             item.Label.FontWeight = active ? FontWeights.Bold : FontWeights.Medium;
-            if (!string.IsNullOrEmpty(item.Spec.OutlineIcon))
-                item.IconSlot.Content = SirajVectorIcon.Make(active ? item.Spec.FilledIcon : item.Spec.OutlineIcon, 21, fg);
-            else if (item.Spec.SegoeGlyph != null)
-                item.IconSlot.Content = Kit.Icon(item.Spec.SegoeGlyph, 17, fg);
+            item.Icon.IconKey = active ? item.Spec.FilledIcon : item.Spec.OutlineIcon;
+            item.Icon.Brush = fg;
+
+            // Keep hover subtle and transparent on the active item so it never clashes with ActivePill.
+            item.Btn.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(active ? Colors.Transparent : hoverColor);
+            item.Btn.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(active ? Colors.Transparent : pressedColor);
 
             // Footer items carry their own tinted highlight since the sliding pill spans PrimaryNav.
             if (item.Spec.IsFooter)
@@ -437,7 +460,7 @@ public sealed partial class MainWindow : Window
         }
 
         if (animatePill && activeIcon != null)
-            Kit.Pulse(activeIcon, 1.15f);
+            Kit.Pulse(activeIcon, 1.08f);
 
         if (primaryIndex >= 0)
         {
@@ -449,19 +472,19 @@ public sealed partial class MainWindow : Window
                 var visual = ElementCompositionPreview.GetElementVisual(ActivePill);
                 visual.StopAnimation("Translation");
                 visual.Properties.InsertVector3("Translation", target);
-                Kit.FadeTo(ActivePill, 1f, animatePill ? 90 : 0);
+                Kit.FadeTo(ActivePill, 1f, animatePill ? 80 : 0);
             }
             else
             {
-                Kit.SpringTo(ActivePill, target, damping: 0.90f, periodMs: 120);
-                Kit.FadeTo(ActivePill, 1f, 80);
+                Kit.GlideTo(ActivePill, target, 160);
+                Kit.FadeTo(ActivePill, 1f, 70);
             }
             _pillVisible = true;
         }
         else
         {
             if (animatePill && _pillVisible && Kit.Motion)
-                Kit.FadeTo(ActivePill, 0f, 90);
+                Kit.FadeTo(ActivePill, 0f, 80);
             else
                 ActivePill.Visibility = Visibility.Collapsed;
             _pillVisible = false;
@@ -498,9 +521,6 @@ public sealed partial class MainWindow : Window
         Win32.SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
     }
 
-    private static NavigationTransitionInfo Transition(NavigationTransitionInfo wanted) =>
-        Kit.Motion ? wanted : new SuppressNavigationTransitionInfo();
-
     internal void Navigate(string page, bool force = false, bool drillIn = false)
     {
         if (!force && page == _page && ContentFrame.Content != null) return;
@@ -526,25 +546,46 @@ public sealed partial class MainWindow : Window
             _ => typeof(PrayerPage),
         };
 
-        NavigationTransitionInfo info = drillIn || (!IsSubpage(prev) && IsSubpage(page))
-            ? new DrillInNavigationTransitionInfo()
-            : new EntranceNavigationTransitionInfo();
-        ContentFrame.Navigate(target, null, Transition(info));
+        // Start sliding the rail pill immediately before Frame navigation so feedback is instantaneous.
+        UpdateNavVisuals(animatePill: hadContent);
+
+        PageTransitionKind kind = PageTransitionKind.None;
+        if (hadContent)
+        {
+            if (drillIn || (!IsSubpage(prev) && IsSubpage(page)))
+                kind = PageTransitionKind.DrillIn;
+            else if (IsSubpage(prev) && !IsSubpage(page))
+                kind = PageTransitionKind.Back;
+            else
+            {
+                int oldIdx = PrimaryIndexOf(prev);
+                int newIdx = PrimaryIndexOf(page);
+                kind = oldIdx >= 0 && newIdx >= 0 && oldIdx != newIdx
+                    ? (newIdx > oldIdx ? PageTransitionKind.TabDown : PageTransitionKind.TabUp)
+                    : PageTransitionKind.Fade;
+            }
+        }
+
+        ContentFrame.Navigate(target, null, new SuppressNavigationTransitionInfo());
+        if (kind != PageTransitionKind.None && ContentFrame.Content is UIElement nextPage)
+            Kit.AnimatePageIn(nextPage, kind, Loc.Current.IsRtl);
+
         Backdrop.Paused = false;
         MiniPlayer.SuppressForReader = false;
         MiniPlayer.Refresh();
-        UpdateNavVisuals(animatePill: hadContent);
     }
 
     internal void OpenReader(ReaderArgs args)
     {
         if (App.Quran.Status != QuranService.State.Ready) { Navigate("quran", force: true); return; }
         _page = "reader";
-        ContentFrame.Navigate(typeof(ReaderPage), args, Transition(new DrillInNavigationTransitionInfo()));
+        UpdateNavVisuals(animatePill: true);
+        ContentFrame.Navigate(typeof(ReaderPage), args, new SuppressNavigationTransitionInfo());
+        if (ContentFrame.Content is UIElement reader)
+            Kit.AnimatePageIn(reader, PageTransitionKind.DrillIn, Loc.Current.IsRtl);
         Backdrop.Paused = true;
         MiniPlayer.SuppressForReader = true;
         MiniPlayer.Refresh();
-        UpdateNavVisuals(animatePill: true);
     }
 
     private void OnClosing(AppWindow sender, AppWindowClosingEventArgs args)

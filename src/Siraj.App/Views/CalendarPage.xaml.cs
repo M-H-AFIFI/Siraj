@@ -50,20 +50,17 @@ public sealed partial class CalendarPage : Page
         var hijriToday = cal.ToHijri(today);
         var upcoming = IslamicOccasions.Upcoming(today, cal);
 
-        // 1. Today + Moon Tonight hero card
         var hero = BuildHeroCard(today, hijriToday, upcoming.FirstOrDefault(), eastern);
         Kit.PopIn(hero, 0);
         _body.Children.Add(hero);
 
-        // 2. Monthly Hijri Calendar Grid
         var monthCard = BuildMonthCard(today, cal, eastern);
         Kit.PopIn(monthCard, 1);
         _body.Children.Add(monthCard);
 
-        // 3. Upcoming Islamic Occasions
-        _body.Children.Add(Ui.SectionWithIcon(loc["calendar_events_tab"], "lantern"));
+        _body.Children.Add(Ui.SectionWithIcon(loc["calendar_events_tab"], "nights_stay"));
         var eventCards = upcoming.Select(o => OccasionCard(o, eastern)).ToList();
-        var grid = Kit.Columns(310, 12, eventCards);
+        var grid = Kit.Columns(380, 12, eventCards);
         Kit.PopIn(grid, 2);
         _body.Children.Add(grid);
     }
@@ -109,7 +106,6 @@ public sealed partial class CalendarPage : Page
         var loc = Loc.Current;
         var stack = new StackPanel { Spacing = 14 };
 
-        // Month header + navigation arrows + Today button
         var header = new Grid { ColumnSpacing = 10 };
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -117,7 +113,7 @@ public sealed partial class CalendarPage : Page
 
         var prevBtn = new Button
         {
-            Content = Kit.Icon(loc.IsRtl ? "\uE76C" : "\uE76B", 14, Kit.B("SirajOnSurfaceBrush")),
+            Content = Kit.Icon(loc.IsRtl ? "chevron_right" : "chevron_left", 18, Kit.B("SirajOnSurfaceBrush")),
             Width = 38, Height = 38, Padding = new Thickness(0), CornerRadius = new CornerRadius(19),
             Background = Kit.B("SirajGlassPillBrush"), BorderBrush = Kit.B("SirajGlassBorderBrush"), BorderThickness = new Thickness(1),
         };
@@ -156,7 +152,7 @@ public sealed partial class CalendarPage : Page
         }
         var nextBtn = new Button
         {
-            Content = Kit.Icon(loc.IsRtl ? "\uE76B" : "\uE76C", 14, Kit.B("SirajOnSurfaceBrush")),
+            Content = Kit.Icon(loc.IsRtl ? "chevron_left" : "chevron_right", 18, Kit.B("SirajOnSurfaceBrush")),
             Width = 38, Height = 38, Padding = new Thickness(0), CornerRadius = new CornerRadius(19),
             Background = Kit.B("SirajGlassPillBrush"), BorderBrush = Kit.B("SirajGlassBorderBrush"), BorderThickness = new Thickness(1),
         };
@@ -167,12 +163,11 @@ public sealed partial class CalendarPage : Page
         header.Children.Add(rightNav);
         stack.Children.Add(header);
 
-        // Weekday headers (Sun..Sat)
         var grid = new Grid { ColumnSpacing = 6, RowSpacing = 6 };
         for (int c = 0; c < 7; c++) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-        // Reference Sunday 2026-11-22
+        // Known Sunday used to format localized short weekday labels.
         var refSun = new DateOnly(2026, 11, 22);
         for (int c = 0; c < 7; c++)
         {
@@ -183,10 +178,9 @@ public sealed partial class CalendarPage : Page
             grid.Children.Add(wd);
         }
 
-        // Occasions in this Hijri month
         var monthOccasions = IslamicOccasions.All.Where(o => o.HijriMonth == _viewMonth).ToDictionary(o => o.HijriDay);
 
-        int startCol = (int)firstGreg.DayOfWeek; // 0 = Sunday
+        int startCol = (int)firstGreg.DayOfWeek;
         int totalRows = (startCol + daysInMonth + 6) / 7;
         for (int r = 0; r < totalRows; r++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
@@ -245,7 +239,6 @@ public sealed partial class CalendarPage : Page
         }
         stack.Children.Add(grid);
 
-        // Selected day details strip
         if (_selectedDate is { } sel)
         {
             var sh = cal.ToHijri(sel);
@@ -270,7 +263,6 @@ public sealed partial class CalendarPage : Page
             });
         }
 
-        // Legend row
         var legend = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16, Margin = new Thickness(4, 2, 4, 0) };
         legend.Children.Add(LegendDot("SirajPrimaryBrush", loc["calendar_legend_occasion"]));
         legend.Children.Add(LegendDot("SirajGoldBrush", loc["calendar_legend_white_days"]));
@@ -290,17 +282,6 @@ public sealed partial class CalendarPage : Page
     private UIElement OccasionCard(DatedOccasion dated, bool eastern)
     {
         var loc = Loc.Current;
-        string iconKey = dated.Occasion.Id switch
-        {
-            "ramadan_start" => "lantern",
-            "last_ten_ramadan" => "night_of_power",
-            "eid_al_fitr" or "eid_al_adha" => "eid_mosque",
-            "day_of_arafah" => "arafah",
-            "isra_miraj" => "dome_of_rock",
-            "ashura" => "parted_sea",
-            "mid_shaban" => "full_moon",
-            _ => "crescent_star",
-        };
         string daysLabel = dated.DaysUntil == 0 ? loc["calendar_countdown_today"]
             : dated.DaysUntil == 1 ? loc["calendar_countdown_tomorrow"]
             : loc.Plural("calendar_countdown_days_left", dated.DaysUntil, loc.Number(dated.DaysUntil));
@@ -310,12 +291,13 @@ public sealed partial class CalendarPage : Page
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        grid.Children.Add(Kit.IconBadge(iconKey, 42, 21,
-            dated.IsToday ? "SirajPrimaryBrush" : "SirajPrimarySoftBrush",
-            dated.IsToday ? "SirajOnPrimaryBrush" : "SirajPrimaryBrush"));
+        grid.Children.Add(Kit.OccasionBadge(dated.Occasion.Id, 44, dated.IsToday));
 
         var txt = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 2 };
-        txt.Children.Add(Kit.Text(dated.Occasion.Title(loc.Language), "SirajHeading", 14.5, bold: true));
+        var titleTb = Kit.Text(dated.Occasion.Title(loc.Language), "SirajHeading", 14.5, bold: true);
+        titleTb.TextTrimming = TextTrimming.CharacterEllipsis;
+        titleTb.MaxLines = 1;
+        txt.Children.Add(titleTb);
         string hStr = $"{loc.Number(dated.Occasion.HijriDay)} {HijriText.MonthName(dated.Occasion.HijriMonth, loc.Language)} {HijriText.Year(dated.HijriYear, loc.Language, eastern)}";
         string gStr = HijriText.Gregorian(dated.Date, loc.Language, eastern, "d MMM yyyy");
         txt.Children.Add(Kit.Text($"{hStr}{loc.Sep}{gStr}", "SirajCaption", 11.5));
