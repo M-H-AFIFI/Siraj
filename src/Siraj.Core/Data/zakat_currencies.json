@@ -1,0 +1,290 @@
+[
+ {
+  "code": "SAR",
+  "symbol": "ر.س",
+  "label": "SAR (ر.س)",
+  "name": "Saudi Riyal - ريال سعودي",
+  "defaultGoldPrice": 280.0,
+  "defaultSilverPrice": 3.75
+ },
+ {
+  "code": "AED",
+  "symbol": "د.إ",
+  "label": "AED (د.إ)",
+  "name": "UAE Dirham - درهم إماراتي",
+  "defaultGoldPrice": 275.0,
+  "defaultSilverPrice": 3.7
+ },
+ {
+  "code": "KWD",
+  "symbol": "د.ك",
+  "label": "KWD (د.ك)",
+  "name": "Kuwaiti Dinar - دينار كويتي",
+  "defaultGoldPrice": 23.0,
+  "defaultSilverPrice": 0.31
+ },
+ {
+  "code": "QAR",
+  "symbol": "ر.ق",
+  "label": "QAR (ر.ق)",
+  "name": "Qatari Riyal - ريال قطري",
+  "defaultGoldPrice": 273.0,
+  "defaultSilverPrice": 3.65
+ },
+ {
+  "code": "OMR",
+  "symbol": "ر.ع",
+  "label": "OMR (ر.ع)",
+  "name": "Omani Rial - ريال عماني",
+  "defaultGoldPrice": 29.0,
+  "defaultSilverPrice": 0.39
+ },
+ {
+  "code": "BHD",
+  "symbol": "د.ب",
+  "label": "BHD (د.ب)",
+  "name": "Bahraini Dinar - دينار بحريني",
+  "defaultGoldPrice": 28.0,
+  "defaultSilverPrice": 0.38
+ },
+ {
+  "code": "EGP",
+  "symbol": "ج.م",
+  "label": "EGP (ج.م)",
+  "name": "Egyptian Pound - جنيه مصري",
+  "defaultGoldPrice": 3650.0,
+  "defaultSilverPrice": 49.0
+ },
+ {
+  "code": "JOD",
+  "symbol": "د.أ",
+  "label": "JOD (د.أ)",
+  "name": "Jordanian Dinar - دينار أردني",
+  "defaultGoldPrice": 53.0,
+  "defaultSilverPrice": 0.71
+ },
+ {
+  "code": "USD",
+  "symbol": "$",
+  "label": "USD ($)",
+  "name": "US Dollar - دولار أمريكي",
+  "defaultGoldPrice": 75.0,
+  "defaultSilverPrice": 1.0
+ },
+ {
+  "code": "EUR",
+  "symbol": "€",
+  "label": "EUR (€)",
+  "name": "Euro - يورو",
+  "defaultGoldPrice": 70.0,
+  "defaultSilverPrice": 0.95
+ },
+ {
+  "code": "GBP",
+  "symbol": "£",
+  "label": "GBP (£)",
+  "name": "British Pound - جنيه إسترليني",
+  "defaultGoldPrice": 60.0,
+  "defaultSilverPrice": 0.8
+ },
+ {
+  "code": "CAD",
+  "symbol": "C$",
+  "label": "CAD (C$)",
+  "name": "Canadian Dollar - دولار كندي",
+  "defaultGoldPrice": 102.0,
+  "defaultSilverPrice": 1.35
+ },
+ {
+  "code": "AUD",
+  "symbol": "A$",
+  "label": "AUD (A$)",
+  "name": "Australian Dollar - دولار أسترالي",
+  "defaultGoldPrice": 114.0,
+  "defaultSilverPrice": 1.5
+ },
+ {
+  "code": "TRY",
+  "symbol": "₺",
+  "label": "TRY (₺)",
+  "name": "Turkish Lira - Türk Lirası",
+  "defaultGoldPrice": 2550.0,
+  "defaultSilverPrice": 34.0
+ },
+ {
+  "code": "PKR",
+  "symbol": "Rs",
+  "label": "PKR (Rs)",
+  "name": "Pakistani Rupee - پاکستانی روپیہ",
+  "defaultGoldPrice": 21000.0,
+  "defaultSilverPrice": 280.0
+ },
+ {
+  "code": "INR",
+  "symbol": "₹",
+  "label": "INR (₹)",
+  "name": "Indian Rupee - भारतीय रुपया",
+  "defaultGoldPrice": 6250.0,
+  "defaultSilverPrice": 85.0
+ },
+ {
+  "code": "BDT",
+  "symbol": "৳",
+  "label": "BDT (৳)",
+  "name": "Bangladeshi Taka - বাংলাদেশ টাকা",
+  "defaultGoldPrice": 8900.0,
+  "defaultSilverPrice": 120.0
+ },
+ {
+  "code": "IDR",
+  "symbol": "Rp",
+  "label": "IDR (Rp)",
+  "name": "Indonesian Rupiah - Rupiah Indonesia",
+  "defaultGoldPrice": 1180000.0,
+  "defaultSilverPrice": 16000.0
+ },
+ {
+  "code": "MYR",
+  "symbol": "RM",
+  "label": "MYR (RM)",
+  "name": "Malaysian Ringgit - Ringgit Malaysia",
+  "defaultGoldPrice": 355.0,
+  "defaultSilverPrice": 4.7
+ },
+ {
+  "code": "SGD",
+  "symbol": "S$",
+  "label": "SGD (S$)",
+  "name": "Singapore Dollar - دولار سنغافوري",
+  "defaultGoldPrice": 101.0,
+  "defaultSilverPrice": 1.35
+ },
+ {
+  "code": "MAD",
+  "symbol": "د.م.",
+  "label": "MAD (د.م.)",
+  "name": "Moroccan Dirham - درهم مغربي",
+  "defaultGoldPrice": 750.0,
+  "defaultSilverPrice": 10.0
+ },
+ {
+  "code": "DZD",
+  "symbol": "د.ج",
+  "label": "DZD (د.ج)",
+  "name": "Algerian Dinar - دينار جزائري",
+  "defaultGoldPrice": 10100.0,
+  "defaultSilverPrice": 135.0
+ },
+ {
+  "code": "TND",
+  "symbol": "د.ت",
+  "label": "TND (د.ت)",
+  "name": "Tunisian Dinar - دينار تونسي",
+  "defaultGoldPrice": 235.0,
+  "defaultSilverPrice": 3.1
+ },
+ {
+  "code": "LYD",
+  "symbol": "د.ل",
+  "label": "LYD (د.ل)",
+  "name": "Libyan Dinar - دينار ليبي",
+  "defaultGoldPrice": 365.0,
+  "defaultSilverPrice": 4.9
+ },
+ {
+  "code": "SDG",
+  "symbol": "ج.س",
+  "label": "SDG (ج.س)",
+  "name": "Sudanese Pound - جنيه سوداني",
+  "defaultGoldPrice": 45000.0,
+  "defaultSilverPrice": 600.0
+ },
+ {
+  "code": "SYP",
+  "symbol": "ل.س",
+  "label": "SYP (ل.س)",
+  "name": "Syrian Pound - ليرة سورية",
+  "defaultGoldPrice": 1000000.0,
+  "defaultSilverPrice": 13500.0
+ },
+ {
+  "code": "LBP",
+  "symbol": "ل.ل",
+  "label": "LBP (ل.ل)",
+  "name": "Lebanese Pound - ليرة لبنانية",
+  "defaultGoldPrice": 6700000.0,
+  "defaultSilverPrice": 90000.0
+ },
+ {
+  "code": "YER",
+  "symbol": "ر.ي",
+  "label": "YER (ر.ي)",
+  "name": "Yemeni Rial - ريال يمني",
+  "defaultGoldPrice": 18750.0,
+  "defaultSilverPrice": 250.0
+ },
+ {
+  "code": "IQD",
+  "symbol": "د.ع",
+  "label": "IQD (د.ع)",
+  "name": "Iraqi Dinar - دينار عراقي",
+  "defaultGoldPrice": 98000.0,
+  "defaultSilverPrice": 1310.0
+ },
+ {
+  "code": "NGN",
+  "symbol": "₦",
+  "label": "NGN (₦)",
+  "name": "Nigerian Naira - نيرة نيجيرية",
+  "defaultGoldPrice": 115000.0,
+  "defaultSilverPrice": 1550.0
+ },
+ {
+  "code": "ZAR",
+  "symbol": "R",
+  "label": "ZAR (R)",
+  "name": "South African Rand - راند جنوب أفريقي",
+  "defaultGoldPrice": 1380.0,
+  "defaultSilverPrice": 18.5
+ },
+ {
+  "code": "KZT",
+  "symbol": "₸",
+  "label": "KZT (₸)",
+  "name": "Kazakhstani Tenge - كازاخستاني تينغ",
+  "defaultGoldPrice": 36000.0,
+  "defaultSilverPrice": 480.0
+ },
+ {
+  "code": "UZS",
+  "symbol": "so'm",
+  "label": "UZS (so'm)",
+  "name": "Uzbekistani Som - سوم أوزبكستاني",
+  "defaultGoldPrice": 950000.0,
+  "defaultSilverPrice": 12500.0
+ },
+ {
+  "code": "AZN",
+  "symbol": "₼",
+  "label": "AZN (₼)",
+  "name": "Azerbaijani Manat - مانات أذربيجاني",
+  "defaultGoldPrice": 128.0,
+  "defaultSilverPrice": 1.7
+ },
+ {
+  "code": "AFN",
+  "symbol": "؋",
+  "label": "AFN (؋)",
+  "name": "Afghan Afghani - أفغاني",
+  "defaultGoldPrice": 5300.0,
+  "defaultSilverPrice": 71.0
+ },
+ {
+  "code": "SOS",
+  "symbol": "Sh",
+  "label": "SOS (Sh)",
+  "name": "Somali Shilling - شلن صومالي",
+  "defaultGoldPrice": 43000.0,
+  "defaultSilverPrice": 570.0
+ }
+]

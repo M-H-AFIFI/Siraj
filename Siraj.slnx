@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Siraj.App/Siraj.App.csproj" />
+    <Project Path="src/Siraj.Core/Siraj.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Siraj.Core.Tests/Siraj.Core.Tests.csproj" />
+  </Folder>
+</Solution>

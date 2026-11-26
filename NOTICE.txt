@@ -1,0 +1,44 @@
+Siraj includes third-party software, fonts, and audio used under their respective licenses.
+
+Adhan (batoulapps/adhan-java 1.2.1)
+Copyright Batoul Apps. Licensed under the MIT License.
+  src/Siraj.Core/Adhan/*.cs implements its prayer-time calculations in C#.
+
+Outfit typeface
+Copyright 2021 The Outfit Project Authors (https://github.com/Outfitio/Outfit-Fonts).
+Licensed under the SIL Open Font License, Version 1.1 (Assets/Fonts/OFL.txt).
+
+Amiri typeface
+Copyright 2010-2022 The Amiri Project Authors (https://github.com/aliftype/amiri).
+Licensed under the SIL Open Font License, Version 1.1 (Assets/Fonts/OFL.txt).
+
+DigitalKhatt New Madina typeface
+Copyright (c) 2020-2024 Amine Anane, Copyright (c) 2024 Tarteel Inc.
+Licensed under the SIL Open Font License, Version 1.1 (Assets/Fonts/OFL.txt).
+
+King Fahd Complex Quran fonts (QCF)
+King Fahd Complex for the Printing of the Holy Quran, all rights reserved. The surah title band
+font ships with the app and the Mushaf page fonts are downloaded on demand with the Quran database.
+
+Win2D (Microsoft.Graphics.Win2D)
+Copyright Microsoft Corporation. Licensed under the MIT License.
+
+Windows App SDK and WinUI 3
+Copyright Microsoft Corporation. Licensed under the MIT License.
+
+Microsoft.Data.Sqlite
+Copyright .NET Foundation and Contributors. Licensed under the MIT License.
+
+SQLitePCLRaw (bundle_winsqlite3)
+Copyright Eric Sink and contributors. Licensed under the Apache License, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0). Uses Windows' built-in winsqlite3.dll.
+
+.NET runtime
+Copyright .NET Foundation and Contributors. Licensed under the MIT License.
+
+IANA Time Zone Database (zone.tab, release 2025b)
+Public domain. Used to resolve a place's country from its time zone.
+
+Adhan recordings
+Bundled under Assets/Adhan. Clearer full-length and Fajr recordings are downloaded on demand
+from the Kiwifu/adhan-mp3 collection via jsDelivr.
