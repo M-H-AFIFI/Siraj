@@ -191,18 +191,18 @@ public static class ListeningLibrary
         ["ar.abdulrahmanmajed"] = "reciter_abdulrahman_majed.jpg",
     };
 
-    public static string? PortraitForAdhan(string voiceId) => voiceId switch
+    public static string? PortraitForAdhan(string? voiceId) => voiceId?.Trim().ToLowerInvariant() switch
     {
-        "Makkah" => "img_makkah.jpg",
-        "Madinah" => "img_madinah.jpg",
-        "Alaqsa" => "img_alaqsa.jpg",
-        "Alafasy" => "reciter_alafasy.jpg",
-        "AbdulBasit" => "reciter_abdulbasit.jpg",
-        "Minshawi" => "reciter_minshawi.jpg",
-        "Naghshbandi" => "reciter_naqshbandi.jpg",
-        "AlNafees" => "reciter_nufeis.jpg",
-        "Qatami" => "reciter_qatami.jpg",
-        "MansourAlZahrani" => "reciter_mansour_zahrani.jpg",
+        "makkah" => "img_makkah.jpg",
+        "madinah" => "img_madinah.jpg",
+        "al-aqsa" or "alaqsa" => "img_alaqsa.jpg",
+        "abdul basit" or "abdulbasit" => "reciter_abdulbasit.jpg",
+        "minshawi" => "reciter_minshawi.jpg",
+        "mishary alafasy" or "alafasy" => "reciter_alafasy.jpg",
+        "ahmad al-nafees" or "alnafees" => "reciter_nufeis.jpg",
+        "mansour al-zahrani" or "mansouralzahrani" => "reciter_mansour_zahrani.jpg",
+        "naghshbandi" or "naqshbandi" => "reciter_naqshbandi.jpg",
+        "nasser al-qatami" or "qatami" => "reciter_qatami.jpg",
         _ => null,
     };
 
