@@ -22,13 +22,54 @@ public sealed record LiveSceneColors(
     Argb Ink,
     Argb Veil,
     bool IsDark,
-    bool IsBlack);
+    bool IsBlack)
+{
+    public LiveSceneColors LerpTo(LiveSceneColors other, float t)
+    {
+        if (t <= 0f) return this;
+        if (t >= 1f) return other;
+        return new LiveSceneColors(
+            SkyTop: Argb.Lerp(SkyTop, other.SkyTop, t),
+            SkyUpperMid: Argb.Lerp(SkyUpperMid, other.SkyUpperMid, t),
+            SkyLowerMid: Argb.Lerp(SkyLowerMid, other.SkyLowerMid, t),
+            SkyHorizon: Argb.Lerp(SkyHorizon, other.SkyHorizon, t),
+            Accent: Argb.Lerp(Accent, other.Accent, t),
+            Secondary: Argb.Lerp(Secondary, other.Secondary, t),
+            Highlight: Argb.Lerp(Highlight, other.Highlight, t),
+            Shade: Argb.Lerp(Shade, other.Shade, t),
+            Ink: Argb.Lerp(Ink, other.Ink, t),
+            Veil: Argb.Lerp(Veil, other.Veil, t),
+            IsDark: other.IsDark,
+            IsBlack: other.IsBlack);
+    }
+}
 
 public sealed record LiveIntensitySpec(string Id, string LabelKey, float MotionScale, float DetailScale, float VeilAdjustment);
+
+internal readonly record struct TimeSkyPalette(
+    Argb SkyTop,
+    Argb SkyUpperMid,
+    Argb SkyLowerMid,
+    Argb SkyHorizon,
+    Argb AccentGlow)
+{
+    public TimeSkyPalette BlendWith(TimeSkyPalette other, float t) => new(
+        Argb.Lerp(SkyTop, other.SkyTop, t),
+        Argb.Lerp(SkyUpperMid, other.SkyUpperMid, t),
+        Argb.Lerp(SkyLowerMid, other.SkyLowerMid, t),
+        Argb.Lerp(SkyHorizon, other.SkyHorizon, t),
+        Argb.Lerp(AccentGlow, other.AccentGlow, t));
+}
+
+internal readonly record struct SkyPhaseSpec(
+    TimeSkyPalette Light,
+    TimeSkyPalette Dark,
+    float StarVisibility);
 
 public static class LiveScenes
 {
     public const string DefaultSceneId = "DesertDunes";
+    public const float RestSeconds = 4.2f;
 
     public static readonly IReadOnlyList<LiveSceneInfo> All =
     [
@@ -58,98 +99,170 @@ public static class LiveScenes
         new("Vivid", "live_theme_intensity_vivid", 1.24f, 1.26f, -0.09f),
     ];
 
-    public static LiveSceneInfo Find(string? id) =>
-        All.FirstOrDefault(s => string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase)) ?? All[0];
+    // 6 prayer-aligned solar phases for Time-of-Day Sky Sync.
+    private static readonly SkyPhaseSpec FajrDawn = new(
+        Light: new(Argb.Hex(0xFFC9D4EE), Argb.Hex(0xFFDED8EC), Argb.Hex(0xFFF2DFD9), Argb.Hex(0xFFFCEAD7), Argb.Hex(0xFFE8A47C)),
+        Dark: new(Argb.Hex(0xFF090E1E), Argb.Hex(0xFF161B33), Argb.Hex(0xFF2B263D), Argb.Hex(0xFF4A333B), Argb.Hex(0xFFE59A73)),
+        StarVisibility: 0.42f);
+
+    private static readonly SkyPhaseSpec MorningDuha = new(
+        Light: new(Argb.Hex(0xFFC4E1F7), Argb.Hex(0xFFD9EDFC), Argb.Hex(0xFFEBF6FE), Argb.Hex(0xFFFFFBF2), Argb.Hex(0xFFF2C46D)),
+        Dark: new(Argb.Hex(0xFF0B1628), Argb.Hex(0xFF132640), Argb.Hex(0xFF1D3654), Argb.Hex(0xFF2B4763), Argb.Hex(0xFFE8BE6B)),
+        StarVisibility: 0.0f);
+
+    private static readonly SkyPhaseSpec MiddayDhuhr = new(
+        Light: new(Argb.Hex(0xFFBDDDF7), Argb.Hex(0xFFD3EAFB), Argb.Hex(0xFFE7F4FD), Argb.Hex(0xFFF7FBFF), Argb.Hex(0xFF4EA5E8)),
+        Dark: new(Argb.Hex(0xFF0A1424), Argb.Hex(0xFF11223B), Argb.Hex(0xFF193252), Argb.Hex(0xFF234369), Argb.Hex(0xFF68B5F2)),
+        StarVisibility: 0.0f);
+
+    private static readonly SkyPhaseSpec GoldenAsr = new(
+        Light: new(Argb.Hex(0xFFD9D8EC), Argb.Hex(0xFFEBE1D8), Argb.Hex(0xFFF7E8CE), Argb.Hex(0xFFFFF3DC), Argb.Hex(0xFFE8A248)),
+        Dark: new(Argb.Hex(0xFF101121), Argb.Hex(0xFF1E1A2B), Argb.Hex(0xFF33252B), Argb.Hex(0xFF4D3226), Argb.Hex(0xFFE6A14C)),
+        StarVisibility: 0.08f);
+
+    private static readonly SkyPhaseSpec MaghribDusk = new(
+        Light: new(Argb.Hex(0xFFC8C5E4), Argb.Hex(0xFFE0C8DC), Argb.Hex(0xFFF4D3CD), Argb.Hex(0xFFFCE2C9), Argb.Hex(0xFFE27A68)),
+        Dark: new(Argb.Hex(0xFF0B0A1A), Argb.Hex(0xFF1B132B), Argb.Hex(0xFF331C31), Argb.Hex(0xFF52282E), Argb.Hex(0xFFE8806B)),
+        StarVisibility: 0.55f);
+
+    private static readonly SkyPhaseSpec IshaNight = new(
+        Light: new(Argb.Hex(0xFFD0D8EE), Argb.Hex(0xFFDDE4F5), Argb.Hex(0xFFEAEEF9), Argb.Hex(0xFFF5F7FC), Argb.Hex(0xFFD6AC54)),
+        Dark: new(Argb.Hex(0xFF050812), Argb.Hex(0xFF0A1021), Argb.Hex(0xFF111A33), Argb.Hex(0xFF192647), Argb.Hex(0xFFE6C16A)),
+        StarVisibility: 1.0f);
+
+    public static string NormalizeId(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return DefaultSceneId;
+        if (id.Equals("FloatingLanterns", StringComparison.OrdinalIgnoreCase) ||
+            id.Equals("Lanterns", StringComparison.OrdinalIgnoreCase)) return "DesertDunes";
+        if (id.Equals("Bokeh", StringComparison.OrdinalIgnoreCase)) return "Circles";
+        if (id.Equals("Constellation", StringComparison.OrdinalIgnoreCase)) return "Particles";
+        if (id.Equals("Ripples", StringComparison.OrdinalIgnoreCase)) return "Rings";
+        var match = All.FirstOrDefault(s => s.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+        return match?.Id ?? DefaultSceneId;
+    }
+
+    public static LiveSceneInfo Find(string? id)
+    {
+        var normalized = NormalizeId(id);
+        return All.FirstOrDefault(s => s.Id.Equals(normalized, StringComparison.OrdinalIgnoreCase)) ?? All[0];
+    }
 
     public static LiveIntensitySpec FindIntensity(string? id) =>
         Intensities.FirstOrDefault(i => string.Equals(i.Id, id, StringComparison.OrdinalIgnoreCase)) ?? Intensities[1];
 
     public static LiveSceneColors ColorsFor(ColorScheme scheme, bool blackMode, bool timeSync = false, int minutesOfDay = 720)
     {
-        var bg = scheme.Background;
-        var primary = scheme.Primary;
-        var secondary = scheme.Secondary;
-        var container = scheme.PrimaryContainer;
+        var bg = Opaque(scheme.Background);
+        var p = Opaque(scheme.Primary);
+        var t = Opaque(scheme.Tertiary);
         var white = Argb.Hex(0xFFFFFFFF);
         var black = Argb.Hex(0xFF000000);
+        bool isDark = scheme.IsDark;
+        bool isAmoled = blackMode && isDark;
 
         LiveSceneColors baseColors;
-        if (blackMode && scheme.IsDark)
+        if (isDark)
         {
+            var night = isAmoled ? black : Argb.Lerp(bg, black, 0.38f);
+            float lift = isAmoled ? 0.72f : 1f;
             baseColors = new LiveSceneColors(
-                SkyTop: black,
-                SkyUpperMid: Argb.Lerp(black, primary, 0.06f),
-                SkyLowerMid: Argb.Lerp(black, primary, 0.14f),
-                SkyHorizon: Argb.Lerp(black, Argb.Lerp(primary, secondary, 0.45f), 0.24f),
-                Accent: Argb.Lerp(primary, white, 0.10f),
-                Secondary: Argb.Lerp(secondary, primary, 0.35f),
-                Highlight: Argb.Lerp(white, primary, 0.18f),
-                Shade: Argb.Lerp(black, primary, 0.18f),
-                Ink: Argb.Hex(0xFF050608),
-                Veil: black,
+                SkyTop: night,
+                SkyUpperMid: Argb.Lerp(night, p, 0.07f * lift),
+                SkyLowerMid: Argb.Lerp(night, p, 0.15f * lift),
+                SkyHorizon: Argb.Lerp(night, Argb.Lerp(p, t, 0.35f), 0.27f * lift),
+                Accent: p,
+                Secondary: t,
+                Highlight: Argb.Lerp(white, p, 0.16f),
+                Shade: Argb.Lerp(night, p, 0.24f * lift),
+                Ink: Argb.Lerp(night, p, 0.08f * lift),
+                Veil: night,
                 IsDark: true,
-                IsBlack: true);
-        }
-        else if (scheme.IsDark)
-        {
-            var deep = Argb.Lerp(bg, black, 0.38f);
-            baseColors = new LiveSceneColors(
-                SkyTop: deep,
-                SkyUpperMid: Argb.Lerp(deep, primary, 0.10f),
-                SkyLowerMid: Argb.Lerp(bg, primary, 0.18f),
-                SkyHorizon: Argb.Lerp(bg, Argb.Lerp(primary, container, 0.35f), 0.32f),
-                Accent: Argb.Lerp(primary, white, 0.12f),
-                Secondary: Argb.Lerp(secondary, primary, 0.40f),
-                Highlight: Argb.Lerp(white, primary, 0.20f),
-                Shade: Argb.Lerp(bg, primary, 0.24f),
-                Ink: Argb.Lerp(deep, black, 0.45f),
-                Veil: deep,
-                IsDark: true,
-                IsBlack: false);
+                IsBlack: isAmoled);
         }
         else
         {
-            var warmPaper = Argb.Lerp(bg, container, 0.42f);
+            var paper = Argb.Lerp(bg, white, 0.45f);
             baseColors = new LiveSceneColors(
-                SkyTop: Argb.Lerp(warmPaper, primary, 0.10f),
-                SkyUpperMid: Argb.Lerp(warmPaper, primary, 0.05f),
-                SkyLowerMid: Argb.Lerp(bg, container, 0.28f),
-                SkyHorizon: Argb.Lerp(white, container, 0.22f),
-                Accent: primary,
-                Secondary: Argb.Lerp(secondary, primary, 0.35f),
+                SkyTop: Argb.Lerp(paper, p, 0.22f),
+                SkyUpperMid: Argb.Lerp(paper, p, 0.13f),
+                SkyLowerMid: Argb.Lerp(paper, p, 0.06f),
+                SkyHorizon: Argb.Lerp(paper, t, 0.03f),
+                Accent: p,
+                Secondary: t,
                 Highlight: white,
-                Shade: Argb.Lerp(primary, Argb.Hex(0xFF3E2D20), 0.25f),
-                Ink: Argb.Lerp(primary, Argb.Hex(0xFF1F1612), 0.55f),
-                Veil: Argb.Lerp(white, bg, 0.65f),
+                Shade: Argb.Lerp(paper, p, 0.26f),
+                Ink: Argb.Lerp(paper, p, 0.50f),
+                Veil: paper,
                 IsDark: false,
                 IsBlack: false);
         }
 
         if (!timeSync) return baseColors;
 
-        // Gentle hour-of-day shift: warm dawn/dusk, crisp midday, deep midnight.
-        float h = (minutesOfDay % 1440) / 60f;
-        Argb tint;
-        float weight;
-        if (h < 5.5f || h >= 20.5f) { tint = Argb.Hex(0xFF0A1430); weight = scheme.IsDark ? 0.24f : 0.12f; }
-        else if (h < 8.5f) { tint = Argb.Hex(0xFFFFB673); weight = 0.16f; }
-        else if (h < 16.5f) { tint = Argb.Hex(0xFF6DB8F0); weight = 0.10f; }
-        else { tint = Argb.Hex(0xFFE87E4A); weight = 0.18f; }
-
+        var timeTint = TimeTintFor(isDark, minutesOfDay);
+        float w = isAmoled ? 0.20f : 0.30f;
         return baseColors with
         {
-            SkyTop = Argb.Lerp(baseColors.SkyTop, tint, weight * 0.7f),
-            SkyHorizon = Argb.Lerp(baseColors.SkyHorizon, tint, weight),
-            Accent = Argb.Lerp(baseColors.Accent, tint, weight * 0.45f),
+            SkyTop = isAmoled ? black : Argb.Lerp(baseColors.SkyTop, timeTint.SkyTop, w),
+            SkyUpperMid = Argb.Lerp(baseColors.SkyUpperMid, timeTint.SkyUpperMid, w),
+            SkyLowerMid = Argb.Lerp(baseColors.SkyLowerMid, timeTint.SkyLowerMid, w),
+            SkyHorizon = Argb.Lerp(baseColors.SkyHorizon, timeTint.SkyHorizon, w),
+            Secondary = Argb.Lerp(baseColors.Secondary, timeTint.AccentGlow, 0.35f),
         };
     }
 
     public static float StarVisibility(int minutesOfDay)
     {
-        float h = (minutesOfDay % 1440) / 60f;
-        if (h >= 20f || h <= 4.5f) return 1f;
-        if (h > 4.5f && h < 6.5f) return 1f - (h - 4.5f) / 2f;
-        if (h > 18f && h < 20f) return (h - 18f) / 2f;
-        return 0f;
+        var (primary, next, blend) = PhaseForMinutesOfDay(minutesOfDay);
+        return primary.StarVisibility + (next.StarVisibility - primary.StarVisibility) * blend;
     }
+
+    private static TimeSkyPalette TimeTintFor(bool isDark, int minutesOfDay)
+    {
+        var (primary, next, blend) = PhaseForMinutesOfDay(minutesOfDay);
+        var p1 = isDark ? primary.Dark : primary.Light;
+        var p2 = isDark ? next.Dark : next.Light;
+        return p1.BlendWith(p2, blend);
+    }
+
+    private static (SkyPhaseSpec Primary, SkyPhaseSpec Next, float Blend) PhaseForMinutesOfDay(int minutesOfDay)
+    {
+        int m = ((minutesOfDay % 1440) + 1440) % 1440;
+        if (m is >= 255 and < 390)
+        {
+            float t = (m - 255f) / (390f - 255f);
+            return (FajrDawn, MorningDuha, SmoothStep(t));
+        }
+        if (m is >= 390 and < 690)
+        {
+            float t = Math.Clamp((m - 600f) / 90f, 0f, 1f);
+            return (MorningDuha, MiddayDhuhr, SmoothStep(t));
+        }
+        if (m is >= 690 and < 915)
+        {
+            float t = Math.Clamp((m - 840f) / 75f, 0f, 1f);
+            return (MiddayDhuhr, GoldenAsr, SmoothStep(t));
+        }
+        if (m is >= 915 and < 1065)
+        {
+            float t = Math.Clamp((m - 990f) / 75f, 0f, 1f);
+            return (GoldenAsr, MaghribDusk, SmoothStep(t));
+        }
+        if (m is >= 1065 and < 1185)
+        {
+            float t = (m - 1065f) / (1185f - 1065f);
+            return (MaghribDusk, IshaNight, SmoothStep(t));
+        }
+        float nightT = m is >= 210 and < 255 ? (m - 210f) / 45f : 0f;
+        return (IshaNight, FajrDawn, SmoothStep(nightT));
+    }
+
+    private static float SmoothStep(float x)
+    {
+        float c = Math.Clamp(x, 0f, 1f);
+        return c * c * (3f - 2f * c);
+    }
+
+    private static Argb Opaque(Argb c) => new(255, c.R, c.G, c.B);
 }

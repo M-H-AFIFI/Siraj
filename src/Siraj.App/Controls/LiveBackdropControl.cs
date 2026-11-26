@@ -14,6 +14,12 @@ public sealed class LiveBackdropControl : UserControl
     private readonly CanvasControl _canvas = new() { IsHitTestVisible = false };
     private DispatcherQueueTimer? _timer;
     private bool _paused;
+    private bool _subscribed;
+
+    private string? _lastScene;
+    private string? _previousScene;
+    private double _fadeStartSec;
+    private const double CrossfadeSeconds = 0.26;
 
     public string? OverrideScene { get; set; }
     public bool? OverrideLive { get; set; }
@@ -31,7 +37,6 @@ public sealed class LiveBackdropControl : UserControl
     {
         IsHitTestVisible = false;
         Content = _canvas;
-        _canvas.Draw += OnDraw;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -40,24 +45,40 @@ public sealed class LiveBackdropControl : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        App.Theme.Changed += OnThemeOrSettings;
-        App.Settings.Changed += OnSettings;
-        Views.MainWindow.ActiveChanged += UpdateTimer;
-        _timer = DispatcherQueue.CreateTimer();
-        _timer.Interval = TimeSpan.FromMilliseconds(42);
-        _timer.Tick += (_, _) => _canvas.Invalidate();
+        if (!_subscribed)
+        {
+            _canvas.Draw += OnDraw;
+            App.Theme.Changed += OnThemeOrSettings;
+            App.Settings.Changed += OnSettings;
+            Views.MainWindow.ActiveChanged += UpdateTimer;
+            _subscribed = true;
+        }
+        _lastScene = LiveScenes.NormalizeId(OverrideScene ?? App.Settings.Current.LiveScene);
+        _timer ??= CreateTimer();
         UpdateTimer();
         _canvas.Invalidate();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        App.Theme.Changed -= OnThemeOrSettings;
-        App.Settings.Changed -= OnSettings;
-        Views.MainWindow.ActiveChanged -= UpdateTimer;
+        if (_subscribed)
+        {
+            _canvas.Draw -= OnDraw;
+            App.Theme.Changed -= OnThemeOrSettings;
+            App.Settings.Changed -= OnSettings;
+            Views.MainWindow.ActiveChanged -= UpdateTimer;
+            _subscribed = false;
+        }
         _timer?.Stop();
-        _timer = null;
-        _canvas.RemoveFromVisualTree();
+    }
+
+    private DispatcherQueueTimer CreateTimer()
+    {
+        var timer = DispatcherQueue.CreateTimer();
+        // 30 fps for the main backdrop, 15 fps for secondary preview cards so they don't compete.
+        timer.Interval = TimeSpan.FromMilliseconds(OverrideScene != null ? 66 : 33);
+        timer.Tick += (_, _) => _canvas.Invalidate();
+        return timer;
     }
 
     private void OnThemeOrSettings() => DispatcherQueue.TryEnqueue(() => { UpdateTimer(); _canvas.Invalidate(); });
@@ -69,6 +90,12 @@ public sealed class LiveBackdropControl : UserControl
             old.GlassUi != updated.GlassUi || old.GlassFinish != updated.GlassFinish ||
             old.ReduceMotion != updated.ReduceMotion)
         {
+            if (OverrideScene == null && !string.Equals(old.LiveScene, updated.LiveScene, StringComparison.OrdinalIgnoreCase))
+            {
+                _previousScene = LiveScenes.NormalizeId(old.LiveScene);
+                _lastScene = LiveScenes.NormalizeId(updated.LiveScene);
+                _fadeStartSec = Clock.Elapsed.TotalSeconds;
+            }
             OnThemeOrSettings();
         }
     }
@@ -91,13 +118,34 @@ public sealed class LiveBackdropControl : UserControl
         var s = App.Settings.Current;
         bool live = OverrideLive ?? s.LiveBackground;
         bool glass = OverrideGlass ?? s.GlassUi;
-        string sceneId = OverrideScene ?? s.LiveScene;
+        string sceneId = LiveScenes.NormalizeId(OverrideScene ?? s.LiveScene);
         var intensity = LiveScenes.FindIntensity(s.LiveIntensity);
         var now = DateTime.Now;
         int mins = now.Hour * 60 + now.Minute;
         var colors = LiveScenes.ColorsFor(App.Theme.Scheme, s.BlackMode, s.LiveSkySync, mins);
-        float t = Animate && Kit.Motion ? (float)Clock.Elapsed.TotalSeconds * intensity.MotionScale : 4.2f;
+        double nowSec = Clock.Elapsed.TotalSeconds;
+        float t = Animate && Kit.Motion
+            ? LiveScenes.RestSeconds + (float)nowSec * intensity.MotionScale
+            : LiveScenes.RestSeconds;
+
+        float crossfade = 1f;
+        string? prev = null;
+        if (_previousScene != null && Kit.Motion)
+        {
+            double elapsed = nowSec - _fadeStartSec;
+            if (elapsed < CrossfadeSeconds)
+            {
+                float u = Math.Clamp((float)(elapsed / CrossfadeSeconds), 0f, 1f);
+                crossfade = u * u * (3f - 2f * u);
+                prev = _previousScene;
+            }
+            else
+            {
+                _previousScene = null;
+            }
+        }
+
         Theme.LiveSceneRenderer.DrawBackdrop(args.DrawingSession, sender, w, h, sceneId, colors, intensity,
-            App.Theme.Glass, live, glass, s.LiveSkySync, mins, t, DrawVeil);
+            App.Theme.Glass, live, glass, s.LiveSkySync, mins, t, DrawVeil, prev, crossfade);
     }
 }

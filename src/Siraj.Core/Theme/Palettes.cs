@@ -12,7 +12,10 @@ public sealed record ColorScheme(
     Argb Background, Argb Surface, Argb SurfaceVariant, Argb OnBackground, Argb OnSurface, Argb OnSurfaceVariant,
     Argb Outline, Argb OutlineVariant,
     Argb SurfaceContainerLow, Argb SurfaceContainer, Argb SurfaceContainerHigh,
-    Argb Gold, bool IsDark);
+    Argb Gold, bool IsDark)
+{
+    public Argb Tertiary => Argb.Lerp(Primary, IsDark ? SurfaceVariant : OnSurface, 0.46f);
+}
 
 public static partial class Palettes
 {
