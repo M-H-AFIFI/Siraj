@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  A native Windows app for prayer times, Adhan alerts, the Madinah Mushaf, and daily devotions.
+  A Windows app for prayer times, Adhan alerts, the Madinah Mushaf, and daily devotions.
 </p>
 
 <p align="center">
@@ -28,7 +28,7 @@ Siraj is a WinUI 3 desktop app for Windows 10 (1809+) and Windows 11. Prayer tim
 - Customizable Windows taskbar prayer bar (drag anywhere across the taskbar, glass/accent/solid/text-only styles, custom colors) with an acrylic prayer schedule flyout, plus movable desktop widgets.
 - Offline Madinah Mushaf reader using King Fahd Complex page fonts in single or two-page spread view, with ayah bookmarks, search, Tafsir Al-Muyassar, Khatma tracking, and verse-by-verse or full-surah recitation.
 - Quran radio streams, daily Adhkar with counter, Tasbih, Hadith collections, the 99 Names of Allah, Fasting log, Zakat calculator, and regional Hijri calendar (Umm al-Qura and country-specific sighting/calculation modes).
-- Twelve accent palettes, light/dark/AMOLED themes, animated backgrounds, glass UI finishes, and full localization in English, Arabic (RTL), Turkish, and Urdu.
+- Twelve accent palettes, light/dark/AMOLED themes, animated backgrounds, glass UI finishes, and interface support for English, Arabic (RTL), Turkish, and Urdu.
 
 ## Screenshots
 
