@@ -7,6 +7,7 @@ internal static partial class Win32
     public const int WM_USER = 0x0400;
     public const int WM_COMMAND = 0x0111;
     public const int WM_DESTROY = 0x0002;
+    public const int WM_NCDESTROY = 0x0082;
     public const int WM_LBUTTONUP = 0x0202;
     public const int WM_LBUTTONDBLCLK = 0x0203;
     public const int WM_RBUTTONUP = 0x0205;
@@ -30,13 +31,13 @@ internal static partial class Win32
     public const uint TPM_RETURNCMD = 0x0100, TPM_RIGHTBUTTON = 0x0002, TPM_LAYOUTRTL = 0x8000, TPM_BOTTOMALIGN = 0x20;
 
     public const int GWL_STYLE = -16, GWL_EXSTYLE = -20, GWLP_HWNDPARENT = -8;
-    public const long WS_EX_TOOLWINDOW = 0x80, WS_EX_APPWINDOW = 0x40000, WS_EX_NOACTIVATE = 0x08000000, WS_EX_LAYERED = 0x80000;
+    public const long WS_EX_TOPMOST = 0x8, WS_EX_TOOLWINDOW = 0x80, WS_EX_APPWINDOW = 0x40000, WS_EX_NOACTIVATE = 0x08000000, WS_EX_LAYERED = 0x80000;
     public const long WS_CAPTION = 0xC00000, WS_THICKFRAME = 0x40000, WS_SYSMENU = 0x80000, WS_MINIMIZEBOX = 0x20000, WS_MAXIMIZEBOX = 0x10000;
     public const long WS_POPUP = 0x80000000, WS_BORDER = 0x800000, WS_DLGFRAME = 0x400000, WS_EX_WINDOWEDGE = 0x100, WS_EX_DLGMODALFRAME = 0x1;
 
     public static readonly IntPtr HWND_BOTTOM = new(1);
     public static readonly IntPtr HWND_TOPMOST = new(-1);
-    public const uint SWP_NOSIZE = 0x1, SWP_NOMOVE = 0x2, SWP_NOACTIVATE = 0x10, SWP_NOZORDER = 0x4, SWP_FRAMECHANGED = 0x20, SWP_SHOWWINDOW = 0x40;
+    public const uint SWP_NOSIZE = 0x1, SWP_NOMOVE = 0x2, SWP_NOACTIVATE = 0x10, SWP_NOZORDER = 0x4, SWP_FRAMECHANGED = 0x20, SWP_SHOWWINDOW = 0x40, SWP_NOOWNERZORDER = 0x0200;
 
     public const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
     public const int DWMWA_BORDER_COLOR = 34;
@@ -346,7 +347,54 @@ internal static partial class Win32
     public static extern bool SetWindowSubclass(IntPtr hwnd, SubclassProc proc, nuint id, nuint refData);
 
     [DllImport("comctl32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool RemoveWindowSubclass(IntPtr hwnd, SubclassProc proc, nuint id);
+
+    [DllImport("comctl32.dll")]
     public static extern IntPtr DefSubclassProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+    public const uint GW_HWNDPREV = 3;
+    public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
+    public const uint EVENT_OBJECT_REORDER = 0x8004;
+    public const uint EVENT_OBJECT_LOCATIONCHANGE = 0x800B;
+    public const int OBJID_WINDOW = 0;
+    public const int CHILDID_SELF = 0;
+    public const uint WINEVENT_OUTOFCONTEXT = 0x0;
+    public const uint WINEVENT_SKIPOWNPROCESS = 0x2;
+
+    public delegate void WinEventProc(
+        IntPtr hook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint eventThread, uint eventTime);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr SetWinEventHook(
+        uint eventMin, uint eventMax, IntPtr hmodWinEventProc, WinEventProc pfnWinEventProc,
+        uint idProcess, uint idThread, uint dwFlags);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool UnhookWinEvent(IntPtr hook);
+
+    [LibraryImport("user32.dll")]
+    public static partial IntPtr GetWindow(IntPtr hwnd, uint cmd);
+
+    [LibraryImport("user32.dll")]
+    public static partial uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool IsWindow(IntPtr hwnd);
+
+    public static bool IsWindowAbove(IntPtr hwnd, IntPtr reference)
+    {
+        if (hwnd == IntPtr.Zero || reference == IntPtr.Zero) return false;
+        var cur = GetWindow(reference, GW_HWNDPREV);
+        for (int i = 0; i < 512 && cur != IntPtr.Zero; i++)
+        {
+            if (cur == hwnd) return true;
+            cur = GetWindow(cur, GW_HWNDPREV);
+        }
+        return false;
+    }
 
     [LibraryImport("user32.dll", EntryPoint = "SystemParametersInfoW")]
     [return: MarshalAs(UnmanagedType.Bool)]

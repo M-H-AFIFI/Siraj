@@ -29,11 +29,14 @@ internal sealed class TaskbarWidgetController : IDisposable
             CloseBar();
             return;
         }
-        if (_bar == null)
+        if (_bar == null || _bar.IsClosed)
         {
+            _bar = null;
             try
             {
-                _bar = new TaskbarWidgetWindow(this, config);
+                var bar = new TaskbarWidgetWindow(this, config);
+                bar.Closed += (_, _) => { if (ReferenceEquals(_bar, bar)) _bar = null; };
+                _bar = bar;
                 _bar.SyncPosition();
             }
             catch (Exception e)
@@ -55,7 +58,17 @@ internal sealed class TaskbarWidgetController : IDisposable
         _flyout?.Refresh();
     }
 
-    public void OnTaskbarCreated() => _bar?.SyncPosition();
+    public void OnTaskbarCreated()
+    {
+        if (_disposed) return;
+        if (_bar == null || _bar.IsClosed)
+        {
+            _bar = null;
+            Apply(App.Settings.Current.TaskbarWidget);
+            return;
+        }
+        _bar.OnTaskbarCreated();
+    }
 
     public bool IsUrgentDismissed(DateOnly date, PrayerType type) =>
         _dismissedUrgentKey == $"{date:yyyy-MM-dd}_{type}";

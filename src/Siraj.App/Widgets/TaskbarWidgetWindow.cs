@@ -16,16 +16,24 @@ internal sealed class TaskbarWidgetWindow : Window
     private readonly IntPtr _hwnd;
     private readonly TaskbarPillView _pill;
     private readonly Win32.SubclassProc _subclass;
+    private readonly Win32.WinEventProc _winEventProc;
     private readonly TaskbarWidgetController _controller;
     private readonly DispatcherQueueTimer _syncTimer;
     private TaskbarWidgetConfig _config;
     private RectInt32 _lastRect;
+    private IntPtr _ownerTrayHwnd;
+    private IntPtr _fgHook;
+    private IntPtr _reorderHook;
+    private IntPtr _locationHook;
     private bool _clear = true;
     private bool _closed;
     private bool _dragging;
+    private bool _syncQueued;
+    private bool _subclassRemoved;
     private int _dragX;
 
     public IntPtr Handle => _hwnd;
+    public bool IsClosed => _closed;
     public RectInt32 Placement
     {
         get
@@ -61,6 +69,10 @@ internal sealed class TaskbarWidgetWindow : Window
         AppWindow.SetPresenter(presenter);
         try { AppWindow.IsShownInSwitchers = false; } catch { }
 
+        _syncTimer = DispatcherQueue.CreateTimer();
+        _syncTimer.Interval = TimeSpan.FromMilliseconds(900);
+        _syncTimer.Tick += (_, _) => { if (!_dragging) SyncPosition(); };
+
         _subclass = OnMessage;
         Win32.SetWindowSubclass(_hwnd, _subclass, 2, 0);
 
@@ -71,24 +83,26 @@ internal sealed class TaskbarWidgetWindow : Window
         ex = (ex | Win32.WS_EX_TOOLWINDOW) & ~(Win32.WS_EX_APPWINDOW | Win32.WS_EX_NOACTIVATE);
         Win32.SetWindowLongPtr(_hwnd, Win32.GWL_EXSTYLE, new IntPtr(ex));
         Win32.SetWindowLongPtr(_hwnd, Win32.GWL_STYLE, Win32.GetWindowLongPtr(_hwnd, Win32.GWL_STYLE));
+
+        // Own the pill by Shell_TrayWnd so clicking the taskbar keeps it above the taskbar in the
+        // same kernel Z-order update, with scoped WinEvent hooks as an immediate safety net.
+        _winEventProc = OnWinEvent;
+        _fgHook = Win32.SetWinEventHook(
+            Win32.EVENT_SYSTEM_FOREGROUND, Win32.EVENT_SYSTEM_FOREGROUND,
+            IntPtr.Zero, _winEventProc, 0, 0,
+            Win32.WINEVENT_OUTOFCONTEXT | Win32.WINEVENT_SKIPOWNPROCESS);
+        var tray = Win32.FindWindow("Shell_TrayWnd", null);
+        if (tray != IntPtr.Zero) EnsureTaskbarBinding(tray);
+
         Win32.SetWindowPos(_hwnd, Win32.HWND_TOPMOST, 0, 0, 0, 0,
-            Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE | Win32.SWP_FRAMECHANGED);
+            Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE | Win32.SWP_NOOWNERZORDER | Win32.SWP_FRAMECHANGED);
 
         ApplyBackdrop();
         _pill.ContextFlyout = BuildMenu();
-
-        _syncTimer = DispatcherQueue.CreateTimer();
-        _syncTimer.Interval = TimeSpan.FromMilliseconds(900);
-        _syncTimer.Tick += (_, _) => { if (!_dragging) SyncPosition(); };
         _syncTimer.Start();
 
         App.Theme.Changed += OnThemeChanged;
-        Closed += (_, _) =>
-        {
-            _closed = true;
-            _syncTimer.Stop();
-            App.Theme.Changed -= OnThemeChanged;
-        };
+        Closed += (_, _) => Cleanup();
     }
 
     private void ApplyBackdrop()
@@ -128,6 +142,16 @@ internal sealed class TaskbarWidgetWindow : Window
         SyncPosition();
     }
 
+    public void OnTaskbarCreated()
+    {
+        if (_closed) return;
+        _ownerTrayHwnd = IntPtr.Zero;
+        UnhookTaskbarEvents();
+        if (Win32.IsWindow(_hwnd) && Win32.GetWindowLongPtr(_hwnd, Win32.GWLP_HWNDPARENT) != IntPtr.Zero)
+            Win32.SetWindowLongPtr(_hwnd, Win32.GWLP_HWNDPARENT, IntPtr.Zero);
+        SyncPosition();
+    }
+
     private void OnDragDelta(int deltaX)
     {
         if (_closed) return;
@@ -144,7 +168,8 @@ internal sealed class TaskbarWidgetWindow : Window
         _dragX = Math.Clamp(_dragX + deltaX, minX, maxX);
         var rect = new RectInt32(_dragX, _lastRect.Y, _lastRect.Width, _lastRect.Height);
         _lastRect = rect;
-        Win32.SetWindowPos(_hwnd, Win32.HWND_TOPMOST, rect.X, rect.Y, rect.Width, rect.Height, Win32.SWP_NOACTIVATE);
+        Win32.SetWindowPos(_hwnd, Win32.HWND_TOPMOST, rect.X, rect.Y, 0, 0,
+            Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE | Win32.SWP_NOOWNERZORDER);
     }
 
     private void OnDragCompleted()
@@ -168,13 +193,21 @@ internal sealed class TaskbarWidgetWindow : Window
     {
         if (_closed || _dragging || _pill.IsInteracting) return;
         var info = Win32.QueryTaskbar();
-        if (info == null || info.Value.AutoHidden)
+        if (info == null)
         {
             if (AppWindow.IsVisible) AppWindow.Hide();
             return;
         }
 
         var tb = info.Value;
+        bool rebound = EnsureTaskbarBinding(tb.Handle);
+
+        if (tb.AutoHidden)
+        {
+            if (AppWindow.IsVisible) AppWindow.Hide();
+            return;
+        }
+
         if (_config.HideInFullscreen && Win32.IsFullscreenOnMonitor(tb.MonitorRect, _hwnd, _controller.FlyoutHandle))
         {
             if (AppWindow.IsVisible) AppWindow.Hide();
@@ -225,10 +258,134 @@ internal sealed class TaskbarWidgetWindow : Window
             AppWindow.MoveAndResize(rect);
         }
 
-        if (!AppWindow.IsVisible)
+        bool wasHidden = !AppWindow.IsVisible;
+        if (wasHidden)
             AppWindow.Show(false);
 
-        Win32.SetWindowPos(_hwnd, Win32.HWND_TOPMOST, rect.X, rect.Y, rect.Width, rect.Height, Win32.SWP_NOACTIVATE);
+        EnsureAboveTaskbar(tb.Handle, force: rebound || wasHidden);
+    }
+
+    private bool EnsureTaskbarBinding(IntPtr trayHwnd)
+    {
+        if (_closed || trayHwnd == IntPtr.Zero || !Win32.IsWindow(trayHwnd))
+            return false;
+
+        bool trayChanged = _ownerTrayHwnd != trayHwnd || !Win32.IsWindow(_ownerTrayHwnd);
+        if (trayChanged)
+        {
+            UnhookTaskbarEvents();
+            _ownerTrayHwnd = trayHwnd;
+            uint trayTid = Win32.GetWindowThreadProcessId(trayHwnd, out uint trayPid);
+            if (trayPid != 0 && trayTid != 0)
+            {
+                const uint flags = Win32.WINEVENT_OUTOFCONTEXT | Win32.WINEVENT_SKIPOWNPROCESS;
+                _reorderHook = Win32.SetWinEventHook(
+                    Win32.EVENT_OBJECT_REORDER, Win32.EVENT_OBJECT_REORDER,
+                    IntPtr.Zero, _winEventProc, trayPid, trayTid, flags);
+                _locationHook = Win32.SetWinEventHook(
+                    Win32.EVENT_OBJECT_LOCATIONCHANGE, Win32.EVENT_OBJECT_LOCATIONCHANGE,
+                    IntPtr.Zero, _winEventProc, trayPid, trayTid, flags);
+            }
+        }
+
+        if (Win32.GetWindowLongPtr(_hwnd, Win32.GWLP_HWNDPARENT) != trayHwnd)
+        {
+            Win32.SetWindowLongPtr(_hwnd, Win32.GWLP_HWNDPARENT, trayHwnd);
+            return true;
+        }
+
+        return trayChanged;
+    }
+
+    private void EnsureAboveTaskbar(IntPtr trayHwnd, bool force = false)
+    {
+        if (_closed || trayHwnd == IntPtr.Zero || !AppWindow.IsVisible) return;
+
+        bool isTopmost = (Win32.GetWindowLongPtr(_hwnd, Win32.GWL_EXSTYLE).ToInt64() & Win32.WS_EX_TOPMOST) != 0;
+        if (!force && isTopmost && Win32.IsWindowAbove(_hwnd, trayHwnd))
+            return;
+
+        Win32.SetWindowPos(_hwnd, Win32.HWND_TOPMOST, 0, 0, 0, 0,
+            Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE | Win32.SWP_NOOWNERZORDER);
+    }
+
+    private void QueueSyncPosition()
+    {
+        if (_closed || _syncQueued) return;
+        _syncQueued = true;
+        if (!DispatcherQueue.TryEnqueue(() =>
+        {
+            _syncQueued = false;
+            if (!_closed && !_dragging) SyncPosition();
+        }))
+        {
+            _syncQueued = false;
+        }
+    }
+
+    private void OnWinEvent(
+        IntPtr hook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint eventThread, uint eventTime)
+    {
+        if (_closed || _dragging) return;
+        try
+        {
+            if (eventType == Win32.EVENT_SYSTEM_FOREGROUND)
+            {
+                if (hwnd != IntPtr.Zero && hwnd == _ownerTrayHwnd)
+                    EnsureAboveTaskbar(_ownerTrayHwnd);
+                if (_config.HideInFullscreen)
+                    QueueSyncPosition();
+                return;
+            }
+            if (eventType == Win32.EVENT_OBJECT_REORDER)
+            {
+                if (idObject == Win32.OBJID_WINDOW && _ownerTrayHwnd != IntPtr.Zero)
+                    EnsureAboveTaskbar(_ownerTrayHwnd);
+                return;
+            }
+            if (eventType == Win32.EVENT_OBJECT_LOCATIONCHANGE
+                && hwnd == _ownerTrayHwnd && idObject == Win32.OBJID_WINDOW && idChild == Win32.CHILDID_SELF)
+            {
+                QueueSyncPosition();
+            }
+        }
+        catch (Exception e)
+        {
+            if (!_closed) Log.Error("taskbar win event", e);
+        }
+    }
+
+    private void UnhookTaskbarEvents()
+    {
+        if (_reorderHook != IntPtr.Zero)
+        {
+            Win32.UnhookWinEvent(_reorderHook);
+            _reorderHook = IntPtr.Zero;
+        }
+        if (_locationHook != IntPtr.Zero)
+        {
+            Win32.UnhookWinEvent(_locationHook);
+            _locationHook = IntPtr.Zero;
+        }
+    }
+
+    private void Cleanup()
+    {
+        _closed = true;
+        _syncTimer.Stop();
+        App.Theme.Changed -= OnThemeChanged;
+        if (_fgHook != IntPtr.Zero)
+        {
+            Win32.UnhookWinEvent(_fgHook);
+            _fgHook = IntPtr.Zero;
+        }
+        UnhookTaskbarEvents();
+        if (_ownerTrayHwnd != IntPtr.Zero)
+        {
+            if (Win32.IsWindow(_hwnd))
+                Win32.SetWindowLongPtr(_hwnd, Win32.GWLP_HWNDPARENT, IntPtr.Zero);
+            _ownerTrayHwnd = IntPtr.Zero;
+        }
     }
 
     private MenuFlyout BuildMenu()
@@ -289,7 +446,21 @@ internal sealed class TaskbarWidgetWindow : Window
         }
         if (msg == Win32.WM_DISPLAYCHANGE || msg == 0x02E0 /* WM_DPICHANGED */)
         {
-            DispatcherQueue.TryEnqueue(SyncPosition);
+            QueueSyncPosition();
+        }
+        else if (msg == Win32.WM_DESTROY)
+        {
+            Cleanup();
+        }
+        else if (msg == Win32.WM_NCDESTROY)
+        {
+            Cleanup();
+            if (!_subclassRemoved)
+            {
+                _subclassRemoved = true;
+                Win32.RemoveWindowSubclass(hwnd, _subclass, 2);
+            }
+            return Win32.DefSubclassProc(hwnd, msg, wParam, lParam);
         }
         return Win32.DefSubclassProc(hwnd, msg, wParam, lParam);
     }

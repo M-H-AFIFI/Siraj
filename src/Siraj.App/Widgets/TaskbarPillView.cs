@@ -42,11 +42,11 @@ internal sealed class TaskbarPillView : UserControl
     private readonly TextBlock _timeText = MakeLine(10.0, false);
     private readonly TextBlock _prefixText = MakeLine(10.0, false);
     private readonly TextBlock _countdownText = MakeLine(11.5, true);
-    private readonly FontIcon _icon = new()
+    private readonly SirajVectorIcon _icon = new()
     {
-        FontFamily = (FontFamily)Application.Current.Resources["SirajIcons"],
-        Glyph = "\uE916",
-        FontSize = 12,
+        IconKey = "timer",
+        Width = 13,
+        Height = 13,
         VerticalAlignment = VerticalAlignment.Center,
     };
     private readonly StackPanel _leftCol = new() { VerticalAlignment = VerticalAlignment.Center, Spacing = 0 };
@@ -280,7 +280,7 @@ internal sealed class TaskbarPillView : UserControl
                 _prayerText.FontSize = 11.5 * s;
                 _timeText.FontSize = 11.0 * s;
                 _countdownText.FontSize = 11.5 * s;
-                _icon.FontSize = 12.0 * s;
+                _icon.Width = _icon.Height = 13.0 * s;
                 _content.Spacing = 6 * s;
                 _shell.Padding = new Thickness(padX, 3, padX, 3);
                 _content.Children.Add(_icon);
@@ -384,7 +384,7 @@ internal sealed class TaskbarPillView : UserControl
         _timeText.Text = _config.Layout == "compact" ? $"· {timeStr} ·" : timeStr;
         _prefixText.Text = prefix;
         _countdownText.Text = countdown;
-        _icon.Glyph = _urgent ? "\uEA8F" : "\uE916";
+        _icon.IconKey = _urgent ? "notifications" : "timer";
 
         ApplyPalette();
         UpdatePulseTimer();
@@ -609,7 +609,7 @@ internal sealed class TaskbarPillView : UserControl
         _countdownText.Foreground = pb;
         _timeText.Foreground = mb;
         _prefixText.Foreground = mb;
-        _icon.Foreground = new SolidColorBrush(iconCol);
+        _icon.Brush = new SolidColorBrush(iconCol);
     }
 
     private static string FormatSpan(TimeSpan span, bool showSeconds, bool eastern, string lang)

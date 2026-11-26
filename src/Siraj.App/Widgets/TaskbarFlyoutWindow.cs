@@ -29,11 +29,11 @@ internal sealed class TaskbarFlyoutWindow : Window
     private readonly Grid _root = new();
     private readonly StackPanel _body = new() { Spacing = 8 };
     private readonly TextBlock _titleText = new() { FontSize = 14.5, FontWeight = FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center };
-    private readonly Button _muteBtn = MakeIconButton("\uE767");
-    private readonly Button _openBtn = MakeIconButton("\uE8A7");
-    private readonly Button _refreshBtn = MakeIconButton("\uE72C");
-    private readonly Button _settingsBtn = MakeIconButton("\uE713");
-    private readonly FontIcon _muteIcon = new() { FontFamily = (FontFamily)Application.Current.Resources["SirajIcons"], Glyph = "\uE767", FontSize = 14 };
+    private readonly Button _muteBtn = MakeIconButton("volume_up");
+    private readonly Button _openBtn = MakeIconButton("open_in_new");
+    private readonly Button _refreshBtn = MakeIconButton("refresh");
+    private readonly Button _settingsBtn = MakeIconButton("nav_settings_outlined");
+    private readonly SirajVectorIcon _muteIcon = SirajVectorIcon.Make("volume_up", 16);
     private readonly TextBlock _weekdayText = new() { FontSize = 13, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
     private readonly TextBlock _hijriText = new() { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Center };
     private readonly TextBlock _locationText = new() { FontSize = 11.5, HorizontalAlignment = HorizontalAlignment.Center, Opacity = 0.78 };
@@ -54,6 +54,7 @@ internal sealed class TaskbarFlyoutWindow : Window
     private readonly Win32.SubclassProc _subclass;
     private string _prevNonSilentAlert = "azan";
     private bool _closing;
+    private bool _subclassRemoved;
     private long _shownAtTick;
     private long _hiddenAtTick;
 #if DEBUG
@@ -197,7 +198,7 @@ internal sealed class TaskbarFlyoutWindow : Window
         Win32.SetWindowPos(_hwnd, Win32.HWND_TOPMOST, x, y, pw, ph, Win32.SWP_SHOWWINDOW);
         Activate();
         Win32.SetForegroundWindow(_hwnd);
-        Kit.AnimateIn(_frame, 0, 8, 1f, 130);
+        Kit.AnimateIn(_frame, 0, 6, 1f, 110);
     }
 
     public void HideFlyout()
@@ -224,7 +225,7 @@ internal sealed class TaskbarFlyoutWindow : Window
         ToolTipService.SetToolTip(_openBtn, loc["win_tray_open"]);
 
         bool muted = App.Settings.Current.AlertType == "silent";
-        _muteIcon.Glyph = muted ? "\uE74F" : "\uE767";
+        _muteIcon.IconKey = muted ? "volume_off" : "volume_up";
         ToolTipService.SetToolTip(_muteBtn, loc[muted ? "win_taskbar_unmute" : "win_taskbar_mute"]);
 
         var today = clock.Place?.Today(now) ?? DateOnly.FromDateTime(DateTime.Now);
@@ -282,11 +283,11 @@ internal sealed class TaskbarFlyoutWindow : Window
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        var icon = new FontIcon
+        var icon = new SirajVectorIcon
         {
-            FontFamily = (FontFamily)Application.Current.Resources["SirajIcons"],
-            Glyph = playing ? "\uEA8F" : urgent ? "\uE7BA" : passed ? "\uE73E" : "\uE823",
-            FontSize = 13.5,
+            IconKey = playing ? "notifications" : urgent ? "warning" : passed ? "check" : "schedule",
+            Width = 15,
+            Height = 15,
             VerticalAlignment = VerticalAlignment.Center,
             Opacity = passed ? 0.55 : 0.92,
         };
@@ -364,7 +365,7 @@ internal sealed class TaskbarFlyoutWindow : Window
             Color rowFg = cfg.UrgentStyle == "accent" ? ThemeService.ToColor(tbScheme.OnPrimary) : UrgentRowFg;
             border.Background = new SolidColorBrush(rowBg);
             var fg = new SolidColorBrush(rowFg);
-            icon.Foreground = fg;
+            icon.Brush = fg;
             name.Foreground = fg;
             time.Foreground = fg;
         }
@@ -375,14 +376,14 @@ internal sealed class TaskbarFlyoutWindow : Window
             border.BorderBrush = new SolidColorBrush(ThemeService.ToColor(scheme.Primary, 0.42f));
             border.BorderThickness = new Thickness(1);
             var fg = new SolidColorBrush(ThemeService.ToColor(App.Theme.Scheme.OnSurface));
-            icon.Foreground = new SolidColorBrush(ThemeService.ToColor(scheme.Primary));
+            icon.Brush = new SolidColorBrush(ThemeService.ToColor(scheme.Primary));
             name.Foreground = fg;
             time.Foreground = fg;
         }
         else
         {
             var fg = new SolidColorBrush(ThemeService.ToColor(App.Theme.Scheme.OnSurface));
-            icon.Foreground = fg;
+            icon.Brush = fg;
             name.Foreground = fg;
             time.Foreground = fg;
         }
@@ -421,9 +422,11 @@ internal sealed class TaskbarFlyoutWindow : Window
         _verseText.Foreground = onSurface;
 
         bool mutedAlert = App.Settings.Current.AlertType == "silent";
-        _muteIcon.Foreground = mutedAlert ? new SolidColorBrush(Color.FromArgb(255, 234, 179, 8)) : onSurface;
+        _muteIcon.Brush = mutedAlert ? new SolidColorBrush(Color.FromArgb(255, 234, 179, 8)) : onSurface;
         foreach (var btn in new[] { _settingsBtn, _refreshBtn, _openBtn })
-            btn.Foreground = onSurface;
+        {
+            if (btn.Content is SirajVectorIcon vi) vi.Brush = onSurface;
+        }
     }
 
     private IntPtr OnMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam, nuint id, nuint data)
@@ -441,17 +444,21 @@ internal sealed class TaskbarFlyoutWindow : Window
             }
             return result;
         }
+        if (msg == Win32.WM_NCDESTROY)
+        {
+            if (!_subclassRemoved)
+            {
+                _subclassRemoved = true;
+                Win32.RemoveWindowSubclass(hwnd, _subclass, 3);
+            }
+            return Win32.DefSubclassProc(hwnd, msg, wParam, lParam);
+        }
         return Win32.DefSubclassProc(hwnd, msg, wParam, lParam);
     }
 
-    private static Button MakeIconButton(string glyph) => new()
+    private static Button MakeIconButton(string iconKey) => new()
     {
-        Content = new FontIcon
-        {
-            FontFamily = (FontFamily)Application.Current.Resources["SirajIcons"],
-            Glyph = glyph,
-            FontSize = 14,
-        },
+        Content = SirajVectorIcon.Make(iconKey, 16),
         Width = 30,
         Height = 30,
         Padding = new Thickness(0),
