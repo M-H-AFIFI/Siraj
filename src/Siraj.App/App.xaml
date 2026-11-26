@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="Siraj.App.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:theme="using:Siraj.App.Theme">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- The accent WinUI's own controls draw with; ThemeService sets it from the palette. -->
+            <Color x:Key="SystemAccentColor">#FF059669</Color>
+            <Color x:Key="SystemAccentColorDark1">#FF059669</Color>
+            <Color x:Key="SystemAccentColorDark2">#FF047854</Color>
+            <Color x:Key="SystemAccentColorDark3">#FF035A3F</Color>
+            <Color x:Key="SystemAccentColorLight1">#FF1DB581</Color>
+            <Color x:Key="SystemAccentColorLight2">#FF34D399</Color>
+            <Color x:Key="SystemAccentColorLight3">#FF71E0B8</Color>
+
+            <!-- Core palette brushes; ThemeService updates their colours in place. -->
+            <SolidColorBrush x:Key="SirajPrimaryBrush" Color="#059669" />
+            <SolidColorBrush x:Key="SirajOnPrimaryBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="SirajPrimaryContainerBrush" Color="#D1FAE5" />
+            <SolidColorBrush x:Key="SirajOnPrimaryContainerBrush" Color="#064E3B" />
+            <SolidColorBrush x:Key="SirajSecondaryContainerBrush" Color="#D9F2E9" />
+            <SolidColorBrush x:Key="SirajOnSecondaryContainerBrush" Color="#1A1A1A" />
+            <SolidColorBrush x:Key="SirajBackgroundBrush" Color="#F9FAFB" />
+            <SolidColorBrush x:Key="SirajSurfaceBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="SirajSurfaceVariantBrush" Color="#F3F4F6" />
+            <SolidColorBrush x:Key="SirajSurfaceContainerLowBrush" Color="#FCFCFD" />
+            <SolidColorBrush x:Key="SirajSurfaceContainerBrush" Color="#F9FAFB" />
+            <SolidColorBrush x:Key="SirajSurfaceContainerHighBrush" Color="#F4F5F7" />
+            <SolidColorBrush x:Key="SirajOnSurfaceBrush" Color="#111827" />
+            <SolidColorBrush x:Key="SirajOnSurfaceVariantBrush" Color="#4D5562" />
+            <SolidColorBrush x:Key="SirajOutlineBrush" Color="#888C93" />
+            <SolidColorBrush x:Key="SirajOutlineVariantBrush" Color="#CFD1D4" />
+            <SolidColorBrush x:Key="SirajGoldBrush" Color="#8A6A16" />
+
+            <!-- Liquid Glass & tinted accent brushes; ThemeService updates GPU blur & stops in place. -->
+            <theme:SirajGlassBrush x:Key="SirajGlassCardBrush" Role="Card" />
+            <theme:SirajGlassBrush x:Key="SirajGlassElevatedBrush" Role="Elevated" />
+            <theme:SirajGlassBrush x:Key="SirajGlassPillBrush" Role="Pill" />
+            <LinearGradientBrush x:Key="SirajGlassBorderBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#FAFFFFFF" Offset="0" />
+                <GradientStop Color="#D1FFFFFF" Offset="0.22" />
+                <GradientStop Color="#6BFFFFFF" Offset="0.50" />
+                <GradientStop Color="#29059669" Offset="0.78" />
+                <GradientStop Color="#42059669" Offset="1" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="SirajGlassCardHoverBrush" Color="#E0FFFFFF" />
+            <SolidColorBrush x:Key="SirajPrimarySoftBrush" Color="#1F059669" />
+            <SolidColorBrush x:Key="SirajPrimaryBorderBrush" Color="#47059669" />
+            <SolidColorBrush x:Key="SirajGoldSoftBrush" Color="#24D4AF37" />
+            <SolidColorBrush x:Key="SirajDividerBrush" Color="#1F059669" />
+
+            <!-- Outfit, the UI face; Arabic and Urdu fall back cleanly to Segoe UI. -->
+            <FontFamily x:Key="SirajFont">ms-appx:///Assets/Fonts/Outfit.ttf#Outfit, Segoe UI Variable Text, Segoe UI</FontFamily>
+            <FontFamily x:Key="SirajIcons">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+            <FontFamily x:Key="SirajArabicFont">ms-appx:///Assets/Quran/quran_amiri.ttf#Amiri</FontFamily>
+            <FontFamily x:Key="SirajQuranFont">ms-appx:///Assets/Quran/quran_digitalkhatt_v2.otf#DigitalKhatt New Madina</FontFamily>
+
+            <x:Double x:Key="SirajCardRadiusValue">24</x:Double>
+            <CornerRadius x:Key="SirajCardRadius">24</CornerRadius>
+            <CornerRadius x:Key="SirajRowRadius">16</CornerRadius>
+
+            <Style x:Key="SirajCard" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource SirajGlassCardBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource SirajGlassBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="{StaticResource SirajCardRadius}" />
+                <Setter Property="Padding" Value="20" />
+            </Style>
+
+            <Style x:Key="SirajTitle" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource SirajFont}" />
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="Foreground" Value="{ThemeResource SirajOnSurfaceBrush}" />
+            </Style>
+
+            <Style x:Key="SirajHeading" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource SirajFont}" />
+                <Setter Property="FontSize" Value="17" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="Foreground" Value="{ThemeResource SirajOnSurfaceBrush}" />
+            </Style>
+
+            <Style x:Key="SirajBody" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource SirajFont}" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="Foreground" Value="{ThemeResource SirajOnSurfaceBrush}" />
+            </Style>
+
+            <Style x:Key="SirajCaption" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource SirajFont}" />
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="Foreground" Value="{ThemeResource SirajOnSurfaceVariantBrush}" />
+            </Style>
+
+            <Style x:Key="SirajSectionHeader" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource SirajFont}" />
+                <Setter Property="FontSize" Value="14.5" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="Margin" Value="4,22,4,8" />
+                <Setter Property="Foreground" Value="{ThemeResource SirajPrimaryBrush}" />
+            </Style>
+
+            <Style x:Key="SirajPrimaryButton" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="Padding" Value="20,10" />
+                <Setter Property="FontFamily" Value="{StaticResource SirajFont}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="SirajButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="CornerRadius" Value="14" />
+                <Setter Property="Padding" Value="16,8" />
+                <Setter Property="FontFamily" Value="{StaticResource SirajFont}" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

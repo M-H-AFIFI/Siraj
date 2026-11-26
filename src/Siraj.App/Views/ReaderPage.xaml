@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Siraj.App.Views.ReaderPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:quran="using:Siraj.App.Quran"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
+    Background="Transparent"
+    KeyDown="OnKeyDown">
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition x:Name="SideColumn" Width="0" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Where the reader is, and how the pages are shown. -->
+        <Border Grid.ColumnSpan="2" Margin="16,6,16,8" CornerRadius="20" Padding="12,8,12,8"
+                Background="{ThemeResource SirajGlassElevatedBrush}" BorderBrush="{ThemeResource SirajGlassBorderBrush}" BorderThickness="1">
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="BackButton" Style="{StaticResource SirajButton}" Click="OnBack" Padding="10,6" CornerRadius="14">
+                    <FontIcon x:Name="BackIcon" FontFamily="{StaticResource SirajIcons}" Glyph="&#xE72B;" FontSize="14" />
+                </Button>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="0">
+                    <TextBlock x:Name="TitleText" Style="{StaticResource SirajHeading}" FontSize="18" />
+                    <TextBlock x:Name="SubtitleText" Style="{StaticResource SirajCaption}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <NumberBox x:Name="PageBox" Minimum="1" Maximum="604" Width="110" SpinButtonPlacementMode="Compact" ValueChanged="OnPageBox" />
+                    <ToggleButton x:Name="SpreadToggle" Style="{StaticResource DefaultToggleButtonStyle}" CornerRadius="12" Click="OnSpread">
+                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE736;" FontSize="15" />
+                    </ToggleButton>
+                    <DropDownButton x:Name="PaperButton" CornerRadius="12">
+                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE790;" FontSize="15" />
+                        <DropDownButton.Flyout>
+                            <MenuFlyout x:Name="PaperMenu" Placement="BottomEdgeAlignedRight" />
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- The open Mushaf: the right-hand page is the odd one, as in print, the two meeting at the spine.
+             A leaf being turned is drawn on the layer over them. -->
+        <Grid x:Name="Pages" Grid.Row="1" Padding="16,0,16,8" FlowDirection="LeftToRight" Background="Transparent"
+              PointerWheelChanged="OnWheel" PointerPressed="OnPagesPressed" PointerMoved="OnPagesMoved"
+              PointerReleased="OnPagesReleased" PointerCanceled="OnPagesReleased" PointerCaptureLost="OnPagesReleased">
+            <StackPanel x:Name="Spread" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="0">
+                <quran:MushafPageView x:Name="LeftPage" />
+                <quran:MushafPageView x:Name="RightPage" />
+            </StackPanel>
+            <canvas:CanvasControl x:Name="TurnLayer" Draw="OnTurnDraw" ClearColor="Transparent" IsHitTestVisible="False" Visibility="Collapsed" />
+        </Grid>
+
+        <!-- The chosen ayah: its text, its tafsir, and what can be done with it. -->
+        <Border x:Name="Side" Grid.Row="1" Grid.Column="1" Style="{StaticResource SirajCard}" Margin="0,0,16,8" Padding="0" Visibility="Collapsed">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid Padding="18,14,10,6">
+                    <TextBlock x:Name="SideTitle" Style="{StaticResource SirajHeading}" VerticalAlignment="Center" />
+                    <Button x:Name="CloseSideButton" HorizontalAlignment="Right" Click="OnCloseSide" Padding="8,6" Background="Transparent" BorderThickness="0">
+                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE711;" FontSize="12" />
+                    </Button>
+                </Grid>
+                <ScrollViewer Grid.Row="1" Padding="18,0,18,0">
+                    <StackPanel Spacing="12" Padding="0,0,0,12">
+                        <TextBlock x:Name="AyahText" FontFamily="ms-appx:///Assets/Quran/quran_digitalkhatt_v2.otf#DigitalKhatt New Madina"
+                                   FontSize="26" TextWrapping="Wrap" FlowDirection="RightToLeft" LineHeight="58"
+                                   Foreground="{ThemeResource SirajOnSurfaceBrush}" IsTextSelectionEnabled="True" />
+                        <TextBlock x:Name="TafsirTitle" Style="{StaticResource SirajCaption}" FontWeight="SemiBold" />
+                        <TextBlock x:Name="TafsirText" Style="{StaticResource SirajBody}" FlowDirection="RightToLeft" FontSize="15" LineHeight="26" IsTextSelectionEnabled="True" />
+                    </StackPanel>
+                </ScrollViewer>
+                <Grid Grid.Row="2" Padding="18,8,18,16" ColumnSpacing="8" RowSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Button x:Name="PlayFromButton" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" Style="{StaticResource SirajPrimaryButton}" Click="OnPlayFrom" />
+                    <Button x:Name="BookmarkButton" Grid.Row="1" HorizontalAlignment="Stretch" Style="{StaticResource SirajButton}" Click="OnBookmark" />
+                    <Button x:Name="CopyButton" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" Style="{StaticResource SirajButton}" Click="OnCopy" />
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- The recitation. -->
+        <Border Grid.Row="2" Grid.ColumnSpan="2" Margin="16,0,16,12" CornerRadius="22" Padding="14,9"
+                Background="{ThemeResource SirajGlassElevatedBrush}" BorderBrush="{ThemeResource SirajGlassBorderBrush}" BorderThickness="1">
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="6" FlowDirection="LeftToRight" VerticalAlignment="Center">
+                    <Button x:Name="PreviousButton" Click="OnPrevious" Padding="10,8" CornerRadius="14">
+                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE892;" FontSize="14" />
+                    </Button>
+                    <Button x:Name="PlayButton" Click="OnPlay" Style="{StaticResource AccentButtonStyle}" Padding="14,8" CornerRadius="18">
+                        <FontIcon x:Name="PlayIcon" FontFamily="{StaticResource SirajIcons}" Glyph="&#xE768;" FontSize="14" />
+                    </Button>
+                    <Button x:Name="NextButton" Click="OnNext" Padding="10,8" CornerRadius="14">
+                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE893;" FontSize="14" />
+                    </Button>
+                    <Button x:Name="StopButton" Click="OnStop" Padding="10,8" CornerRadius="14">
+                        <FontIcon FontFamily="{StaticResource SirajIcons}" Glyph="&#xE71A;" FontSize="14" />
+                    </Button>
+                </StackPanel>
+                <TextBlock x:Name="NowText" Grid.Column="1" Style="{StaticResource SirajCaption}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <CheckBox x:Name="ContinuousBox" Click="OnContinuous" MinWidth="0" />
+                    <ContentControl x:Name="ReciterAvatarSlot" VerticalAlignment="Center" />
+                    <ComboBox x:Name="ReciterBox" Width="240" SelectionChanged="OnReciter" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

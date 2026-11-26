@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Siraj.App.Controls.SkyCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
+    xmlns:local="using:Siraj.App.Controls">
+    <UserControl.Resources>
+        <Style x:Key="CalendarCapsuleButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid x:Name="Card" CornerRadius="32" Height="380" Background="#FF0A1530">
+        <!-- The sky runs east to west and never mirrors in RTL. -->
+        <canvas:CanvasControl x:Name="Canvas" Draw="OnDraw" FlowDirection="LeftToRight" ClearColor="#FF0A1530" />
+
+        <!-- Top-right (physical) floating period badge. -->
+        <Grid VerticalAlignment="Top" Padding="18,14" FlowDirection="LeftToRight" IsHitTestVisible="False">
+            <Border x:Name="PhaseChip" HorizontalAlignment="Right" CornerRadius="20" Padding="12,6"
+                    Background="#59000000" BorderBrush="#52FFFFFF" BorderThickness="0.8">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <TextBlock x:Name="PhaseText" FontFamily="{StaticResource SirajFont}" FontSize="11.5" FontWeight="Bold"
+                               Foreground="#F2FFFFFF" VerticalAlignment="Center" TextWrapping="NoWrap" />
+                    <FontIcon x:Name="PhaseIcon" FontFamily="{StaticResource SirajIcons}" Glyph="&#xE706;" FontSize="13"
+                              Foreground="#FFFFD54F" RenderTransformOrigin="0.5,0.5" VerticalAlignment="Center">
+                        <FontIcon.RenderTransform>
+                            <RotateTransform x:Name="PhaseIconRotation" />
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Centered prayer hero below the arc apex. -->
+        <StackPanel x:Name="Heading" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,48,20,10">
+            <Border x:Name="LabelBadge" HorizontalAlignment="Center" CornerRadius="12" Padding="8,2" Background="Transparent">
+                <Grid HorizontalAlignment="Center">
+                    <Border x:Name="LabelShadowHost" IsHitTestVisible="False" />
+                    <TextBlock x:Name="LabelText" FontFamily="{StaticResource SirajFont}" FontSize="11" FontWeight="Bold"
+                               Foreground="#D9FFFFFF" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="NoWrap" />
+                </Grid>
+            </Border>
+
+            <Grid x:Name="NameHost" HorizontalAlignment="Center" Margin="0,2,0,0">
+                <Border x:Name="NameShadowHost" IsHitTestVisible="False" />
+                <TextBlock x:Name="NameText" FontFamily="{StaticResource SirajFont}" FontSize="26" FontWeight="Black"
+                           Foreground="White" HorizontalAlignment="Center" TextAlignment="Center"
+                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+            </Grid>
+
+            <Grid x:Name="TimeHost" HorizontalAlignment="Center" Margin="0,2,0,0">
+                <Border x:Name="TimeShadowHost" IsHitTestVisible="False" />
+                <TextBlock x:Name="PrayerTimeText" FontFamily="{StaticResource SirajFont}" FontSize="34" FontWeight="Black"
+                           Foreground="White" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="NoWrap" />
+            </Grid>
+
+            <Grid x:Name="CountdownHost" HorizontalAlignment="Center" Margin="0,6,0,0">
+                <Border x:Name="AzanGlow" CornerRadius="20" Background="#FFFF9800" Opacity="0"
+                        Visibility="Collapsed" IsHitTestVisible="False" />
+                <Border x:Name="CountdownPill" HorizontalAlignment="Center" CornerRadius="20" Padding="16,7"
+                        Background="#61000000" BorderBrush="#66FFD54F" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <FontIcon x:Name="CountdownIcon" FontFamily="{StaticResource SirajIcons}" Glyph="&#xE916;" FontSize="16"
+                                  Foreground="#FFE5B558" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock x:Name="CountdownBefore" FontFamily="{StaticResource SirajFont}" FontSize="12.5" FontWeight="Black"
+                                       LineStackingStrategy="MaxHeight" Foreground="White" VerticalAlignment="Center"
+                                       TextWrapping="NoWrap" Visibility="Collapsed" />
+                            <local:RollingText x:Name="CountdownText" FontFamily="{StaticResource SirajFont}" FontSize="12.5"
+                                               FontWeight="Black" Foreground="White" VerticalAlignment="Center" Margin="0,-2" />
+                            <TextBlock x:Name="CountdownAfter" FontFamily="{StaticResource SirajFont}" FontSize="12.5" FontWeight="Black"
+                                       LineStackingStrategy="MaxHeight" Foreground="White" VerticalAlignment="Center"
+                                       TextWrapping="NoWrap" Visibility="Collapsed" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Button x:Name="LocationButton" Visibility="Collapsed" HorizontalAlignment="Center" Margin="0,8,0,0"
+                    Style="{StaticResource SirajPrimaryButton}" Click="OnSetLocation" />
+        </StackPanel>
+
+        <!-- Floating calendar capsule over the reflecting pool. -->
+        <StackPanel x:Name="CalendarFooter" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="16,0,16,12" Spacing="3">
+            <Button x:Name="GregorianButton" HorizontalAlignment="Center" Style="{StaticResource CalendarCapsuleButton}"
+                    Click="OnOpenCalendar">
+                <Grid Padding="8,2">
+                    <Border x:Name="GregorianShadowHost" IsHitTestVisible="False" />
+                    <TextBlock x:Name="GregorianText" FontFamily="{StaticResource SirajFont}" FontSize="11.5" FontWeight="SemiBold"
+                               Foreground="#E0FFFFFF" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="NoWrap" />
+                </Grid>
+            </Button>
+
+            <Button x:Name="HijriCapsule" HorizontalAlignment="Center" Style="{StaticResource CalendarCapsuleButton}"
+                    Click="OnOpenCalendar">
+                <Grid CornerRadius="14" Background="#66070B14">
+                    <!-- Soft outer gold aura. -->
+                    <Border CornerRadius="14" BorderThickness="2.2" BorderBrush="#1BE5B558" IsHitTestVisible="False" />
+                    <!-- Glassmorphic specular gold border and horizontal gold sheen. -->
+                    <Border x:Name="HijriBorder" CornerRadius="14" BorderThickness="1" Padding="10,4,12,4">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                <GradientStop Color="#1FE5B558" Offset="0" />
+                                <GradientStop Color="#0FE5B558" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.BorderBrush>
+                            <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                <GradientStop Color="#53E5B558" Offset="0" />
+                                <GradientStop Color="#2EE5B558" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.BorderBrush>
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <Grid Width="13" Height="13" VerticalAlignment="Center" FlowDirection="LeftToRight">
+                                <Ellipse Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                         Fill="#38E5B558" />
+                                <Path x:Name="HijriMoonLit" Width="13" Height="13" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                      Fill="#FFE5B558" />
+                            </Grid>
+                            <Grid VerticalAlignment="Center">
+                                <Border x:Name="HijriShadowHost" IsHitTestVisible="False" />
+                                <TextBlock x:Name="HijriCapsuleText" FontFamily="{StaticResource SirajFont}" FontSize="12" FontWeight="Bold"
+                                           Foreground="#FFE5B558" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="NoWrap" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Button>
+        </StackPanel>
+
+        <!-- Outer 1px border drawn over the scene so the inner rim light meets it flush. -->
+        <Border x:Name="CardBorder" CornerRadius="32" BorderThickness="1" IsHitTestVisible="False" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Siraj.App.Views.SetupPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Transparent">
+    <Grid Padding="24">
+        <Border Style="{StaticResource SirajCard}" MaxWidth="680" Padding="36,30" VerticalAlignment="Center">
+            <Grid RowSpacing="18">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <StackPanel Spacing="8">
+                    <Border x:Name="ProgressTrack" Height="5" CornerRadius="2.5" Background="{ThemeResource SirajSurfaceContainerHighBrush}"
+                            HorizontalAlignment="Stretch" Margin="0,0,0,4">
+                        <Border x:Name="ProgressFill" Height="5" CornerRadius="2.5" Background="{ThemeResource SirajPrimaryBrush}"
+                                HorizontalAlignment="Left" />
+                    </Border>
+                    <TextBlock x:Name="StepText" Style="{StaticResource SirajCaption}" />
+                    <TextBlock x:Name="TitleText" Style="{StaticResource SirajTitle}" TextWrapping="Wrap" />
+                    <TextBlock x:Name="DescText" Style="{StaticResource SirajCaption}" FontSize="14" />
+                </StackPanel>
+                <ScrollViewer Grid.Row="1" MaxHeight="440" VerticalScrollBarVisibility="Auto">
+                    <ContentControl x:Name="StepBody" HorizontalContentAlignment="Stretch" />
+                </ScrollViewer>
+                <Grid Grid.Row="2">
+                    <Button x:Name="BackButton" Style="{StaticResource SirajButton}" Click="OnBack" />
+                    <Button x:Name="NextButton" Style="{StaticResource SirajPrimaryButton}" HorizontalAlignment="Right" Click="OnNext" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>
