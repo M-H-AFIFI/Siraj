@@ -31,5 +31,4 @@ $env:SIRAJ_MUTE = "1"
 
 - Keep changes focused on one fix or feature per PR.
 - Run `dotnet test tests/Siraj.Core.Tests` and verify a clean `x64` build with zero warnings before submitting.
-- Update localization files in `src/Siraj.App/Strings/` (and `strings/`) when adding or changing UI text.
-- Keep comments brief and focused on why non-obvious workarounds exist.
+- Update the JSON files in `src/Siraj.App/Strings/` when adding or changing UI text.

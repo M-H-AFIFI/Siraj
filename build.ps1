@@ -1,11 +1,6 @@
-# Builds Siraj for Windows: runs tests, publishes self-contained binaries, strips unused
-# locale folders, compiles Inno Setup installers, and writes SHA256SUMS.txt + windows-latest.json.
-#
-#   .\build.ps1                 # x64 and ARM64 installers in out\installer
-#   .\build.ps1 -Arch x64       # x64 only
-#   .\build.ps1 -SkipTests
-#
-# Requires the .NET 10 SDK and Inno Setup 6.7+ (ISCC.exe).
+# Runs tests, publishes self-contained builds, and packages Inno Setup installers in out\installer.
+# Usage: .\build.ps1 [-Arch x64|arm64|all] [-SkipTests]
+# Requires .NET 10 SDK and Inno Setup 6.7+ (ISCC.exe).
 param(
     [ValidateSet("x64", "arm64", "all")] [string] $Arch = "all",
     [switch] $SkipTests,

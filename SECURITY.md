@@ -2,13 +2,12 @@
 
 ## Supported versions
 
-Security fixes are released on the latest minor version of Siraj for Windows. Users can update directly inside the app via Settings -> Updates or download the latest release from GitHub.
+Security fixes ship on the latest release of Siraj for Windows. Update from Settings -> Updates or download the latest installer from GitHub Releases.
 
 ## Reporting a vulnerability
 
-If you find a security issue (for example in the update verifier, installer, or local file handling), please avoid opening a public issue with exploit details.
+If you find a security issue, please do not open a public issue with exploit details. Report it privately using GitHub Security Advisories:
 
-Instead, report it privately using GitHub Security Advisories at:
 https://github.com/M-H-AFIFI/Siraj/security/advisories/new
 
-Include a description of the issue, steps to reproduce, and any suggested fix if you have one. You can expect an initial response within a few days.
+Include what you found and how to reproduce it. You should get an initial response within a few days.

@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  A Windows app for prayer times, Adhan alerts, the Madinah Mushaf, and daily devotions.
+  Prayer times, Adhan alerts, and the Madinah Mushaf for Windows.
 </p>
 
 <p align="center">
@@ -19,16 +19,18 @@
 
 ---
 
-Siraj is a WinUI 3 desktop app for Windows 10 (1809+) and Windows 11. Prayer times, Hijri dates, and background Adhan alerts are all calculated locally on your PC with no account and no tracking. It stays light in the system tray so Adhan notifications, desktop widgets, and the taskbar prayer bar keep working even when the main window is closed.
+Siraj is a WinUI 3 app for Windows 10 (1809+) and Windows 11. Prayer times, Hijri dates, and background Adhan alerts run locally on your PC with no account and no tracking. Closing the window leaves it in the system tray so Adhan alerts, desktop widgets, and the taskbar prayer bar keep running.
 
 ## Features
 
-- Prayer dashboard with a live sky card that tracks the sun, moon phase, and current prayer period, supporting standard calculation methods, Shafi/Hanafi Asr, high-latitude rules, and per-prayer minute offsets.
-- Background Adhan alerts from the system tray with pre-prayer reminders, a dedicated Adhan alert window, Fajr Adhan support, and bundled plus optional full-length recordings.
-- Customizable Windows taskbar prayer bar (drag anywhere across the taskbar, glass/accent/solid/text-only styles, custom colors) with an acrylic prayer schedule flyout, plus movable desktop widgets.
-- Offline Madinah Mushaf reader using King Fahd Complex page fonts in single or two-page spread view, with ayah bookmarks, search, Tafsir Al-Muyassar, Khatma tracking, and verse-by-verse or full-surah recitation.
-- Quran radio streams, daily Adhkar with counter, Tasbih, Hadith collections, the 99 Names of Allah, Fasting log, Zakat calculator, and regional Hijri calendar (Umm al-Qura and country-specific sighting/calculation modes).
-- Twelve accent palettes, light/dark/AMOLED themes, animated backgrounds, glass UI finishes, and interface support for English, Arabic (RTL), Turkish, and Urdu.
+- Prayer dashboard with a live sky card, standard calculation methods, Shafi/Hanafi Asr, and minute offsets.
+- Background Adhan alerts from the system tray with pre-prayer reminders, Fajr Adhan support, and optional full-length recordings.
+- Movable Windows taskbar prayer bar with a schedule flyout, plus pinned desktop widgets.
+- Offline Madinah Mushaf reader in single or two-page spread view with search, bookmarks, Tafsir Al-Muyassar, and Khatma tracking.
+- Verse-by-verse and full-surah Quran recitation alongside live Quran radio streams.
+- Daily Adhkar with progress tracking, Tasbih, Hadith collections, the 99 Names of Allah, Fasting log, and Zakat calculator.
+- Regional Hijri calendar supporting Umm al-Qura and country-specific sighting modes.
+- Light, dark, and AMOLED themes with 12 accent palettes, optional live backgrounds, and English, Arabic (RTL), Turkish, and Urdu UI.
 
 ## Screenshots
 
@@ -62,18 +64,18 @@ Grab the latest installer from [GitHub Releases](https://github.com/M-H-AFIFI/Si
 - `SirajSetup-<version>-x64.exe` for standard 64-bit Intel and AMD PCs.
 - `SirajSetup-<version>-arm64.exe` for Windows on ARM devices.
 
-Both installers are self-contained (the .NET runtime and Windows App SDK are bundled inside) and install per user under `%LOCALAPPDATA%\Programs\Siraj` without an administrator prompt. You can verify any download against the release `SHA256SUMS.txt` using `certutil -hashfile SirajSetup-1.0.0-x64.exe SHA256`.
+Both installers bundle the .NET runtime and Windows App SDK, and install per user under `%LOCALAPPDATA%\Programs\Siraj` without an administrator prompt. You can check any download against `SHA256SUMS.txt` using `certutil -hashfile SirajSetup-<version>-x64.exe SHA256`.
 
-Once installed, Siraj checks for new releases automatically (or on demand in Settings -> Updates), verifies the installer checksum, updates in place without touching your settings or downloaded Mushaf pages, and restarts into the new version.
+Siraj checks for updates automatically (or anytime in Settings -> Updates), verifies the installer checksum, and updates in place without touching your settings or downloaded Mushaf pages.
 
 Unattended or machine-wide install switches:
 
 ```powershell
 # Silent per-user install
-.\SirajSetup-1.0.0-x64.exe /VERYSILENT /NORESTART
+.\SirajSetup-<version>-x64.exe /VERYSILENT /NORESTART
 
 # Install for all users (requires administrator)
-.\SirajSetup-1.0.0-x64.exe /ALLUSERS
+.\SirajSetup-<version>-x64.exe /ALLUSERS
 ```
 
 ## Build from source
@@ -102,13 +104,6 @@ dotnet build src/Siraj.App/Siraj.App.csproj -p:Platform=x64
 # Or package x64 only
 .\build.ps1 -Arch x64
 ```
-
-Developer switches:
-
-- `SIRAJ_DATA_DIR=<folder>` isolates settings, journal, and logs into a separate folder without touching your normal profile.
-- `SIRAJ_MUTE=1` mutes Adhan playback while testing.
-- `--sky-time=2026-11-26T16:40:00` previews the sky card at a specific local date and time.
-- `--background` starts straight into the system tray without opening the main window.
 
 ## License
 

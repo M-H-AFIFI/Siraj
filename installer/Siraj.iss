@@ -66,11 +66,11 @@ Name: "tr"; MessagesFile: "compiler:Languages\Turkish.isl"
 
 [Messages]
 en.WelcomeLabel1=Welcome to Siraj
-en.WelcomeLabel2=This will install Siraj {#AppVersion} on your computer.%n%nPrayer times, background Adhan alerts, the Madinah Mushaf, Quran recitation and radio, daily Adhkar, and desktop widgets, all in one native Windows app.%n%nNo administrator permission is needed.
+en.WelcomeLabel2=This will install Siraj {#AppVersion} on your computer.%n%nPrayer times, background Adhan alerts, and the Madinah Mushaf for Windows.%n%nNo administrator permission is needed.
 ar.WelcomeLabel1=مرحبًا بك في سراج
-ar.WelcomeLabel2=سيتم تثبيت سراج {#AppVersion} على جهازك.%n%nمواقيت الصلاة، الأذان في الخلفية، مصحف المدينة، تلاوات القرآن والإذاعة، الأذكار اليومية، وأدوات سطح المكتب في تطبيق ويندوز واحد.%n%nلا حاجة لصلاحيات المسؤول.
+ar.WelcomeLabel2=سيتم تثبيت سراج {#AppVersion} على جهازك.%n%nمواقيت الصلاة والأذان في الخلفية ومصحف المدينة لويندوز.%n%nلا حاجة لصلاحيات المسؤول.
 tr.WelcomeLabel1=Siraj'a Hoş Geldiniz
-tr.WelcomeLabel2=Bu kurulum bilgisayarınıza Siraj {#AppVersion} sürümünü yükleyecektir.%n%nNamaz vakitleri, arka planda ezan, Medine Mushafı, Kur'an tilavetleri ve radyo, günlük zikirler ve masaüstü araçları tek bir Windows uygulamasında.%n%nYönetici izni gerekmez.
+tr.WelcomeLabel2=Bu kurulum bilgisayarınıza Siraj {#AppVersion} sürümünü yükleyecektir.%n%nWindows için namaz vakitleri, arka planda ezan ve Medine Mushafı.%n%nYönetici izni gerekmez.
 
 [CustomMessages]
 en.DesktopIcon=Create a desktop shortcut
@@ -115,7 +115,6 @@ begin
   Result := ExpandConstant('{param:RELAUNCH|0}') = '1';
 end;
 
-// Checks whether Siraj.exe is still locked by a running instance by attempting a no-op rename.
 function IsExeLocked(const Path: String): Boolean;
 begin
   if not FileExists(Path) then
@@ -132,7 +131,6 @@ begin
     Result := True;
 end;
 
-// Ask any running Siraj instance to quit gracefully before overwriting files during an update.
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   ResultCode, Waited: Integer;
@@ -152,7 +150,6 @@ begin
   Result := '';
 end;
 
-// On interactive uninstall, optionally let the user remove local settings and cached Mushaf pages.
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   DataDir: String;

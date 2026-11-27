@@ -40,5 +40,5 @@ IANA Time Zone Database (zone.tab, release 2025b)
 Public domain. Used to resolve a place's country from its time zone.
 
 Adhan recordings
-Bundled under Assets/Adhan. Clearer full-length and Fajr recordings are downloaded on demand
+Bundled under Assets/Adhan. Full-length and Fajr recordings are downloaded on demand
 from the Kiwifu/adhan-mp3 collection via jsDelivr.
