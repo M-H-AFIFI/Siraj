@@ -231,7 +231,6 @@ public sealed record ChapterTitles(string En, string Tr, string Ur);
 
 public sealed class BookChapter
 {
-    public int Id { get; set; }
     public string Title { get; set; } = "";
     public List<BookDhikr>? Azkar { get; set; }
 }

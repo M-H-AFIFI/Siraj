@@ -95,7 +95,7 @@ public sealed class HijriCalendar
         var uq = UmmAlQuraDate(Clamp(shifted));
         if (Region.Method == HijriMethod.UmmAlQura) return uq;
 
-        // Start from Umm al-Qura's month, then step to whichever month really contains the day.
+        // Use Umm al-Qura as an initial month guess, then adjust if sighting shifts the boundary.
         int index = IndexOf(uq.Year, uq.Month);
         while (Start(index) > shifted) index--;
         while (Start(index + 1) <= shifted) index++;
@@ -139,11 +139,15 @@ public sealed class HijriCalendar
             if (Region.Method == HijriMethod.Turkey)
                 return _starts[index] = TurkishStart(index);
 
-            // Walk forward from the nearest month already known, or from Umm al-Qura eight months back.
+            // Step forward from the nearest cached month, or seed from Umm al-Qura 8 months back.
             int? known = null;
             for (int i = index - 1; i >= index - ChainMonths; i--)
             {
-                if (_starts.ContainsKey(i)) { known = i; break; }
+                if (_starts.ContainsKey(i))
+                {
+                    known = i;
+                    break;
+                }
             }
             DateOnly date;
             if (known == null)
@@ -200,7 +204,7 @@ public sealed class HijriCalendar
     private static bool GlobalCrescent(DateOnly date, double conjunction)
     {
         double midnight = Ephemeris.JulianDay(UtcMillis(date.AddDays(1), TimeOnly.MinValue));
-        // For each latitude, the place whose sunset falls just before 00:00 UTC sees the oldest moon allowed.
+        // At each latitude, find the longitude whose sunset falls just before 00:00 UTC (oldest moon in that UTC day).
         for (double latitude = -60.0; latitude <= 60.0; latitude += 5.0)
         {
             double longitude = -60.0;
@@ -208,13 +212,13 @@ public sealed class HijriCalendar
             {
                 var sunset = SunsetAt(date, latitude, longitude);
                 if (sunset == null) continue;
-                // Half a degree east of the exact spot, so the sunset found is before midnight.
+                // Bias 0.5 deg east so sunset stays before 00:00 UTC.
                 longitude = Math.Clamp(longitude + (sunset.Value - midnight) * 360.0 + 0.5, -180.0, 180.0);
             }
             var s = SunsetAt(date, latitude, longitude);
             if (s != null && s < midnight && conjunction < s && MeetsIstanbulCriterion(s.Value, latitude, longitude)) return true;
         }
-        // The American exception.
+        // Americas exception: allow western-hemisphere sighting if conjunction precedes dawn in New Zealand.
         var auckland = Zones.Find("Pacific/Auckland");
         double? newZealandDawn = Ephemeris.SunAtAltitude(
             Ephemeris.JulianDay(Zones.AtLocal(date.AddDays(1), new TimeOnly(12, 0), auckland)),
@@ -243,9 +247,8 @@ public sealed class HijriCalendar
 
     private static double? SunsetAt(DateOnly date, double latitude, double longitude)
     {
-        // Round half upward toward positive infinity.
         int offsetSeconds = Math.Clamp((int)Math.Floor(longitude / 15.0 * 3600 + 0.5), -18 * 3600, 18 * 3600);
-        // A DateTimeOffset holds whole minutes only; the offset here is to the second.
+        // Compute local solar noon with second precision (DateTimeOffset only stores minute offsets).
         long noonMillis = UtcMillis(date, new TimeOnly(12, 0)) - offsetSeconds * 1000L;
         return Crescent.SunsetOn(Ephemeris.JulianDay(noonMillis), latitude, longitude);
     }
@@ -281,7 +284,11 @@ public static class HijriCalendars
         for (int i = 0; i < 14; i++)
         {
             calendar.FirstDayOf(year, month);
-            if (++month > 12) { month = 1; year++; }
+            if (++month > 12)
+            {
+                month = 1;
+                year++;
+            }
         }
         if (!ReferenceEquals(Current, calendar))
         {

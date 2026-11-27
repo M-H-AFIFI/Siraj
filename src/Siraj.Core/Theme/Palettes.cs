@@ -22,22 +22,8 @@ public static partial class Palettes
     public static readonly Argb SirajGold = Argb.Hex(0xFFD4AF37);
     public static readonly Argb SirajGoldDeep = Argb.Hex(0xFF8A6A16);
 
-    public static string Resolve(string? name) => name switch
-    {
-        "RoyalIndigo" or "ImperialOud" or "RoyalAmethyst" => "RoyalIndigo",
-        "Emerald" or "MedinaDawn" => "Emerald",
-        "Rose" or "CrimsonVelvet" or "SaharaDusk" => "Rose",
-        "OceanBlue" or "BlueNile" => "OceanBlue",
-        "Coffee" or "Violet" or "GoldenAmber" or "Daylight" or "GoldenOasis" => "Coffee",
-        "TealCaspian" or "Midnight" => "TealCaspian",
-        "Sand" or "OliveSage" or "AmoledBlack" or "PureNight" => "Sand",
-        "Olive" => "Olive",
-        "Burgundy" => "Burgundy",
-        "Slate" => "Slate",
-        "Lime" => "Lime",
-        "Gold" => "Gold",
-        _ => "Emerald"
-    };
+    public static string Resolve(string? name) =>
+        name != null && Base.ContainsKey(name) ? name : "Emerald";
 
     public static Argb Swatch(string name) => Argb.Hex(Base[Resolve(name)].Light.Primary);
 
@@ -56,7 +42,6 @@ public static partial class Palettes
             surface = Argb.Hex(0xFF000000);
             surfaceVariant = Argb.Hex(0xFF121212);
         }
-        var black0 = Argb.Hex(0xFF000000);
         var secondary = Argb.Lerp(primary, isDark ? surfaceVariant : onSurface, 0.30f);
         var secondaryContainer = Argb.Lerp(surface, primary, isDark ? 0.30f : 0.15f);
         return new ColorScheme(

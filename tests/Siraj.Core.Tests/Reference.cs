@@ -10,7 +10,7 @@ internal static class Reference
         Stream stream = File.OpenRead(path);
         if (name.EndsWith(".gz")) stream = new GZipStream(stream, CompressionMode.Decompress);
         using var reader = new StreamReader(stream);
-        reader.ReadLine(); // header
+        reader.ReadLine();
         while (reader.ReadLine() is { } line)
         {
             if (line.Length > 0) yield return line.Split(',');

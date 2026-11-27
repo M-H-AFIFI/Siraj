@@ -7,15 +7,13 @@ namespace Siraj.Core.Settings;
 
 public sealed record AppSettings
 {
-    // Place and prayer times
     public Place? Location { get; set; }
     public bool LocationIsManual { get; set; }
     public string CalculationMethod { get; set; } = Prayer.CalculationMethods.FallbackMethod;
     public string Madhab { get; set; } = "Shafi";
     public string HighLatitudeRule { get; set; } = "MiddleOfTheNight";
-    public Dictionary<string, int> MinuteOffsets { get; set; } = new();
+    public Dictionary<string, int> MinuteOffsets { get; set; } = [];
 
-    // Appearance and language
     public string Language { get; set; } = "en";
     public string ThemeMode { get; set; } = "System";
     public string Palette { get; set; } = "Emerald";
@@ -31,11 +29,9 @@ public sealed record AppSettings
     public bool ReduceMotion { get; set; }
     public bool ShowContinueReadingOnHome { get; set; } = true;
 
-    // Hijri date
     public string HijriMethod { get; set; } = Hijri.HijriCalendars.MethodAuto;
     public int HijriAdjustment { get; set; }
 
-    // Adhan and reminders
     public Dictionary<string, bool> PrayerAlerts { get; set; } = new()
     {
         ["fajr"] = true, ["sunrise"] = false, ["dhuhr"] = true, ["asr"] = true, ["maghrib"] = true, ["isha"] = true,
@@ -47,7 +43,6 @@ public sealed record AppSettings
     public bool AdhanWindow { get; set; } = true;
     public int AdhanVolume { get; set; } = 80;
 
-    // Quran
     public Quran.QuranPosition? LastRead { get; set; }
     public List<Quran.Bookmark> Bookmarks { get; set; } = [];
     public string ReciterId { get; set; } = Quran.Reciters.DefaultId;
@@ -56,12 +51,10 @@ public sealed record AppSettings
     public bool QuranSpread { get; set; } = true;
     public bool QuranContinuous { get; set; } = true;
 
-    // Adhkar display options
     public bool AdhkarTranslation { get; set; } = true;
     public bool AdhkarTransliteration { get; set; } = true;
     public bool AdhkarVirtues { get; set; } = true;
 
-    // Listening & Radio
     public List<string> PinnedRadioIds { get; set; } = [];
     public string? LastRadioStationId { get; set; }
     public string? LastListenReciterId { get; set; }
@@ -69,7 +62,6 @@ public sealed record AppSettings
     public string? AmbientSound { get; set; }
     public double AmbientVolume { get; set; } = 0.35;
 
-    // Windows
     public bool StartWithWindows { get; set; } = true;
     public bool CloseToTray { get; set; } = true;
     public bool SetupDone { get; set; }
@@ -171,17 +163,23 @@ public sealed class SettingsStore
             if (!File.Exists(_path)) return new AppSettings();
             var json = File.ReadAllText(_path);
             var read = JsonSerializer.Deserialize(json, SettingsJson.Default.AppSettings) ?? new AppSettings();
-            // A list written as null by hand is read as an empty one.
+            // Guard against null collections in hand-edited settings files.
             return read with
             {
                 Bookmarks = read.Bookmarks ?? [], Widgets = read.Widgets ?? [],
                 PinnedRadioIds = read.PinnedRadioIds ?? [],
-                MinuteOffsets = read.MinuteOffsets ?? new(), PrayerAlerts = read.PrayerAlerts ?? new AppSettings().PrayerAlerts,
+                MinuteOffsets = read.MinuteOffsets ?? [], PrayerAlerts = read.PrayerAlerts ?? new AppSettings().PrayerAlerts,
             };
         }
         catch (Exception)
         {
-            try { File.Copy(_path, Path.ChangeExtension(_path, ".bad.json"), overwrite: true); } catch { }
+            try
+            {
+                File.Copy(_path, Path.ChangeExtension(_path, ".bad.json"), overwrite: true);
+            }
+            catch
+            {
+            }
             return new AppSettings();
         }
     }

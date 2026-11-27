@@ -8,17 +8,16 @@ public class QuranTextTest
     private const char SmallHighSeen = (char)0x06DC;
 
     [Fact]
-    public void WordGapsWidenAndFoundWordsFollowThem()
+    public void ForDisplayWidensWordGapsAndMapsRanges()
     {
         var (text, ranges) = DigitalKhattText.ForDisplay("ab cd ef", [(3, 5), (2, 6), (2, 3)]);
         Assert.Equal("ab   cd   ef", text);
-        // "cd" moves with its word; a span that takes in the spaces keeps to the letters inside
-        // it; a span of nothing but a space is dropped.
+        // Maps "cd", trims space-padded span to "cd", and drops whitespace-only span.
         Assert.Equal([(5, 7), (5, 7)], ranges);
     }
 
     [Fact]
-    public void PauseSignsJoinTheWordBefore()
+    public void ForDisplayAttachesPauseSignsToPrecedingWord()
     {
         string stored = $"ab {SmallHighSeen} cd";
         var (text, ranges) = DigitalKhattText.ForDisplay(stored, [(5, 7)]);
@@ -28,7 +27,7 @@ public class QuranTextTest
     }
 
     [Fact]
-    public void HizbTableRunsInOrder()
+    public void HizbStartPagesAreStrictlyIncreasing()
     {
         Assert.Equal(1, Ajzaa.HizbStartPage(1));
         Assert.Equal(32, Ajzaa.HizbStartPage(4));
@@ -74,7 +73,7 @@ public class QuranTextTest
     [InlineData("juz 7")]
     [InlineData("para 30")]
     [InlineData("الصبر")]
-    public void NotAyahReferences(string query) => Assert.Null(QuranQuery.Ayah(query, Surahs));
+    public void InvalidAyahReferences(string query) => Assert.Null(QuranQuery.Ayah(query, Surahs));
 
     [Theory]
     [InlineData("42", 42)]
@@ -90,7 +89,7 @@ public class QuranTextTest
     [InlineData("605")]
     [InlineData("page 0")]
     [InlineData("Kahf 10")]
-    public void NotPageReferences(string query) => Assert.Null(QuranQuery.Page(query));
+    public void InvalidPageReferences(string query) => Assert.Null(QuranQuery.Page(query));
 
     [Theory]
     [InlineData("juz 7", 7)]
@@ -107,7 +106,7 @@ public class QuranTextTest
     [InlineData("juz 31")]
     [InlineData("juz")]
     [InlineData("7")]
-    public void NotJuzReferences(string query) => Assert.Null(QuranQuery.Juz(query));
+    public void InvalidJuzReferences(string query) => Assert.Null(QuranQuery.Juz(query));
 
     [Theory]
     [InlineData("Meccan", true)]
@@ -117,8 +116,8 @@ public class QuranTextTest
     [InlineData("medinan", false)]
     [InlineData("مدنية", false)]
     [InlineData("Medenî", false)]
-    public void Revelation(string query, bool meccan) => Assert.Equal(meccan, QuranQuery.Revelation(query));
+    public void RevelationKeywords(string query, bool meccan) => Assert.Equal(meccan, QuranQuery.Revelation(query));
 
     [Fact]
-    public void OtherWordsAreNoRevelation() => Assert.Null(QuranQuery.Revelation("Mecca road"));
+    public void NonRevelationQueryReturnsNull() => Assert.Null(QuranQuery.Revelation("Mecca road"));
 }

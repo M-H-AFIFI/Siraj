@@ -17,7 +17,7 @@ public sealed class QuranDatabase : IDisposable
 
     public QuranDatabase(string path)
     {
-        if (!File.Exists(path)) throw new FileNotFoundException("The Quran database is not installed.", path);
+        if (!File.Exists(path)) throw new FileNotFoundException("Quran database file not found.", path);
         _db = new SqliteConnection(new SqliteConnectionStringBuilder
         {
             DataSource = path,
@@ -44,7 +44,6 @@ public sealed class QuranDatabase : IDisposable
             using var reader = Command("SELECT number, name, englishName, englishNameTranslation, numberOfAyahs, revelationType, revelationOrder FROM quran_surahs ORDER BY number").ExecuteReader();
             while (reader.Read())
             {
-                // Normalize Latin surah names to standard transliteration once on load.
                 list.Add(new Surah(reader.GetInt32(0), reader.GetString(1), SurahNames.Transliteration(reader.GetString(2)), reader.GetString(3),
                     reader.GetInt32(4), reader.GetString(5), reader.IsDBNull(6) ? null : reader.GetInt32(6)));
             }
@@ -69,7 +68,7 @@ public sealed class QuranDatabase : IDisposable
                     reader.IsDBNull(7) ? null : reader.GetInt32(7), reader.IsDBNull(8) ? null : reader.GetInt32(8),
                     !reader.IsDBNull(9) && reader.GetInt32(9) != 0);
             }
-            if (i != list.Length) throw new InvalidDataException($"The Quran database holds {i} ayahs, not 6,236.");
+            if (i != list.Length) throw new InvalidDataException($"Expected 6236 ayahs in Quran database, found {i}.");
             return _ayahs = list;
         }
     }
@@ -171,13 +170,12 @@ public sealed class QuranDatabase : IDisposable
                 .ExecuteScalar() as string;
             if (text == null && globalAyah is >= 1 and <= 6236)
             {
-                // Multi-ayah tafsir entries are stored under the first ayah; look back up to 10 ayahs
-                // within the same surah without crossing into the previous surah.
+                // Multi-ayah tafsir entries are stored under the first ayah; look back up to 10 ayahs within the same surah.
                 int floor = Math.Max(globalAyah - TafsirMaxLookBack, SurahStartIndex(Ayahs()[globalAyah - 1].Surah) + 1);
                 text = Command("SELECT text FROM quran_tafsirs WHERE edition = $e AND ayahNumber <= $a AND ayahNumber >= $f ORDER BY ayahNumber DESC LIMIT 1",
                     ("$a", globalAyah), ("$e", edition), ("$f", floor)).ExecuteScalar() as string;
             }
-            // The rows carry markup (Al-Muyassar's open with a <div>); the reader is shown plain text.
+            // Strip HTML tags from stored tafsir entries.
             return text == null ? null : Text.HtmlText.Plain(text);
         }
     }

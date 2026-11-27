@@ -11,14 +11,18 @@ public static class DigitalKhattText
 
     public static (string Text, IReadOnlyList<(int Start, int End)> Ranges) ForDisplay(string text, IEnumerable<(int Start, int End)> ranges)
     {
-        // Where each character of the stored text lands in the displayed one; -1 for a space.
+        // Map each source char index to its display index (-1 for spaces).
         var at = new int[text.Length + 1];
         Array.Fill(at, -1);
         var shown = new StringBuilder(text.Length + text.Length / 2);
         int i = 0;
         while (i < text.Length)
         {
-            if (text[i] == ' ') { i++; continue; }
+            if (text[i] == ' ')
+            {
+                i++;
+                continue;
+            }
             int start = i;
             while (i < text.Length && text[i] != ' ') i++;
             var word = text.AsSpan(start, i - start);
@@ -28,7 +32,7 @@ public static class DigitalKhattText
         }
         at[text.Length] = shown.Length;
 
-        // A span that begins or ends on a space is taken to the nearest letter inside it.
+        // Trim spans starting or ending on spaces inward to the nearest character.
         int From(int s)
         {
             s = Math.Clamp(s, 0, text.Length);

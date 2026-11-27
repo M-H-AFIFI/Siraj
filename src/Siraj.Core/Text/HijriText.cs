@@ -11,7 +11,6 @@ public static class HijriText
     private static readonly string[] MonthsEn =
         ["Muharram", "Safar", "Rabi' al-Awwal", "Rabi' al-Thani", "Jumada al-Ula", "Jumada al-Akhirah", "Rajab", "Sha'ban", "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"];
 
-    // Turkish has its own established names for the Hijri months.
     private static readonly string[] MonthsTr =
         ["Muharrem", "Safer", "Rebiülevvel", "Rebiülahir", "Cemaziyelevvel", "Cemaziyelahir", "Recep", "Şaban", "Ramazan", "Şevval", "Zilkade", "Zilhicce"];
 
@@ -42,7 +41,7 @@ public static class HijriText
     public static string Gregorian(DateOnly date, string language, bool eastern, string pattern)
     {
         var culture = CultureInfo.GetCultureInfo(language switch { "ar" => "ar-EG", "tr" => "tr-TR", "ur" => "ur-PK", _ => "en-GB" });
-        // The Gregorian calendar explicitly: ar-SA's own default is Umm al-Qura.
+        // Force Gregorian calendar regardless of culture defaults.
         var format = (DateTimeFormatInfo)culture.DateTimeFormat.Clone();
         format.Calendar = new GregorianCalendar();
         var text = date.ToDateTime(TimeOnly.MinValue).ToString(pattern, format);

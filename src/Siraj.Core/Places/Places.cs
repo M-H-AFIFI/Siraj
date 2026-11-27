@@ -61,12 +61,25 @@ public static class Zones
         return Cache.GetOrAdd(ianaId, id =>
         {
             if (id is "UTC" or "GMT" or "Etc/UTC") return TimeZoneInfo.Utc;
-            try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById(id);
+            }
             catch (Exception) when (TimeZoneInfo.TryConvertIanaIdToWindowsId(id, out var win))
             {
-                try { return TimeZoneInfo.FindSystemTimeZoneById(win); } catch { return TimeZoneInfo.Local; }
+                try
+                {
+                    return TimeZoneInfo.FindSystemTimeZoneById(win);
+                }
+                catch
+                {
+                    return TimeZoneInfo.Local;
+                }
             }
-            catch { return TimeZoneInfo.Local; }
+            catch
+            {
+                return TimeZoneInfo.Local;
+            }
         });
     }
 
@@ -75,7 +88,13 @@ public static class Zones
         var local = TimeZoneInfo.Local;
         if (local.HasIanaId) return local.Id;
         string? region = null;
-        try { region = RegionInfo.CurrentRegion.TwoLetterISORegionName; } catch { }
+        try
+        {
+            region = RegionInfo.CurrentRegion.TwoLetterISORegionName;
+        }
+        catch
+        {
+        }
         if (region != null && TimeZoneInfo.TryConvertWindowsIdToIanaId(local.Id, region, out var regional)) return regional!;
         return TimeZoneInfo.TryConvertWindowsIdToIanaId(local.Id, out var iana) ? iana! : "UTC";
     }
@@ -112,7 +131,7 @@ public static class LocationZones
     private static bool Fits(TimeZoneInfo zone, double longitude, DateTimeOffset now)
     {
         double offsetHours = zone.GetUtcOffset(now).TotalHours;
-        // Round the date line: Samoa's +13 at 172 W is an hour from the sun, not twenty-three.
+        // Wrap across the date line (e.g. UTC+13 at 172W is 1h from solar time, not 23h).
         double apart = (offsetHours - longitude / 15.0) % 24.0;
         if (apart > 12.0) apart -= 24.0;
         if (apart < -12.0) apart += 24.0;

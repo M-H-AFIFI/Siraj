@@ -99,7 +99,6 @@ public static class LiveScenes
         new("Vivid", "live_theme_intensity_vivid", 1.24f, 1.26f, -0.09f),
     ];
 
-    // 6 prayer-aligned solar phases for Time-of-Day Sky Sync.
     private static readonly SkyPhaseSpec FajrDawn = new(
         Light: new(Argb.Hex(0xFFC9D4EE), Argb.Hex(0xFFDED8EC), Argb.Hex(0xFFF2DFD9), Argb.Hex(0xFFFCEAD7), Argb.Hex(0xFFE8A47C)),
         Dark: new(Argb.Hex(0xFF090E1E), Argb.Hex(0xFF161B33), Argb.Hex(0xFF2B263D), Argb.Hex(0xFF4A333B), Argb.Hex(0xFFE59A73)),
@@ -133,11 +132,6 @@ public static class LiveScenes
     public static string NormalizeId(string? id)
     {
         if (string.IsNullOrWhiteSpace(id)) return DefaultSceneId;
-        if (id.Equals("FloatingLanterns", StringComparison.OrdinalIgnoreCase) ||
-            id.Equals("Lanterns", StringComparison.OrdinalIgnoreCase)) return "DesertDunes";
-        if (id.Equals("Bokeh", StringComparison.OrdinalIgnoreCase)) return "Circles";
-        if (id.Equals("Constellation", StringComparison.OrdinalIgnoreCase)) return "Particles";
-        if (id.Equals("Ripples", StringComparison.OrdinalIgnoreCase)) return "Rings";
         var match = All.FirstOrDefault(s => s.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
         return match?.Id ?? DefaultSceneId;
     }

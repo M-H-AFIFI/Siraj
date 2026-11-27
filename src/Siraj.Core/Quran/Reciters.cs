@@ -42,7 +42,7 @@ public static partial class Reciters
     public static Uri SurahUrl(Reciter reciter, int surah)
     {
         var server = reciter.SurahServer ?? (SurahServers.TryGetValue(reciter.Id, out var s) ? s : "https://server8.mp3quran.net/afs/");
-        // quranicaudio's qdc tree names its files without padding: 1.mp3, not 001.mp3.
+        // quranicaudio /qdc/ uses unpadded surah numbers (1.mp3 instead of 001.mp3).
         var name = server.Contains("quranicaudio.com/qdc/") ? surah.ToString() : surah.ToString("000");
         return new Uri(server + name + ".mp3");
     }

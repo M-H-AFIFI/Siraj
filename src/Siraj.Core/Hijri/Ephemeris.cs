@@ -1,8 +1,6 @@
 namespace Siraj.Core.Hijri;
 
-// Where the sun and the moon are, close enough to decide whether a new crescent can be seen.
-//
-// Sun position follows Meeus (chapter 25, ~0.01 deg); moon follows ELP-2000/82 (chapter 47, ~10 arcsec).
+// Sun position follows Meeus ch. 25 (~0.01 deg); moon follows ELP-2000/82 ch. 47 (~10 arcsec).
 // Times are Julian days in UT (Delta-T ignored).
 
 internal readonly record struct Position(double RightAscension, double Declination, double Longitude, double Distance);
@@ -95,7 +93,7 @@ internal static class Ephemeris
         sumB += -2235 * SinD(lp) + 382 * SinD(a3) + 175 * SinD(a1 - f) + 175 * SinD(a1 + f) +
                 127 * SinD(lp - mp) - 115 * SinD(lp + mp);
 
-        // Nutation in longitude, its four largest terms.
+        // Top 4 nutation-in-longitude terms.
         double omega = 125.04452 - 1934.136261 * t;
         double l0 = 280.4665 + 36000.7698 * t;
         double dPsi = (-17.20 * SinD(omega) - 1.32 * SinD(2 * l0) - 0.23 * SinD(2 * lp) + 0.21 * SinD(2 * omega)) / 3600.0;
@@ -161,7 +159,7 @@ internal static class Ephemeris
     public static double PreviousConjunction(double jd)
     {
         double delta = ElongationInLongitude(jd);
-        // Moon minus sun grows by about 12.19 degrees a day.
+        // Mean lunar-solar synodic rate (~12.190749 deg/day).
         double guess = jd - Norm360(delta) / 12.190749;
         for (int i = 0; i < 8; i++)
         {
@@ -201,7 +199,10 @@ internal static class Ephemeris
                 for (int i = 0; i < 12; i++)
                 {
                     double mid = (lo + hi) / 2;
-                    if (f(mid) > 0) lo = mid; else hi = mid;
+                    if (f(mid) > 0)
+                        lo = mid;
+                    else
+                        hi = mid;
                 }
                 return (lo + hi) / 2;
             }

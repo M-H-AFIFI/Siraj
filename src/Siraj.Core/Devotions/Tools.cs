@@ -117,7 +117,7 @@ public static class Fasting
         Yearly(12, 9, FastOccasion.Arafah);
         Yearly(9, 1, FastOccasion.Ramadan);
 
-        // The nearest of the white days, the 13th to the 15th of a month, within ninety days.
+        // Nearest white day (13th-15th of a Hijri month) within 90 days.
         UpcomingFast? white = null;
         for (int y = hijri.Year; y <= hijri.Year + 1 && white == null; y++)
             for (int m = 1; m <= 12 && white == null; m++)
@@ -125,7 +125,11 @@ public static class Fasting
                 {
                     var date = calendar.ToGregorian(y, m, d);
                     int away = date.DayNumber - today.DayNumber;
-                    if (away is >= 0 and <= 90) { white = new UpcomingFast(FastOccasion.WhiteDays, date, away, d, m); break; }
+                    if (away is >= 0 and <= 90)
+                    {
+                        white = new UpcomingFast(FastOccasion.WhiteDays, date, away, d, m);
+                        break;
+                    }
                 }
         if (white != null) results.Add(white);
         return results.OrderBy(r => r.DaysAway).ThenBy(r => r.Occasion).ToList();
@@ -145,7 +149,11 @@ public static class Fasting
     {
         var day = log.ContainsKey(Key(today)) ? today : today.AddDays(-1);
         int streak = 0;
-        while (log.ContainsKey(Key(day))) { streak++; day = day.AddDays(-1); }
+        while (log.ContainsKey(Key(day)))
+        {
+            streak++;
+            day = day.AddDays(-1);
+        }
         return streak;
     }
 

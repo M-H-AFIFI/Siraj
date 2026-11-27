@@ -1,66 +1,66 @@
 [
- {
-  "arabic": "سُبْحَانَ اللَّهِ",
-  "transliteration": "SubhanAllah",
-  "translationEn": "Glory be to Allah",
-  "translationTr": "Allah'ı tenzih ederim",
-  "translationUr": "اللہ پاک ہے",
-  "defaultGoal": 33
- },
- {
-  "arabic": "الْحَمْدُ لِلهِ",
-  "transliteration": "Alhamdulillah",
-  "translationEn": "Praise be to Allah",
-  "translationTr": "Hamd Allah'adır",
-  "translationUr": "تمام تعریفیں اللہ کے لیے ہیں",
-  "defaultGoal": 33
- },
- {
-  "arabic": "اللهُ أَكْبَرُ",
-  "transliteration": "Allahu Akbar",
-  "translationEn": "Allah is the Greatest",
-  "translationTr": "Allah en büyüktür",
-  "translationUr": "اللہ سب سے بڑا ہے",
-  "defaultGoal": 34
- },
- {
-  "arabic": "لَا إِلَهَ إِلَّا اللهُ",
-  "transliteration": "La ilaha illa Allah",
-  "translationEn": "There is no god but Allah",
-  "translationTr": "Allah'tan başka ilah yoktur",
-  "translationUr": "اللہ کے سوا کوئی معبود نہیں",
-  "defaultGoal": 100
- },
- {
-  "arabic": "أَسْتَغْفِرُ اللَّهَ",
-  "transliteration": "Astaghfirullah",
-  "translationEn": "I seek forgiveness from Allah",
-  "translationTr": "Allah'tan bağışlanma dilerim",
-  "translationUr": "میں اللہ سے معافی مانگتا ہوں",
-  "defaultGoal": 100
- },
- {
-  "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ",
-  "transliteration": "Allahumma salli ala Muhammad",
-  "translationEn": "O Allah, bless Muhammad",
-  "translationTr": "Allah'ım, Muhammed'e salat eyle",
-  "translationUr": "اے اللہ، محمد صلی اللہ علیہ وسلم پر درود بھیج",
-  "defaultGoal": 100
- },
- {
-  "arabic": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
-  "transliteration": "SubhanAllahi wa bihamdihi",
-  "translationEn": "Glory and praise be to Allah",
-  "translationTr": "Allah'ı hamd ile tesbih ederim",
-  "translationUr": "اللہ اپنی تعریف کے ساتھ پاک ہے",
-  "defaultGoal": 100
- },
- {
-  "arabic": "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
-  "transliteration": "La hawla wa la quwwata illa billah",
-  "translationEn": "There is no power nor might except with Allah",
-  "translationTr": "Güç ve kuvvet ancak Allah'tandır",
-  "translationUr": "نیکی کرنے کی طاقت اور برائی سے بچنے کی ہمت اللہ ہی کی طرف سے ہے",
-  "defaultGoal": 100
- }
+  {
+    "arabic": "سُبْحَانَ اللَّهِ",
+    "transliteration": "SubhanAllah",
+    "translationEn": "Glory be to Allah",
+    "translationTr": "Allah'ı tenzih ederim",
+    "translationUr": "اللہ پاک ہے",
+    "defaultGoal": 33
+  },
+  {
+    "arabic": "الْحَمْدُ لِلهِ",
+    "transliteration": "Alhamdulillah",
+    "translationEn": "Praise be to Allah",
+    "translationTr": "Hamd Allah'adır",
+    "translationUr": "تمام تعریفیں اللہ کے لیے ہیں",
+    "defaultGoal": 33
+  },
+  {
+    "arabic": "اللهُ أَكْبَرُ",
+    "transliteration": "Allahu Akbar",
+    "translationEn": "Allah is the Greatest",
+    "translationTr": "Allah en büyüktür",
+    "translationUr": "اللہ سب سے بڑا ہے",
+    "defaultGoal": 34
+  },
+  {
+    "arabic": "لَا إِلَهَ إِلَّا اللهُ",
+    "transliteration": "La ilaha illa Allah",
+    "translationEn": "There is no god but Allah",
+    "translationTr": "Allah'tan başka ilah yoktur",
+    "translationUr": "اللہ کے سوا کوئی معبود نہیں",
+    "defaultGoal": 100
+  },
+  {
+    "arabic": "أَسْتَغْفِرُ اللَّهَ",
+    "transliteration": "Astaghfirullah",
+    "translationEn": "I seek forgiveness from Allah",
+    "translationTr": "Allah'tan bağışlanma dilerim",
+    "translationUr": "میں اللہ سے معافی مانگتا ہوں",
+    "defaultGoal": 100
+  },
+  {
+    "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ",
+    "transliteration": "Allahumma salli ala Muhammad",
+    "translationEn": "O Allah, bless Muhammad",
+    "translationTr": "Allah'ım, Muhammed'e salat eyle",
+    "translationUr": "اے اللہ، محمد صلی اللہ علیہ وسلم پر درود بھیج",
+    "defaultGoal": 100
+  },
+  {
+    "arabic": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+    "transliteration": "SubhanAllahi wa bihamdihi",
+    "translationEn": "Glory and praise be to Allah",
+    "translationTr": "Allah'ı hamd ile tesbih ederim",
+    "translationUr": "اللہ اپنی تعریف کے ساتھ پاک ہے",
+    "defaultGoal": 100
+  },
+  {
+    "arabic": "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+    "transliteration": "La hawla wa la quwwata illa billah",
+    "translationEn": "There is no power nor might except with Allah",
+    "translationTr": "Güç ve kuvvet ancak Allah'tandır",
+    "translationUr": "نیکی کرنے کی طاقت اور برائی سے بچنے کی ہمت اللہ ہی کی طرف سے ہے",
+    "defaultGoal": 100
+  }
 ]

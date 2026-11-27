@@ -58,12 +58,20 @@ public sealed class QuranAssets(string root)
     private static async Task DownloadAsync(HttpClient http, Payload payload, string target, Action<long> onBytes, CancellationToken cancel)
     {
         var part = target + ".part";
-        if (File.Exists(target) && await HashMatches(target, payload.Sha256, cancel)) { onBytes(payload.Bytes); return; }
+        if (File.Exists(target) && await HashMatches(target, payload.Sha256, cancel))
+        {
+            onBytes(payload.Bytes);
+            return;
+        }
 
         for (int attempt = 1; ; attempt++)
         {
             long have = File.Exists(part) ? new FileInfo(part).Length : 0;
-            if (have > payload.Bytes) { File.Delete(part); have = 0; }
+            if (have > payload.Bytes)
+            {
+                File.Delete(part);
+                have = 0;
+            }
             try
             {
                 if (have < payload.Bytes)
@@ -71,7 +79,8 @@ public sealed class QuranAssets(string root)
                     using var request = new HttpRequestMessage(HttpMethod.Get, ReleaseBase + payload.RemoteName);
                     if (have > 0) request.Headers.Range = new RangeHeaderValue(have, null);
                     using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancel);
-                    if (have > 0 && response.StatusCode != System.Net.HttpStatusCode.PartialContent) have = 0; // the server would not resume
+                    // Server ignored Range header; restart from byte 0.
+                    if (have > 0 && response.StatusCode != System.Net.HttpStatusCode.PartialContent) have = 0;
                     response.EnsureSuccessStatusCode();
                     await using var source = await response.Content.ReadAsStreamAsync(cancel);
                     await using var file = new FileStream(part, have > 0 ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.None, 1 << 16);
@@ -88,7 +97,7 @@ public sealed class QuranAssets(string root)
                 if (!await HashMatches(part, payload.Sha256, cancel))
                 {
                     File.Delete(part);
-                    throw new InvalidDataException($"{payload.RemoteName} did not match its checksum.");
+                    throw new InvalidDataException($"SHA-256 mismatch for {payload.RemoteName}.");
                 }
                 File.Move(part, target, overwrite: true);
                 return;
@@ -133,7 +142,7 @@ public sealed class QuranAssets(string root)
                 if (string.IsNullOrEmpty(entry.Name)) continue;
                 var destination = Path.GetFullPath(Path.Combine(staging, entry.FullName));
                 if (!destination.StartsWith(stagingFull, StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidDataException($"Unsafe path in the font archive: {entry.FullName}");
+                    throw new InvalidDataException($"Invalid archive entry path: {entry.FullName}");
                 Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
                 entry.ExtractToFile(destination, overwrite: true);
             }

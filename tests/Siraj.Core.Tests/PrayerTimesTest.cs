@@ -9,7 +9,7 @@ namespace Siraj.Core.Tests;
 public class PrayerTimesTest
 {
     [Fact]
-    public void MatchesReferencePrayerTimesToTheMinute()
+    public void MatchesReferencePrayerTimes()
     {
         int rows = 0;
         var mismatches = new List<string>();
@@ -33,20 +33,20 @@ public class PrayerTimesTest
     }
 
     [Fact]
-    public void CairoTimesAreOnCairosClock()
+    public void CairoPrayerTimesUseLocalTimeZone()
     {
         var cairo = Place.FromCity(Cities.Search("Cairo")[0]);
         var now = new DateTimeOffset(2026, 10, 30, 6, 0, 0, TimeSpan.Zero);
         var day = PrayerCalculator.Day(cairo, new DateOnly(2026, 10, 30), new CalculationSettings("Egyptian"), now);
         var dhuhr = day[PrayerType.Dhuhr].Time;
-        // Egypt keeps summer time until the last Friday of October; on the 30th it is UTC+2.
+        // Egypt ends DST at the end of October; Oct 30 is UTC+2.
         Assert.Equal(TimeSpan.FromHours(2), dhuhr.Offset);
         Assert.InRange(dhuhr.Hour, 11, 12);
         Assert.Equal(dhuhr.AddMinutes(20), day[PrayerType.Dhuhr].Iqama);
     }
 
     [Fact]
-    public void AfterIshaTomorrowsFajrIsNext()
+    public void SelectsTomorrowsFajrAfterIshaWindow()
     {
         var mecca = Place.FromCity(Cities.Search("Mecca")[0]);
         var date = new DateOnly(2026, 3, 1);
@@ -60,7 +60,7 @@ public class PrayerTimesTest
     }
 
     [Fact]
-    public void StateWalksThroughAdhanIqamaAndPrayer()
+    public void PrayerStateTransitionsThroughWindow()
     {
         var mecca = Place.FromCity(Cities.Search("Mecca")[0]);
         var date = new DateOnly(2026, 3, 1);
@@ -79,13 +79,13 @@ public class PrayerTimesTest
     }
 
     [Fact]
-    public void QiblaFromCairoIsSoutheast()
+    public void QiblaDirectionFromCairo()
     {
         Assert.InRange(Qibla.Direction(new Coordinates(30.0444, 31.2357)), 135.5, 136.5);
     }
 
     [Fact]
-    public void RecommendsTheCountrysMethod()
+    public void RecommendsMethodAndMadhabByCountry()
     {
         Assert.Equal("Egyptian", CalculationMethods.RecommendedFor("eg"));
         Assert.Equal("Karachi", CalculationMethods.RecommendedFor("PK"));

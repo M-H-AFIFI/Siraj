@@ -9,7 +9,7 @@ namespace Siraj.Core.Tests;
 public class HijriTest
 {
     [Fact]
-    public void UmmAlQuraMatchesTheJdk()
+    public void UmmAlQuraMatchesReferenceTable()
     {
         int rows = 0;
         var mismatches = new List<string>();
@@ -19,7 +19,7 @@ public class HijriTest
             int y = int.Parse(r[0]), m = int.Parse(r[1]);
             var expected = DateOnly.Parse(r[2], CultureInfo.InvariantCulture);
             var got = HijriCalendar.UmmAlQura.FirstDayOf(y, m);
-            if (got != expected) mismatches.Add($"{y}-{m}: jdk {expected:yyyy-MM-dd} here {got:yyyy-MM-dd}");
+            if (got != expected) mismatches.Add($"{y}-{m}: expected {expected:yyyy-MM-dd} got {got:yyyy-MM-dd}");
             var back = HijriCalendar.UmmAlQura.ToHijri(expected);
             if (back.Year != y || back.Month != m || back.Day != 1) mismatches.Add($"{y}-{m}: {expected} reads as {back}");
         }
@@ -75,7 +75,7 @@ public class HijriTest
     }
 
     [Fact]
-    public void ZoneCountries()
+    public void ZonesResolveCountryCodes()
     {
         Assert.Equal("EG", Zones.CountryOf("Africa/Cairo"));
         Assert.Equal("KW", Zones.CountryOf("Asia/Kuwait"));

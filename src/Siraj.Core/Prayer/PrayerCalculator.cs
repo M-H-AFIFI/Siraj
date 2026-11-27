@@ -14,7 +14,7 @@ public sealed record PrayerDay(DateOnly Date, IReadOnlyList<PrayerTime> Times, P
 {
     public PrayerTime this[PrayerType type] => Times.First(t => t.Type == type);
 
-    public PrayerTime? Next => Times.FirstOrNull(t => t.IsNext);
+    public PrayerTime? Next => Times.FirstOrDefault(t => t.IsNext);
 }
 
 public sealed record CalculationSettings(
@@ -50,10 +50,9 @@ public static class PrayerCalculator
             "Kuwait" => CalculationParameters.For(CalculationMethod.Kuwait),
             "Qatar" => CalculationParameters.For(CalculationMethod.Qatar),
             "Other" => CalculationParameters.For(CalculationMethod.Other),
-            // Diyanet and Tehran angles are configured explicitly.
             "Turkey" or "Diyanet" => new CalculationParameters(18.0, 17.0, CalculationMethod.Other)
                 .WithMethodAdjustments(new PrayerAdjustments(0, -7, 5, 4, 7, 0)),
-            // Tehran also puts Maghrib at a 4.5-degree depression, which the library cannot express.
+            // Uses standard sunset for Maghrib; CalculationParameters does not model a Maghrib angle.
             "Tehran" => new CalculationParameters(17.7, 14.0, CalculationMethod.Other),
             _ => CalculationParameters.For(CalculationMethod.MuslimWorldLeague)
         };
@@ -86,7 +85,6 @@ public static class PrayerCalculator
 
         PrayerTime Make(PrayerType type, DateTime? utc, int fallbackHour)
         {
-            // Fallback to fixed hours at extreme latitudes where the sun does not set.
             var time = utc is { } u
                 ? TimeZoneInfo.ConvertTime(new DateTimeOffset(u, TimeSpan.Zero), zone)
                 : Zones.AtLocal(date, new TimeOnly(fallbackHour, 0), zone);
@@ -113,7 +111,11 @@ public static class PrayerCalculator
         {
             var p = raw[i];
             var activeEnd = p.Type == PrayerType.Sunrise ? p.Time.AddMinutes(15) : p.WindowEnd;
-            if (p.Time > now || now < activeEnd) { nextIndex = i; break; }
+            if (p.Time > now || now < activeEnd)
+            {
+                nextIndex = i;
+                break;
+            }
         }
 
         if (nextIndex != -1)
@@ -127,10 +129,4 @@ public static class PrayerCalculator
 
     public static PrayerDay Today(Place place, CalculationSettings settings, DateTimeOffset now) =>
         Day(place, place.Today(now), settings, now);
-}
-
-internal static class EnumerableExtensions
-{
-    public static T? FirstOrNull<T>(this IEnumerable<T> source, Func<T, bool> predicate) where T : class =>
-        source.FirstOrDefault(predicate);
 }

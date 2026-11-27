@@ -8,7 +8,7 @@ public static partial class HtmlText
     [GeneratedRegex("<[^>]*>")]
     private static partial Regex Tag();
 
-    // Where a paragraph, heading or line ends, the text keeps a line break rather than running on.
+    // Preserve line breaks at block element boundaries.
     [GeneratedRegex(@"<br\s*/?>|</(p|div|h[1-6]|li)>", RegexOptions.IgnoreCase)]
     private static partial Regex BlockEnd();
 
@@ -31,7 +31,7 @@ public static partial class HtmlText
     [
         ("&quot;", "\""), ("&apos;", "'"), ("&#39;", "'"), ("&lt;", "<"), ("&gt;", ">"), ("&nbsp;", " "),
         ("&rlm;", ""), ("&lrm;", ""), ("&bull;", "•"), ("&mdash;", "\u2014"), ("&ndash;", "–"), ("&hellip;", "…"),
-        // Last, so "&amp;lt;" reads as the "&lt;" it was written as.
+        // Decode &amp; last to avoid double-unescaping entities like &amp;lt;.
         ("&amp;", "&"),
     ];
 

@@ -58,8 +58,7 @@ public sealed record AdhanSkySpec(
 
         if (SkyTheme.IsWarmGlow && !SkyTheme.ShowCrescent)
         {
-            // Daytime palettes end in pale sand for the horizon; anchor the lower fade through the
-            // deeper upper blue so blending toward DeepBase avoids a muddy band behind the title.
+            // Daytime palettes fade to pale sand at the horizon; blend through upperMid before DeepBase to avoid a muddy band.
             var midSky = Sample(g, 0.52f);
             var horizon = Argb.Lerp(Sample(g, 0.72f), Argb.Lerp(upperMid, DeepBase, 0.42f), 0.48f);
             var lowerMid = Argb.Lerp(upperMid, DeepBase, 0.78f);

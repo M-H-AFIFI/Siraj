@@ -19,7 +19,7 @@ public sealed record SolarArc(float Progress, bool IsDaytime, string PhaseKey, I
         var maghrib = Find(PrayerType.Maghrib) ?? At(18, 30);
         var fajr = Find(PrayerType.Fajr) ?? sunrise.AddMinutes(-90);
         var isha = Find(PrayerType.Isha) ?? maghrib.AddMinutes(90);
-        // Tomorrow's Fajr is handed over after Isha; the day's own Fajr is a day earlier.
+        // After Isha, the prayer list carries tomorrow's Fajr; shift back a day for today's arc.
         if (fajr > sunrise) fajr = fajr.AddDays(-1);
 
         bool IsNext(PrayerType type) => next != null
@@ -70,7 +70,7 @@ public sealed record SolarArc(float Progress, bool IsDaytime, string PhaseKey, I
             ]);
         }
 
-        // Night: from the last Maghrib to the coming Fajr.
+        // Night arc runs from previous Maghrib to next Fajr.
         bool dawnWindow = now >= fajr && now < sunrise;
         var nextFajr = fajr > now || dawnWindow ? fajr : fajr.AddDays(1);
         var prevMaghrib = maghrib > now ? maghrib.AddDays(-1) : maghrib;

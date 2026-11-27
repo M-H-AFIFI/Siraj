@@ -34,7 +34,7 @@ public static class AlertPlanner
                 var prayerAlert = new PlannedAlert(p.Type, AlertKind.Prayer, p.Time, p.Time);
                 if (p.Time >= now - Grace && seen.Add(prayerAlert.Key)) alerts.Add(prayerAlert);
 
-                // Sunrise has no adhan, so no reminder before one either.
+                // Sunrise has no adhan, so skip pre-prayer reminders.
                 if (lead > 0 && p.Type != PrayerType.Sunrise)
                 {
                     var at = p.Time.AddMinutes(-lead);

@@ -40,7 +40,7 @@ public static partial class QuranQuery
             .Where(x => x.Distance >= 0)
             .OrderBy(x => x.Distance).ThenBy(x => x.Surah.Number)
             .FirstOrDefault();
-        // One letter is part of too many names to stand for one, unless it is the whole name: ص, ق.
+        // Require exact match for 1-character surah names (e.g. ص, ق) to avoid false substring hits.
         if (best == null || (key.Length < 2 && distance != 0)) return null;
         return ayah >= 1 && ayah <= best.AyahCount ? (best, ayah) : null;
     }
@@ -53,7 +53,7 @@ public static partial class QuranQuery
         return null;
     }
 
-    // Folded surah names for diacritic-insensitive search.
+    // Folded revelation-type keywords for diacritic-insensitive matching.
     private static readonly HashSet<string> MeccanWords =
         Folded("مكية", "مكي", "مکی", "مکیہ", "meccan", "makki", "makkan", "mekki", "mekkî", "mekke");
 

@@ -116,7 +116,7 @@ public sealed class PrayerTimes
 
             tempAsr = AtTime(solarTime.Afternoon(parameters.Madhab == Madhab.Hanafi ? 2.0 : 1.0), date);
 
-            // Night length in whole milliseconds, matching adhan-java.
+            // Truncate night length to whole milliseconds for night-portion math.
             long night = (long)(tomorrowSunrise!.Value - sunsetComponents!.Value).TotalMilliseconds;
 
             tempFajr = AtTime(solarTime.HourAngle(-parameters.FajrAngle, false), date);
@@ -198,7 +198,7 @@ public sealed class PrayerTimes
         double c = 75 + 32.74 / 55.0 * Math.Abs(latitude);
         double d = 75 + 48.10 / 55.0 * Math.Abs(latitude);
         double adjustment = SeasonCurve(a, b, c, d, DaysSinceSolstice(day, year, latitude));
-        return sunrise.AddSeconds(-(int)DoubleUtil.JavaRound(adjustment * 60.0));
+        return sunrise.AddSeconds(-(int)DoubleUtil.RoundHalfUp(adjustment * 60.0));
     }
 
     private static DateTime SeasonAdjustedEveningTwilight(double latitude, int day, int year, DateTime sunset)
@@ -208,7 +208,7 @@ public sealed class PrayerTimes
         double c = 75 - 9.210 / 55.0 * Math.Abs(latitude);
         double d = 75 + 6.140 / 55.0 * Math.Abs(latitude);
         double adjustment = SeasonCurve(a, b, c, d, DaysSinceSolstice(day, year, latitude));
-        return sunset.AddSeconds((int)DoubleUtil.JavaRound(adjustment * 60.0));
+        return sunset.AddSeconds((int)DoubleUtil.RoundHalfUp(adjustment * 60.0));
     }
 
     private static double SeasonCurve(double a, double b, double c, double d, int dyy)

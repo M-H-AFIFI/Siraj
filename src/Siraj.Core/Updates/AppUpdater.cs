@@ -3,9 +3,10 @@ using System.Text.RegularExpressions;
 
 namespace Siraj.Core.Updates;
 
-public readonly record struct AppVersion(int Major, int Minor, int Patch) : IComparable<AppVersion>
+public readonly partial record struct AppVersion(int Major, int Minor, int Patch) : IComparable<AppVersion>
 {
-    private static readonly Regex Pattern = new(@"(?:^|[^\d])v?(\d+)\.(\d+)(?:\.(\d+))?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"(?:^|[^\d])v?(\d+)\.(\d+)(?:\.(\d+))?", RegexOptions.IgnoreCase)]
+    private static partial Regex Pattern();
 
     public int CompareTo(AppVersion other)
     {
@@ -23,7 +24,7 @@ public readonly record struct AppVersion(int Major, int Minor, int Patch) : ICom
     {
         version = default;
         if (string.IsNullOrWhiteSpace(raw)) return false;
-        var m = Pattern.Match(raw.Trim());
+        var m = Pattern().Match(raw.Trim());
         if (!m.Success) return false;
         if (!int.TryParse(m.Groups[1].Value, out int maj) || !int.TryParse(m.Groups[2].Value, out int min))
             return false;
@@ -48,11 +49,10 @@ public sealed record UpdateRelease(
     string? ReleasePageUrl,
     DateTimeOffset? PublishedAt);
 
-public static class UpdateFeedParser
+public static partial class UpdateFeedParser
 {
-    private static readonly Regex AssetPattern = new(
-        @"^SirajSetup-(\d+\.\d+(?:\.\d+)?)-(x64|arm64)\.exe$",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"^SirajSetup-(\d+\.\d+(?:\.\d+)?)-(x64|arm64)\.exe$", RegexOptions.IgnoreCase)]
+    private static partial Regex AssetPattern();
 
     public static bool IsDirectManifestUrl(string source) =>
         source.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
@@ -147,7 +147,7 @@ public static class UpdateFeedParser
                 sumsUrl = url;
                 continue;
             }
-            var m = AssetPattern.Match(name);
+            var m = AssetPattern().Match(name);
             if (m.Success && m.Groups[2].Value.Equals(normArch, StringComparison.OrdinalIgnoreCase))
             {
                 if (AppVersion.TryParse(m.Groups[1].Value, out var parsed))
@@ -160,21 +160,8 @@ public static class UpdateFeedParser
             }
         }
 
-        if (installerUrl == null || installerName == null) return null;
-
-        AppVersion version;
-        if (assetVersion is { } av)
-        {
-            version = av;
-        }
-        else if (TryGetString(rel, "tag_name", out var tag) && AppVersion.TryParse(tag, out var tv))
-        {
-            version = tv;
-        }
-        else
-        {
+        if (installerUrl == null || installerName == null || assetVersion is not { } version)
             return null;
-        }
 
         TryGetString(rel, "body", out var body);
         TryGetString(rel, "html_url", out var pageUrl);

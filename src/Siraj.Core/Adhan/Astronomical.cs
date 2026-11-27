@@ -1,6 +1,6 @@
 namespace Siraj.Core.Adhan;
 
-// Based on batoulapps/adhan-java 1.2.1 (MIT). Equations follow Jean Meeus, Astronomical Algorithms.
+// Solar position equations from Jean Meeus, Astronomical Algorithms.
 
 internal static class DoubleUtil
 {
@@ -11,10 +11,10 @@ internal static class DoubleUtil
     public static double ClosestAngle(double angle)
     {
         if (angle >= -180 && angle <= 180) return angle;
-        return angle - 360 * JavaRound(angle / 360);
+        return angle - 360 * RoundHalfUp(angle / 360);
     }
 
-    public static long JavaRound(double value) => (long)Math.Floor(value + 0.5);
+    public static long RoundHalfUp(double value) => (long)Math.Floor(value + 0.5);
 
     public static double ToRadians(double degrees) => degrees * Math.PI / 180.0;
 
@@ -23,10 +23,8 @@ internal static class DoubleUtil
 
 internal static class CalendricalHelper
 {
-    /* Equation from Astronomical Algorithms page 60 */
     public static double JulianDay(int year, int month, int day, double hours = 0.0)
     {
-        // Integer conversion is intentional, for the decimal truncation.
         int y = month > 2 ? year : year - 1;
         int m = month > 2 ? month : month + 12;
         double d = day + hours / 24;
@@ -37,27 +35,23 @@ internal static class CalendricalHelper
         return i0 + i1 + d + b - 1524.5;
     }
 
-    /* Equation from Astronomical Algorithms page 163 */
     public static double JulianCentury(double jd) => (jd - 2451545.0) / 36525;
 }
 
 internal static class Astronomical
 {
-    /* page 163 */
     public static double MeanSolarLongitude(double t)
     {
         double l0 = 280.4664567 + 36000.76983 * t + 0.0003032 * Math.Pow(t, 2);
         return DoubleUtil.UnwindAngle(l0);
     }
 
-    /* page 144 */
     public static double MeanLunarLongitude(double t)
     {
         double lp = 218.3165 + 481267.8813 * t;
         return DoubleUtil.UnwindAngle(lp);
     }
 
-    /* page 164 */
     public static double ApparentSolarLongitude(double t, double l0)
     {
         double longitude = l0 + SolarEquationOfTheCenter(t, MeanSolarAnomaly(t));
@@ -66,21 +60,18 @@ internal static class Astronomical
         return DoubleUtil.UnwindAngle(lambda);
     }
 
-    /* page 144 */
     public static double AscendingLunarNodeLongitude(double t)
     {
         double omega = 125.04452 - 1934.136261 * t + 0.0020708 * Math.Pow(t, 2) + Math.Pow(t, 3) / 450000;
         return DoubleUtil.UnwindAngle(omega);
     }
 
-    /* page 163 */
     public static double MeanSolarAnomaly(double t)
     {
         double m = 357.52911 + 35999.05029 * t - 0.0001537 * Math.Pow(t, 2);
         return DoubleUtil.UnwindAngle(m);
     }
 
-    /* page 164 */
     public static double SolarEquationOfTheCenter(double t, double m)
     {
         double mrad = DoubleUtil.ToRadians(m);
@@ -90,18 +81,15 @@ internal static class Astronomical
         return term1 + term2 + term3;
     }
 
-    /* page 147 */
     public static double MeanObliquityOfTheEcliptic(double t) =>
         23.439291 - 0.013004167 * t - 0.0000001639 * Math.Pow(t, 2) + 0.0000005036 * Math.Pow(t, 3);
 
-    /* page 165 */
     public static double ApparentObliquityOfTheEcliptic(double t, double epsilon0)
     {
         double o = 125.04 - 1934.136 * t;
         return epsilon0 + 0.00256 * Math.Cos(DoubleUtil.ToRadians(o));
     }
 
-    /* page 165 */
     public static double MeanSiderealTime(double t)
     {
         double jd = t * 36525 + 2451545.0;
@@ -109,7 +97,6 @@ internal static class Astronomical
         return DoubleUtil.UnwindAngle(theta);
     }
 
-    /* page 144 */
     public static double NutationInLongitude(double t, double l0, double lp, double omega)
     {
         double term1 = -17.2 / 3600 * Math.Sin(DoubleUtil.ToRadians(omega));
@@ -119,7 +106,6 @@ internal static class Astronomical
         return term1 - term2 - term3 + term4;
     }
 
-    /* page 144 */
     public static double NutationInObliquity(double t, double l0, double lp, double omega)
     {
         double term1 = 9.2 / 3600 * Math.Cos(DoubleUtil.ToRadians(omega));
@@ -129,7 +115,6 @@ internal static class Astronomical
         return term1 + term2 + term3 - term4;
     }
 
-    /* page 93 */
     public static double AltitudeOfCelestialBody(double phi, double delta, double h)
     {
         double term1 = Math.Sin(DoubleUtil.ToRadians(phi)) * Math.Sin(DoubleUtil.ToRadians(delta));
@@ -137,14 +122,12 @@ internal static class Astronomical
         return DoubleUtil.ToDegrees(Math.Asin(term1 + term2));
     }
 
-    /* page 102 */
     public static double ApproximateTransit(double l, double theta0, double alpha2)
     {
         double lw = l * -1;
         return DoubleUtil.NormalizeWithBound((alpha2 + lw - theta0) / 360, 1);
     }
 
-    /* page 102 */
     public static double CorrectedTransit(double m0, double l, double theta0, double alpha2, double alpha1, double alpha3)
     {
         double lw = l * -1;
@@ -155,7 +138,6 @@ internal static class Astronomical
         return (m0 + dm) * 24;
     }
 
-    /* page 102 */
     public static double CorrectedHourAngle(double m0, double h0, Coordinates coordinates, bool afterTransit,
         double theta0, double alpha2, double alpha1, double alpha3, double delta2, double delta1, double delta3)
     {
@@ -175,7 +157,6 @@ internal static class Astronomical
         return (m + dm) * 24;
     }
 
-    /* page 24 */
     public static double Interpolate(double y2, double y1, double y3, double n)
     {
         double a = y2 - y1;
@@ -184,7 +165,6 @@ internal static class Astronomical
         return y2 + n / 2 * (a + b + n * c);
     }
 
-    /* page 24 */
     public static double InterpolateAngles(double y2, double y1, double y3, double n)
     {
         double a = DoubleUtil.UnwindAngle(y2 - y1);
@@ -213,11 +193,8 @@ internal sealed class SolarCoordinates
         double epsilon0 = Astronomical.MeanObliquityOfTheEcliptic(t);
         double epsilonApp = DoubleUtil.ToRadians(Astronomical.ApparentObliquityOfTheEcliptic(t, epsilon0));
 
-        /* page 165 */
         Declination = DoubleUtil.ToDegrees(Math.Asin(Math.Sin(epsilonApp) * Math.Sin(lambda)));
-        /* page 165 */
         RightAscension = DoubleUtil.UnwindAngle(DoubleUtil.ToDegrees(Math.Atan2(Math.Cos(epsilonApp) * Math.Sin(lambda), Math.Cos(lambda))));
-        /* page 88 */
         ApparentSiderealTime = theta0 + dPsi * 3600 * Math.Cos(DoubleUtil.ToRadians(epsilon0 + dEpsilon)) / 3600;
     }
 }

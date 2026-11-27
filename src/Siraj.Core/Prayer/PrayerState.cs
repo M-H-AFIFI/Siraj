@@ -26,7 +26,7 @@ public abstract record PrayerState(PrayerTime Prayer)
             return new InPrayer(pt, Max0(now - iqama));
         }
 
-        // A prayer still ahead wins over a stale "next" mark.
+        // Prefer a future prayer over a stale IsNext flag.
         var next = day.Times.FirstOrDefault(t => t.IsNext && t.Time > now) ?? day.Times.FirstOrDefault(t => t.Time > now);
         return next == null ? null : new UpcomingAzan(next, next.Time - now);
     }

@@ -64,7 +64,7 @@ public static class KhatmaPlanner
             portions.Add(new KhatmaDayPortion(d, from, to, isDone, d == elapsed));
         }
 
-        // Current focus portion: first undone portion, or today's portion if all done.
+        // First incomplete portion, or the final portion if all are complete.
         var focus = portions.FirstOrDefault(p => !p.Completed) ?? portions[^1];
 
         int streak = 0;

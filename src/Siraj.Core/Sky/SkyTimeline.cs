@@ -18,8 +18,12 @@ public readonly record struct Argb(byte A, byte R, byte G, byte B)
     {
         get
         {
-            static double C(byte v) { double s = v / 255.0; return s <= 0.03928 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4); }
-            return 0.2126 * C(R) + 0.7152 * C(G) + 0.0722 * C(B);
+            static double Linear(byte v)
+            {
+                double s = v / 255.0;
+                return s <= 0.03928 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4);
+            }
+            return 0.2126 * Linear(R) + 0.7152 * Linear(G) + 0.0722 * Linear(B);
         }
     }
 }

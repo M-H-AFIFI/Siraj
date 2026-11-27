@@ -34,12 +34,16 @@ public sealed class QcfGlyphs
         var pages = new List<(uint, byte[])>(PageCount);
         while (reader.ReadLine() is { } line)
         {
-            if (string.IsNullOrWhiteSpace(line)) { pages.Add((0, [])); continue; }
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                pages.Add((0, []));
+                continue;
+            }
             int space = line.IndexOf(' ');
             var digits = line[(space + 1)..];
             pages.Add((Convert.ToUInt32(line[..space], 16), digits.Select(d => (byte)(d - '0')).ToArray()));
         }
-        if (pages.Count != PageCount) throw new InvalidDataException($"The glyph table has {pages.Count} pages, not {PageCount}.");
+        if (pages.Count != PageCount) throw new InvalidDataException($"Expected {PageCount} pages in glyph table, found {pages.Count}.");
         return new QcfGlyphs(pages.ToArray());
     }
 

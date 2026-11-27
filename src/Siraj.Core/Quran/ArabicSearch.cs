@@ -14,7 +14,7 @@ public static class ArabicSearch
         >= 'ً' and <= 'ٟ' => true, // tashkeel and the marks after it
         >= 'ۖ' and <= 'ۭ' => true, // Quranic annotation and waqf signs
         'ࣰ' or 'ࣱ' or 'ࣲ' => true, // open tanween
-        '​' or '‌' or '‍' or '‎' or '‏' => true,
+        '\u200B' or '\u200C' or '\u200D' or '\u200E' or '\u200F' => true,
         _ => false
     };
 

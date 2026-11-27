@@ -70,7 +70,13 @@ public sealed class JournalStore : IDisposable
         }
         catch (Exception)
         {
-            try { File.Copy(_path, Path.ChangeExtension(_path, ".bad.json"), overwrite: true); } catch { }
+            try
+            {
+                File.Copy(_path, Path.ChangeExtension(_path, ".bad.json"), overwrite: true);
+            }
+            catch
+            {
+            }
             return new Journal();
         }
     }
@@ -117,7 +123,10 @@ public sealed class JournalStore : IDisposable
     {
         var dayKey = Fasting.Key(day);
         if (!j.Adhkar.TryGetValue(key, out var p) || p.Day != dayKey) j.Adhkar[key] = p = new AdhkarProgress { Day = dayKey };
-        if (count <= 0) p.Counts.Remove(id); else p.Counts[id] = count;
+        if (count <= 0)
+            p.Counts.Remove(id);
+        else
+            p.Counts[id] = count;
     });
 
     public void ResetAdhkar(string key) => Update(j => j.Adhkar.Remove(key));

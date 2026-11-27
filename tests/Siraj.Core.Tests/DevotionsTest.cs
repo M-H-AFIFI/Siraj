@@ -7,18 +7,22 @@ namespace Siraj.Core.Tests;
 public class DevotionsTest
 {
     [Fact]
-    public void ReadsTheWholeBookWithExpectedNumbering()
+    public void LoadsAdhkarBookAndChapters()
     {
         Assert.Equal(384, AdhkarBook.All.Count);
         Assert.Equal(140, AdhkarBook.Chapters.Count);
         Assert.Equal(Enumerable.Range(1, 384), AdhkarBook.All.Select(d => d.Id));
         Assert.All(AdhkarBook.All, d => Assert.True(d.Count >= 1 && d.Text.Length > 0));
-        // Every chapter has its title in the other three languages.
-        Assert.All(AdhkarBook.Chapters, c => Assert.NotEqual(c.Title, AdhkarBook.ChapterTitle(c.Title, "en")));
+        Assert.All(AdhkarBook.Chapters, c =>
+        {
+            Assert.NotEqual(c.Title, AdhkarBook.ChapterTitle(c.Title, "en"));
+            Assert.NotEqual(c.Title, AdhkarBook.ChapterTitle(c.Title, "tr"));
+            Assert.NotEqual(c.Title, AdhkarBook.ChapterTitle(c.Title, "ur"));
+        });
     }
 
     [Fact]
-    public void EveryGroupFindsItsAdhkar()
+    public void EveryAdhkarGroupHasEntries()
     {
         foreach (var group in Enum.GetValues<AdhkarGroup>())
             Assert.True(AdhkarBook.Of(group).Count > 0, group.ToString());
@@ -27,7 +31,7 @@ public class DevotionsTest
     }
 
     [Fact]
-    public void PicksOneLanguageFromATaggedValue()
+    public void TaggedPickSelectsRequestedLanguage()
     {
         const string value = "[ar]عربي\n[en]English\n[tr]Türkçe";
         Assert.Equal("عربي", Tagged.Pick(value, "ar"));
@@ -40,7 +44,7 @@ public class DevotionsTest
     }
 
     [Fact]
-    public void SuggestsTheAdhkarOfTheHour()
+    public void SuggestsAdhkarGroupByTimeOfDay()
     {
         Assert.Equal(AdhkarGroup.Morning, AdhkarGroups.Suggested(new TimeOnly(6, 0)));
         Assert.Equal(AdhkarGroup.AfterPrayer, AdhkarGroups.Suggested(new TimeOnly(13, 0)));
@@ -50,7 +54,7 @@ public class DevotionsTest
     }
 
     [Fact]
-    public void HadithAndNamesLoad()
+    public void LoadsHadithAndAllahNames()
     {
         Assert.True(Hadiths.All.Count > 100);
         Assert.Equal(Hadiths.All.Count, Hadiths.All.Select(h => h.Id).Distinct().Count());
@@ -62,7 +66,7 @@ public class DevotionsTest
     }
 
     [Fact]
-    public void HadithOfTheDayRotatesByEpochDay()
+    public void DailyHadithRotatesByEpochDay()
     {
         Assert.Same(Hadiths.All[0], Hadiths.ForDay(new DateOnly(1970, 1, 1)));
         Assert.Same(Hadiths.All[1], Hadiths.ForDay(new DateOnly(1970, 1, 2)));
@@ -72,7 +76,7 @@ public class DevotionsTest
     }
 
     [Fact]
-    public void ZakatMatchesExpectedThresholdsAndRates()
+    public void ZakatCalculationAppliesNisabAndRate()
     {
         Assert.Equal(36, Zakat.Currencies.Count);
         Assert.Equal("SAR", Zakat.Currencies[0].Code);
@@ -85,14 +89,14 @@ public class DevotionsTest
         var due = Zakat.Calculate(new ZakatInputs { Cash = 10000, Debts = 2000, GoldGrams = 10, GoldPrice = 280, SilverPrice = 0 });
         Assert.Equal(85 * 280, due.Nisab, 6);
         Assert.Equal(10000 + 2800 - 2000, due.Net, 6);
-        Assert.False(due.Eligible); // 10,800 is under the gold nisab of 23,800
+        Assert.False(due.Eligible);
         var gold = Zakat.Calculate(new ZakatInputs { Cash = 30000, GoldPrice = 280, SilverPrice = 0 });
         Assert.True(gold.Eligible);
         Assert.Equal(750, gold.Due, 6);
     }
 
     [Fact]
-    public void TasbihStartsANewRoundAfterTheGoal()
+    public void TasbihIncrementWrapsAfterGoal()
     {
         Assert.Equal(8, TasbihPhrases.BuiltIn.Count);
         Assert.Equal([33, 33, 34], TasbihPhrases.BuiltIn.Take(3).Select(p => p.DefaultGoal));
@@ -102,9 +106,9 @@ public class DevotionsTest
     }
 
     [Fact]
-    public void UpcomingFastsAreInOrderAndInTheFuture()
+    public void UpcomingFastsAreOrderedFromToday()
     {
-        var today = new DateOnly(2026, 10, 30); // a Friday
+        var today = new DateOnly(2026, 10, 30);
         var list = Fasting.Upcoming(today, HijriCalendar.UmmAlQura);
         Assert.Equal(list.OrderBy(f => f.DaysAway), list);
         Assert.All(list, f => Assert.True(f.DaysAway >= 0 && f.Date == today.AddDays(f.DaysAway)));
@@ -117,7 +121,7 @@ public class DevotionsTest
     }
 
     [Fact]
-    public void StreakCountsBackFromTodayOrYesterday()
+    public void FastingStreakCountsConsecutiveDays()
     {
         var today = new DateOnly(2026, 10, 30);
         var log = new Dictionary<string, string>
@@ -132,7 +136,7 @@ public class DevotionsTest
     }
 
     [Fact]
-    public void JournalKeepsTodaysAdhkarAndForgetsYesterdays()
+    public void JournalStorePersistsTodayAndResetsNextDay()
     {
         var dir = Path.Combine(Path.GetTempPath(), "siraj-journal-" + Guid.NewGuid().ToString("N"));
         try
@@ -154,6 +158,9 @@ public class DevotionsTest
             Assert.Empty(broken.Current.Adhkar);
             Assert.True(File.Exists(Path.Combine(dir, "journal.bad.json")));
         }
-        finally { Directory.Delete(dir, true); }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
     }
 }

@@ -18,7 +18,7 @@ public class QuranTest(ITestOutputHelper output)
     }
 
     [Fact]
-    public void EveryMadaniPageMatchesItsFonts()
+    public void MadaniPagesMatchGlyphTable()
     {
         if (Skip()) return;
         using var db = new QuranDatabase(DbPath!);
@@ -34,7 +34,7 @@ public class QuranTest(ITestOutputHelper output)
     }
 
     [Fact]
-    public void TheTextIsWhole()
+    public void DatabaseContainsCompleteQuranMetadata()
     {
         if (Skip()) return;
         using var db = new QuranDatabase(DbPath!);
@@ -58,7 +58,7 @@ public class QuranTest(ITestOutputHelper output)
     }
 
     [Fact]
-    public void EachJuzOpensWithItsFirstHizbOnThePageOfItsFirstAyah()
+    public void JuzStartPagesMatchFirstHizb()
     {
         if (Skip()) return;
         using var db = new QuranDatabase(DbPath!);
@@ -69,7 +69,7 @@ public class QuranTest(ITestOutputHelper output)
     }
 
     [Fact]
-    public void WordsForPagesAndAjzaaNameNoSurah()
+    public void AyahQueryRejectsPageAndJuzKeywords()
     {
         if (Skip()) return;
         using var db = new QuranDatabase(DbPath!);
@@ -86,7 +86,7 @@ public class QuranTest(ITestOutputHelper output)
     }
 
     [Fact]
-    public void SearchFindsWordsWithoutTheirMarks()
+    public void SearchMatchesArabicIgnoringDiacritics()
     {
         if (Skip()) return;
         using var db = new QuranDatabase(DbPath!);
@@ -118,16 +118,22 @@ public class QuranTest(ITestOutputHelper output)
         Assert.Equal(ReciterMode.SurahSegments, jalil.Mode);
         Assert.Equal("https://download.quranicaudio.com/qdc/khalid_jalil/murattal/mp3/18.mp3", Reciters.SurahUrl(jalil, 18).ToString());
         Assert.Equal(34, Reciters.All.Count);
+        Assert.Equal(75, Reciters.SurahServers.Count);
+        Assert.All(Reciters.All, r =>
+        {
+            var url = Reciters.SurahUrl(r, 1).ToString();
+            Assert.DoesNotContain("//", url["https://".Length..]);
+        });
     }
 
     [Fact]
-    public void EveryAyahFindsItsTafsirAsPlainText()
+    public void TafsirReturnsPlainText()
     {
         Assert.Equal("a & b\n\nc", Siraj.Core.Text.HtmlText.Plain("<div><p>a &amp; b</p>\n\n\n<p>c &rlm;</p></div>"));
         if (Skip()) return;
         using var db = new QuranDatabase(DbPath!);
         var missing = Enumerable.Range(1, 6236).Where(n => db.Tafsir(n) == null).ToList();
-        // Four ayahs have no Muyassar block within reach in the dataset.
+        // 4 ayahs have no Muyassar entry within the 10-ayah lookback window.
         Assert.Equal([5405, 5812, 5813, 5814], missing);
         var first = db.Tafsir(1)!;
         Assert.DoesNotContain("<", first);
@@ -135,7 +141,7 @@ public class QuranTest(ITestOutputHelper output)
     }
 
     [Fact]
-    public void SurahNamesFormatProperly()
+    public void SurahNamesFormatAndMatchQueries()
     {
         Assert.Equal("Al-Fātiḥah", SurahNames.Transliteration("Al-Fātiĥah"));
         Assert.Equal("Āli ʿImrān", SurahNames.Transliteration("Āli `Imrān"));
@@ -151,5 +157,59 @@ public class QuranTest(ITestOutputHelper output)
         var imran = new Surah(3, "آل عمران", "Āli ʿImrān", "Family of Imran", 200, "madinah", 89);
         Assert.True(SurahNames.Matches(imran, "imran"));
         Assert.True(SurahNames.Matches(imran, "عمران"));
+    }
+
+    [Fact]
+    public void KhatmaPlannerSplitsFullMushaf()
+    {
+        var start = new DateOnly(2026, 11, 1);
+        var state = KhatmaPlanner.Create(start, targetDays: 30, startPage: 1);
+        var summary = KhatmaPlanner.Summarize(state, start);
+
+        Assert.Equal(30, summary.Portions.Count);
+        Assert.Equal(1, summary.Portions[0].FromPage);
+        Assert.Equal(QuranDatabase.PageCount, summary.Portions[^1].ToPage);
+        Assert.Equal(QuranDatabase.PageCount, summary.TotalPages);
+        Assert.Equal(0, summary.PagesRead);
+        Assert.False(summary.IsFinished);
+        for (int i = 1; i < summary.Portions.Count; i++)
+            Assert.Equal(summary.Portions[i - 1].ToPage + 1, summary.Portions[i].FromPage);
+
+        state.CompletedDays.AddRange([1, 2]);
+        var day2 = KhatmaPlanner.Summarize(state, start.AddDays(1));
+        Assert.Equal(2, day2.CompletedDays);
+        Assert.Equal(2, day2.Streak);
+        Assert.Equal(3, day2.TodayPortion.DayNumber);
+        Assert.True(day2.PagesRead > 35);
+    }
+
+    [Fact]
+    public void KhatmaPlannerStartsFromCustomPage()
+    {
+        var start = new DateOnly(2026, 11, 1);
+        var state = KhatmaPlanner.Create(start, targetDays: 10, startPage: 305);
+        var summary = KhatmaPlanner.Summarize(state, start);
+
+        Assert.Equal(305, summary.Portions[0].FromPage);
+        Assert.Equal(604, summary.Portions[^1].ToPage);
+        Assert.Equal(300, summary.TotalPages);
+        Assert.Equal(30, KhatmaPlanner.PagesPerDay(10, 305));
+    }
+
+    [Fact]
+    public void DailyAyahRotatesAcrossLanguages()
+    {
+        var a = DailyAyah.ForDay(new DateOnly(2026, 11, 23));
+        var b = DailyAyah.ForDay(new DateOnly(2026, 11, 24));
+        Assert.NotEqual(a, b);
+        Assert.All(DailyAyah.Pool, v =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(v.Arabic));
+            Assert.InRange(v.Surah, 1, 114);
+            Assert.InRange(v.Page, 1, QuranDatabase.PageCount);
+            Assert.False(string.IsNullOrWhiteSpace(v.Translation("en")));
+            Assert.False(string.IsNullOrWhiteSpace(v.Translation("tr")));
+            Assert.False(string.IsNullOrWhiteSpace(v.Translation("ur")));
+        });
     }
 }
