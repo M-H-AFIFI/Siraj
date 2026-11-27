@@ -23,8 +23,17 @@ public sealed partial class KhatmaPage : Page
             back: () => App.MainWindowInstance?.Navigate("quran"));
         _body = body;
         Content = root;
-        Loaded += (_, _) => { App.Journal.Changed += Refresh; App.Theme.Changed += Refresh; Refresh(); };
-        Unloaded += (_, _) => { App.Journal.Changed -= Refresh; App.Theme.Changed -= Refresh; };
+        Loaded += (_, _) =>
+        {
+            App.Journal.Changed += Refresh;
+            App.Theme.Changed += Refresh;
+            Refresh();
+        };
+        Unloaded += (_, _) =>
+        {
+            App.Journal.Changed -= Refresh;
+            App.Theme.Changed -= Refresh;
+        };
     }
 
     private void Refresh()
@@ -68,7 +77,11 @@ public sealed partial class KhatmaPage : Page
             inner.Children.Add(perDay);
 
             int d = days;
-            var btn = Kit.CardButton(inner, () => { _chosenDays = d; Refresh(); },
+            var btn = Kit.CardButton(inner, () =>
+            {
+                _chosenDays = d;
+                Refresh();
+            },
                 background: selected ? "SirajPrimarySoftBrush" : "SirajGlassCardBrush",
                 padding: new Thickness(14, 14, 14, 14));
             if (selected) btn.BorderBrush = Kit.B("SirajPrimaryBrush");
@@ -86,7 +99,11 @@ public sealed partial class KhatmaPage : Page
         {
             if (double.IsNaN(e.NewValue)) return;
             int v = Math.Clamp((int)e.NewValue, 1, 365);
-            if (v != _chosenDays) { _chosenDays = v; Refresh(); }
+            if (v != _chosenDays)
+            {
+                _chosenDays = v;
+                Refresh();
+            }
         };
         hero.Children.Add(Ui.Card(
             Ui.Row(loc["kh_custom_days"], loc.Format("kh_finishes_on", HijriText.Gregorian(today.AddDays(_chosenDays), loc.Language, eastern, "d MMMM yyyy")), customBox),
@@ -96,7 +113,11 @@ public sealed partial class KhatmaPage : Page
                 [
                     (false, loc["kh_from_beginning"]),
                     (true, loc.Format("kh_from_last_read", loc.Number(lastPage))),
-                ], _startFromLastRead, v => { _startFromLastRead = v; Refresh(); }), stack: true)));
+                ], _startFromLastRead, v =>
+                {
+                    _startFromLastRead = v;
+                    Refresh();
+                }), stack: true)));
 
         var summaryLine = Kit.Text(
             $"{loc.Format("kh_pages_range", loc.Number(startPage), loc.Number(QuranDatabase.PageCount))}{loc.Sep}{loc.Format("kh_finishes_on", HijriText.Gregorian(today.AddDays(_chosenDays), loc.Language, eastern, "d MMMM yyyy"))}",
@@ -198,7 +219,11 @@ public sealed partial class KhatmaPage : Page
                 Content = _showAllDays ? loc["kh_schedule_show_less"] : loc.Format("kh_schedule_show_all", loc.Number(summary.Portions.Count)),
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
-            toggleBtn.Click += (_, _) => { _showAllDays = !_showAllDays; Refresh(); };
+            toggleBtn.Click += (_, _) =>
+            {
+                _showAllDays = !_showAllDays;
+                Refresh();
+            };
             schedHeader.Children.Add(toggleBtn);
         }
         _body.Children.Add(schedHeader);

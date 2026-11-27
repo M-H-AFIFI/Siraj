@@ -62,7 +62,11 @@ public sealed partial class QuranPage : Page
         App.Journal.Changed += OnJournalChanged;
         App.Theme.Changed += OnThemeChanged;
         _loaded = true;
-        if (!_tabsBuilt) { BuildTabs(); _tabsBuilt = true; }
+        if (!_tabsBuilt)
+        {
+            BuildTabs();
+            _tabsBuilt = true;
+        }
         string key = CurrentKey();
         if (key != _builtKey || App.Quran.Status != QuranService.State.Ready)
             Refresh();
@@ -78,16 +82,38 @@ public sealed partial class QuranPage : Page
         App.Theme.Changed -= OnThemeChanged;
     }
 
-    private void OnQuranChanged() => DispatcherQueue.TryEnqueue(() => { _builtKey = ""; Refresh(); });
+    private void OnQuranChanged() => DispatcherQueue.TryEnqueue(() =>
+    {
+        _builtKey = "";
+        Refresh();
+    });
 
-    private void OnThemeChanged() => DispatcherQueue.TryEnqueue(() => { _builtKey = ""; if (_loaded) { BuildTabs(); Refresh(); } });
+    private void OnThemeChanged() => DispatcherQueue.TryEnqueue(() =>
+    {
+        _builtKey = "";
+        if (_loaded)
+        {
+            BuildTabs();
+            Refresh();
+        }
+    });
 
-    private void OnJournalChanged() => DispatcherQueue.TryEnqueue(() => { _builtKey = ""; if (_loaded) BuildKhatmaCard(); });
+    private void OnJournalChanged() => DispatcherQueue.TryEnqueue(() =>
+    {
+        _builtKey = "";
+        if (_loaded) BuildKhatmaCard();
+    });
 
     private void OnSettingsChanged(Core.Settings.AppSettings old, Core.Settings.AppSettings updated)
     {
         if (old.Bookmarks != updated.Bookmarks || old.LastRead != updated.LastRead)
-            DispatcherQueue.TryEnqueue(() => { _builtKey = ""; Refresh(); });
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                _builtKey = "";
+                Refresh();
+            });
+        }
     }
 
     private void BuildTabs()
@@ -149,9 +175,16 @@ public sealed partial class QuranPage : Page
             _warming = true;
             try
             {
-                await Task.Run(() => { _ = quran.Database.Surahs(); _ = quran.Database.Ayahs(); });
+                await Task.Run(() =>
+                {
+                    _ = quran.Database.Surahs();
+                    _ = quran.Database.Ayahs();
+                });
             }
-            finally { _warming = false; }
+            finally
+            {
+                _warming = false;
+            }
         }
         if (!_loaded) return;
 
@@ -572,7 +605,11 @@ public sealed partial class QuranPage : Page
     {
         _search?.Cancel();
         var cancel = (_search = new CancellationTokenSource()).Token;
-        if (string.IsNullOrWhiteSpace(query)) { ShowTab(); return; }
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            ShowTab();
+            return;
+        }
         var db = App.Quran.Database;
         await Task.Delay(180, cancel).ContinueWith(_ => { });
         if (cancel.IsCancellationRequested) return;

@@ -847,7 +847,6 @@ internal static class LiveSceneRenderer
             DrawSoftDisc(ds, b, w * RoseBokehX[i] + dx, h * RoseBokehY[i] + dy, r, 1f, 1f, 0f, pulse);
         }
 
-        // Sculpted notched rose petal + crease
         float unit = MathF.Max(0.5f, minDim * 0.043f);
         using var petalPb = new CanvasPathBuilder(rc);
         petalPb.BeginFigure(0f, unit);
@@ -1252,9 +1251,9 @@ internal static class LiveSceneRenderer
             {
                 int index = layer == 0 ? j : 6 + j;
                 float x0 = j * span;
-                float centre = x0 + span * 0.5f;
-                float pivotX = centre * w;
-                float pivotY = GroundY(centre, layer, h) + sink;
+                float center = x0 + span * 0.5f;
+                float pivotX = center * w;
+                float pivotY = GroundY(center, layer, h) + sink;
                 float phase = j * 0.75f + layer * 1.9f;
                 float swing = swayDeg * (MathF.Sin(t * 0.85f + phase) + 0.35f * MathF.Sin(t * 1.9f + phase * 2.3f));
 
@@ -1574,7 +1573,6 @@ internal static class LiveSceneRenderer
         var nodeCol = isDark ? Argb.Lerp(c.Highlight, Argb.Hex(0xFFFFFFFF), 0.30f) : Argb.Lerp(c.Accent, c.Secondary, 0.25f);
         var lineCol = isDark ? Argb.Lerp(c.Accent, c.Highlight, 0.48f) : Argb.Lerp(c.Accent, c.Secondary, 0.30f);
 
-        // 42 background dust stars
         float bgPeak = (isDark ? 0.42f : 0.30f) * k;
         for (int i = 0; i < 42; i++)
         {
@@ -1590,7 +1588,6 @@ internal static class LiveSceneRenderer
             if (a > 0.01f) ds.FillCircle(w * xn, h * yn, r, Ca(nodeCol, a));
         }
 
-        // 20 constellation vertices
         const int nodes = 20;
         Span<float> px = stackalloc float[nodes];
         Span<float> py = stackalloc float[nodes];
@@ -1620,7 +1617,6 @@ internal static class LiveSceneRenderer
             nRad[i] = MathF.Max(anchor ? 1.6f : 1.0f, minDim * (anchor ? 0.0036f : 0.0018f + 0.0010f * SceneHash(i, 149)));
         }
 
-        // Connecting threads
         float maxDist = minDim * 0.25f;
         float linePeak = (isDark ? 0.19f : 0.16f) * k;
         float lineW = MathF.Max(0.85f, minDim * 0.0014f);
@@ -1640,7 +1636,6 @@ internal static class LiveSceneRenderer
             }
         }
 
-        // Vertices + 5 beacon anchor stars with cross glints
         float anchorHaloR = MathF.Max(6.0f, minDim * 0.030f);
         float glintHalf = MathF.Max(2.2f, minDim * 0.011f);
         float glintW = MathF.Max(0.75f, minDim * 0.0012f);
@@ -1709,7 +1704,10 @@ internal static class LiveSceneRenderer
             {
                 float xn = s / (float)poolSteps;
                 float y = h * (0.042f + 0.011f * MathF.Sin(xn * TwoPi * 1.4f + t * 0.42f + 0.7f) + 0.006f * MathF.Cos(xn * TwoPi * 2.6f - t * 0.34f));
-                if (s == 0) trace.Start(w * xn, y); else trace.To(w * xn, y);
+                if (s == 0)
+                    trace.Start(w * xn, y);
+                else
+                    trace.To(w * xn, y);
             }
             trace.End();
             topPb.AddLine(w, 0f);
@@ -1840,7 +1838,10 @@ internal static class LiveSceneRenderer
             {
                 float xn = s / (float)poolSteps;
                 float y = h * (0.915f + 0.015f * MathF.Sin(xn * TwoPi * 1.3f - t * 0.42f) + 0.008f * MathF.Cos(xn * TwoPi * 2.7f + t * 0.34f));
-                if (s == 0) trace.Start(w * xn, y); else trace.To(w * xn, y);
+                if (s == 0)
+                    trace.Start(w * xn, y);
+                else
+                    trace.To(w * xn, y);
             }
             trace.End();
             botPb.AddLine(w, h);
@@ -1967,7 +1968,6 @@ internal static class LiveSceneRenderer
         var silkCool = Argb.Lerp(c.Secondary, Argb.Hex(0xFF4AC2D4), 0.35f);
         var silkMid = Argb.Lerp(silkWarm, silkCool, 0.50f);
 
-        // Upper-right warm orb
         float orbR = MathF.Max(1f, minDim * 0.22f);
         using (var orb = SoftRadial(rc, Argb.Lerp(silkWarm, c.Highlight, 0.25f), (isDark ? 0.16f : 0.14f) * k, orbR, c.SkyUpperMid))
             DrawSoftDisc(ds, orb, w * (0.84f + 0.025f * MathF.Sin(t * 0.38f)), h * (0.065f + 0.018f * MathF.Cos(t * 0.32f)), orbR, 1f, 1f, 0f, 0.85f + 0.15f * MathF.Sin(t * 0.75f));
@@ -2009,7 +2009,10 @@ internal static class LiveSceneRenderer
                     float halfSpan = h * twistAmp * MathF.Sin(xn * TwoPi * 0.92f - t * (speed * 0.72f) + u * 0.42f + twistPhase);
                     float shimmer = h * 0.018f * MathF.Cos(xn * TwoPi * 2.1f + u * 2.4f + t * speed * 1.15f);
                     float y = spine + halfSpan * (0.45f + 1.10f * u) + shimmer;
-                    if (s == 0) trace.Start(x, y); else trace.To(x, y);
+                    if (s == 0)
+                        trace.Start(x, y);
+                    else
+                        trace.To(x, y);
                 }
                 trace.End();
                 pb.EndFigure(CanvasFigureLoop.Open);
@@ -2227,7 +2230,10 @@ internal static class LiveSceneRenderer
                 float y = baseY + amp * (
                     0.68f * MathF.Sin(xn * TwoPi * (1.18f + b * 0.20f) + t * speed + b * 1.40f)
                     + 0.32f * MathF.Cos(xn * TwoPi * (2.30f - b * 0.16f) - t * speed * 0.62f));
-                if (s == 0) trace.Start(x, y); else trace.To(x, y);
+                if (s == 0)
+                    trace.Start(x, y);
+                else
+                    trace.To(x, y);
             }
             trace.End();
             pb.AddLine(xLast, h);
@@ -2319,9 +2325,15 @@ internal static class LiveSceneRenderer
         using var mapleGeo = BuildMapleLeaf(rc, leafR);
         using var oakGeo = BuildOakLeaf(rc, leafR);
         using var veinPb = new CanvasPathBuilder(rc);
-        veinPb.BeginFigure(0f, leafR * 1.15f); veinPb.AddLine(0f, -leafR * 0.78f); veinPb.EndFigure(CanvasFigureLoop.Open);
-        veinPb.BeginFigure(0f, leafR * 0.15f); veinPb.AddLine(-leafR * 0.42f, -leafR * 0.22f); veinPb.EndFigure(CanvasFigureLoop.Open);
-        veinPb.BeginFigure(0f, leafR * 0.15f); veinPb.AddLine(leafR * 0.42f, -leafR * 0.22f); veinPb.EndFigure(CanvasFigureLoop.Open);
+        veinPb.BeginFigure(0f, leafR * 1.15f);
+        veinPb.AddLine(0f, -leafR * 0.78f);
+        veinPb.EndFigure(CanvasFigureLoop.Open);
+        veinPb.BeginFigure(0f, leafR * 0.15f);
+        veinPb.AddLine(-leafR * 0.42f, -leafR * 0.22f);
+        veinPb.EndFigure(CanvasFigureLoop.Open);
+        veinPb.BeginFigure(0f, leafR * 0.15f);
+        veinPb.AddLine(leafR * 0.42f, -leafR * 0.22f);
+        veinPb.EndFigure(CanvasFigureLoop.Open);
         using var veinGeo = CanvasGeometry.CreatePath(veinPb);
         using var roundCap = new CanvasStrokeStyle { StartCap = CanvasCapStyle.Round, EndCap = CanvasCapStyle.Round };
 
@@ -2551,7 +2563,9 @@ internal static class LiveSceneRenderer
         {
             if (join) pb.AddLine(x, y);
             else pb.BeginFigure(x, y);
-            _px = x; _py = y; _count = 1;
+            _px = x;
+            _py = y;
+            _count = 1;
         }
 
         public void To(float x, float y)
@@ -2560,7 +2574,9 @@ internal static class LiveSceneRenderer
             float my = (_py + y) * 0.5f;
             if (_count == 1) pb.AddLine(mx, my);
             else pb.AddQuadraticBezier(new Vector2(_px, _py), new Vector2(mx, my));
-            _px = x; _py = y; _count++;
+            _px = x;
+            _py = y;
+            _count++;
         }
 
         public void End() => pb.AddLine(_px, _py);

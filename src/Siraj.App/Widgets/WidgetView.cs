@@ -171,14 +171,14 @@ internal sealed class WidgetView : UserControl
             case "none":
                 _ink = Inks.Plain;
                 return (null, null, null, Colors.Transparent);
-            default: // glass: the window's acrylic shows through a light tint of the palette's surface
+            default:
             {
                 var ink = C(scheme.OnSurface);
                 _ink = Inks.Make(ink, 0.7f, primary, primary, onPrimary, false);
                 var tint = C(scheme.Surface, alpha * 0.45f);
                 Brush card = _live
                     ? new SolidColorBrush(tint)
-                    // In the gallery there is no window acrylic: the app's own blurs the stage behind it.
+                    // Preview tiles have no DWM window acrylic, so blur the gallery backdrop directly.
                     : new AcrylicBrush { TintColor = C(scheme.Surface), TintOpacity = 0.25 + alpha * 0.4, TintLuminosityOpacity = 0.55, FallbackColor = C(scheme.Surface, 0.9f) };
                 var rim = dark ? Alpha(Colors.White, 0.14f) : Alpha(Colors.Black, 0.07f);
                 return (card, Sheen(dark ? 0.08f : 0.3f), new SolidColorBrush(rim), Alpha(ink, 0.06f));
@@ -192,7 +192,7 @@ internal sealed class WidgetView : UserControl
         var (card, sheen, rim, motif) = Dress();
         _s = _config.Scale;
         double s = _s, width = Face.Width * s, height = Face.Height * s;
-        // Glass is the window's own acrylic, which Windows rounds at 8 px; the other cards follow
+        // Match DWM's 8px rounded corners for glass windows.
         double radius = _config.Background == "glass" ? (_live ? 8 : 8 * s) : 16 * s;
         var root = new Grid
         {
@@ -440,7 +440,9 @@ internal sealed class WidgetView : UserControl
         text.Text = Loc.Current["widget_no_location"];
         var icon = VectorIcon("location_on", 24);
         icon.HorizontalAlignment = HorizontalAlignment.Center;
-        body.Children.Add(Down(8 * _s, icon, text).Also(p => p.VerticalAlignment = VerticalAlignment.Center));
+        var panel = Down(8 * _s, icon, text);
+        panel.VerticalAlignment = VerticalAlignment.Center;
+        body.Children.Add(panel);
         return () => { };
     }
 
@@ -607,7 +609,7 @@ internal sealed class WidgetView : UserControl
             nowHead.Text = Caps(loc["win_now"]);
             nextHead.Text = Caps(loc["win_next_short"]);
             var c = Counting();
-            // From the adhan to the end of the prayer, "now" is that prayer, and "next" its iqama.
+            // During adhan/iqama/prayer, show that prayer in "now" and its iqama in "next".
             var current = c.Prayer != null && c.Prayer.Type != PrayerType.Sunrise && clock.State is not PrayerState.UpcomingAzan ? c.Prayer : Current(day, clock.Now);
             nowName.Text = current != null ? loc.PrayerName(current) : "";
             nowCallig.Text = current != null ? ArabicName(current) : "";
@@ -659,10 +661,10 @@ internal sealed class WidgetView : UserControl
         var countRow = Across(5 * s, stopwatch, countdown);
         foreach (var e in new FrameworkElement[] { head, name, callig, countRow }) e.HorizontalAlignment = HorizontalAlignment.Center;
         head.MaxWidth = countdown.MaxWidth = size - 34 * s;
-        var centre = Down(1 * s, icon, head, name, callig, countRow);
-        centre.HorizontalAlignment = HorizontalAlignment.Center;
-        centre.VerticalAlignment = VerticalAlignment.Center;
-        ring.Children.Add(centre);
+        var center = Down(1 * s, icon, head, name, callig, countRow);
+        center.HorizontalAlignment = HorizontalAlignment.Center;
+        center.VerticalAlignment = VerticalAlignment.Center;
+        ring.Children.Add(center);
         body.Children.Add(ring);
         return () =>
         {
@@ -679,17 +681,16 @@ internal sealed class WidgetView : UserControl
                 name.Text = loc.PrayerName(prayer);
                 callig.Text = ArabicName(prayer);
             }
-            // The arc starts at the top and runs clockwise; in Arabic and Urdu, the other way.
             arc.Data = ArcGeometry(size / 2, size / 2 - stroke / 2, c.Progress);
         };
     }
 
-    private static Geometry ArcGeometry(double centre, double radius, double fraction)
+    private static Geometry ArcGeometry(double center, double radius, double fraction)
     {
         fraction = Math.Clamp(fraction, 0.001, 0.9999);
         double angle = fraction * 2 * Math.PI;
-        var start = new Windows.Foundation.Point(centre, centre - radius);
-        var end = new Windows.Foundation.Point(centre + radius * Math.Sin(angle), centre - radius * Math.Cos(angle));
+        var start = new Windows.Foundation.Point(center, center - radius);
+        var end = new Windows.Foundation.Point(center + radius * Math.Sin(angle), center - radius * Math.Cos(angle));
         var figure = new PathFigure { StartPoint = start, IsClosed = false };
         figure.Segments.Add(new ArcSegment
         {
@@ -739,7 +740,7 @@ internal sealed class WidgetView : UserControl
             var clock = App.Clock;
             var now = clock.Place != null ? Core.Places.Zones.On(clock.Now, clock.Place.Zone) : clock.Now;
             var parts = loc.Time(now).Split((char)0xA0);
-            // A clock reads 9:51, not 09:51.
+            // Strip leading zero on 12-hour times (e.g. 09:51 -> 9:51).
             digits.Text = parts[0].Length == 5 && parts.Length > 1 && parts[0][0] is '0' or '٠' or '۰' ? parts[0][1..] : parts[0];
             marker.Text = parts.Length > 1 ? parts[1] : "";
             marker.Visibility = parts.Length > 1 ? Visibility.Visible : Visibility.Collapsed;
@@ -830,7 +831,9 @@ internal sealed class WidgetView : UserControl
     {
         double s = _s;
         var grid = Rows(Auto, Auto, Star1, Auto, Auto);
-        grid.Children.Add(Label().Also(l => l.Text = Caps(Loc.Current["widget_hijri_label"])));
+        var hijriLabel = Label();
+        hijriLabel.Text = Caps(Loc.Current["widget_hijri_label"]);
+        grid.Children.Add(hijriLabel);
 
         var date = At(Columns(Auto, Star1), 1);
         date.ColumnSpacing = 12 * s;
@@ -935,15 +938,6 @@ internal sealed class WidgetView : UserControl
     }
 }
 
-internal static class ElementExtensions
-{
-    public static T Also<T>(this T element, Action<T> set)
-    {
-        set(element);
-        return element;
-    }
-}
-
 internal static class TextShadow
 {
     public static void Wrap(Panel panel)
@@ -966,7 +960,7 @@ internal static class TextShadow
                     host.Children.Add(caster);
                     host.Children.Add(text);
                     Cast(caster, text);
-                    // The text's visibility now belongs to the host, which the face still sets on the text.
+                    // Mirror TextBlock.Visibility onto the wrapper host so callers toggling the text also toggle its shadow.
                     text.RegisterPropertyChangedCallback(UIElement.VisibilityProperty, (_, _) => host.Visibility = text.Visibility);
                     break;
                 case Panel child:
@@ -994,7 +988,6 @@ internal static class TextShadow
         void Fit()
         {
             sprite.Size = new Vector2((float)text.ActualWidth, (float)text.ActualHeight);
-            // The mask follows the text as it changes; it is taken again only when the size does.
             shadow.Mask = text.GetAlphaMask();
         }
         text.SizeChanged += (_, _) => Fit();

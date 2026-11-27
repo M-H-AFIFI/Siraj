@@ -69,9 +69,23 @@ public sealed partial class PrayerPage : Page
         SizeChanged += (_, e) => Arrange(e.NewSize.Width);
     }
 
-    private void OnThemeChanged() { _lastDynamicKey = ""; Refresh(); }
-    private void OnQuranChanged() { _lastDynamicKey = ""; Refresh(); }
-    private void OnSettings(Core.Settings.AppSettings old, Core.Settings.AppSettings updated) => DispatcherQueue.TryEnqueue(() => { _lastDynamicKey = ""; Refresh(); });
+    private void OnThemeChanged()
+    {
+        _lastDynamicKey = "";
+        Refresh();
+    }
+
+    private void OnQuranChanged()
+    {
+        _lastDynamicKey = "";
+        Refresh();
+    }
+
+    private void OnSettings(Core.Settings.AppSettings old, Core.Settings.AppSettings updated) => DispatcherQueue.TryEnqueue(() =>
+    {
+        _lastDynamicKey = "";
+        Refresh();
+    });
 
     private void Arrange(double width)
     {
@@ -141,10 +155,14 @@ public sealed partial class PrayerPage : Page
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             grid.Children.Add(badge);
-            Grid.SetColumn(name, 1); grid.Children.Add(name);
-            Grid.SetColumn(iqama, 2); grid.Children.Add(iqama);
-            Grid.SetColumn(time, 3); grid.Children.Add(time);
-            Grid.SetColumn(bell, 4); grid.Children.Add(bell);
+            Grid.SetColumn(name, 1);
+            grid.Children.Add(name);
+            Grid.SetColumn(iqama, 2);
+            grid.Children.Add(iqama);
+            Grid.SetColumn(time, 3);
+            grid.Children.Add(time);
+            Grid.SetColumn(bell, 4);
+            grid.Children.Add(bell);
 
             var row = new Border
             {
@@ -298,9 +316,11 @@ public sealed partial class PrayerPage : Page
         for (int i = 0; i < 3; i++) gauges.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         gauges.Children.Add(Gauge((double)page / QuranDatabase.PageCount, loc.Number(page), loc["last_read_page_gauge"]));
         var gJuz = Gauge(juz / 30.0, $"{loc.Number(juz)}/{loc.Number(30)}", loc["quran_juz"]);
-        Grid.SetColumn(gJuz, 1); gauges.Children.Add(gJuz);
+        Grid.SetColumn(gJuz, 1);
+        gauges.Children.Add(gJuz);
         var gSurah = Gauge(surahNum / 114.0, $"{loc.Number(surahNum)}/{loc.Number(114)}", loc["quran_surah"]);
-        Grid.SetColumn(gSurah, 2); gauges.Children.Add(gSurah);
+        Grid.SetColumn(gSurah, 2);
+        gauges.Children.Add(gSurah);
         stack.Children.Add(gauges);
 
         if (App.Settings.Current.Bookmarks.FirstOrDefault() is { } bm && (bm.Surah != surahNum || bm.Ayah != ayahNum))

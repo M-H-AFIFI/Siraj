@@ -98,8 +98,17 @@ internal sealed class TaskbarPillView : UserControl
         _shell.Child = _content;
         Content = _root;
 
-        _root.PointerEntered += (_, _) => { _hovered = true; ApplyPalette(); };
-        _root.PointerExited += (_, _) => { _hovered = false; if (!_dragging) _pointerDown = false; ApplyPalette(); };
+        _root.PointerEntered += (_, _) =>
+        {
+            _hovered = true;
+            ApplyPalette();
+        };
+        _root.PointerExited += (_, _) =>
+        {
+            _hovered = false;
+            if (!_dragging) _pointerDown = false;
+            ApplyPalette();
+        };
         _root.PointerPressed += OnPointerPressed;
         _root.PointerMoved += OnPointerMoved;
         _root.PointerReleased += OnPointerReleased;
@@ -495,7 +504,7 @@ internal sealed class TaskbarPillView : UserControl
                 break;
 
             case "glass":
-                // Real acrylic blur sits underneath; overlay a tinted frosted glaze + diagonal Liquid Glass specular sheen.
+                // Acrylic sits behind the window; overlay a tinted glaze and diagonal highlight.
                 double glaze = _useRealBackdrop ? (_hovered ? 0.34 : 0.24) : (_hovered ? 0.56 : 0.42);
                 var glassBase = customColorSelected
                     ? scheme.Primary

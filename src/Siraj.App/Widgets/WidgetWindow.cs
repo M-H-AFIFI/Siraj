@@ -47,15 +47,14 @@ internal sealed class WidgetWindow : Window
         _subclass = OnMessage;
         Win32.SetWindowSubclass(_hwnd, _subclass, 1, 0);
 
-        // A tool window (no taskbar button) and a bare popup: the subclass strips the frame from
-        // these and from every later change the presenter makes (see OnMessage).
+        // Hide from taskbar/Alt+Tab and re-trigger WM_STYLECHANGING so the subclass strips frame flags.
         long ex = Win32.GetWindowLongPtr(_hwnd, Win32.GWL_EXSTYLE).ToInt64();
         ex = (ex | Win32.WS_EX_TOOLWINDOW) & ~Win32.WS_EX_APPWINDOW;
         Win32.SetWindowLongPtr(_hwnd, Win32.GWL_EXSTYLE, new IntPtr(ex));
         Win32.SetWindowLongPtr(_hwnd, Win32.GWL_STYLE, Win32.GetWindowLongPtr(_hwnd, Win32.GWL_STYLE));
         Win32.SetWindowPos(_hwnd, IntPtr.Zero, 0, 0, 0, 0,
             Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOZORDER | Win32.SWP_NOACTIVATE | Win32.SWP_FRAMECHANGED);
-        // Owned by the desktop, so Show desktop (Win+D) leaves it in place.
+        // Set Progman as owner so Win+D does not minimize desktop widgets.
         var desktop = Win32.FindWindow("Progman", null);
         if (desktop != IntPtr.Zero) Win32.SetWindowLongPtr(_hwnd, Win32.GWLP_HWNDPARENT, desktop);
 
@@ -172,15 +171,14 @@ internal sealed class WidgetWindow : Window
     {
         _peeking = true;
         Win32.SetWindowPos(_hwnd, Win32.HWND_TOPMOST, 0, 0, 0, 0, Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE);
-        // One timer, held here: a second peek restarts it, and it cannot be collected before it
-        // fires and leave the widget above every window.
+        // Reuse a field-held timer so repeated peeks restart cleanly and GC cannot drop it while topmost.
         if (_peekEnd == null)
         {
             _peekEnd = DispatcherQueue.CreateTimer();
             _peekEnd.IsRepeating = false;
             _peekEnd.Tick += (_, _) =>
             {
-                Win32.SetWindowPos(_hwnd, new IntPtr(-2) /* HWND_NOTOPMOST */, 0, 0, 0, 0, Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE);
+                Win32.SetWindowPos(_hwnd, Win32.HWND_NOTOPMOST, 0, 0, 0, 0, Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE);
                 _peeking = false;
                 SendToBack();
             };
@@ -196,7 +194,7 @@ internal sealed class WidgetWindow : Window
 
     private IntPtr OnMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam, nuint id, nuint data)
     {
-        // Whatever moves it in the z-order - a click, the menu - it goes back behind the windows.
+        // Pin desktop widgets to the bottom of the z-order unless actively peeking.
         if (msg == Win32.WM_WINDOWPOSCHANGING)
         {
             unsafe
@@ -205,32 +203,18 @@ internal sealed class WidgetWindow : Window
                 if ((pos->flags & Win32.SWP_NOZORDER) == 0 && !_peeking) pos->hwndInsertAfter = Win32.HWND_BOTTOM;
             }
         }
-        // A bare popup, whatever the presenter sets: without border and title bar it still asks
-        // for WS_DLGFRAME, a 3-pixel frame Windows paints white and takes out of the content.
-        // The presenter decides in this same message, so its answer is corrected afterwards.
         else if (msg == Win32.WM_STYLECHANGING)
         {
-            var result = Win32.DefSubclassProc(hwnd, msg, wParam, lParam);
-            unsafe
-            {
-                var change = (Win32.STYLESTRUCT*)lParam;
-                if (wParam.ToInt32() == Win32.GWL_STYLE)
-                    change->styleNew = (uint)((change->styleNew & ~(Win32.WS_CAPTION | Win32.WS_THICKFRAME | Win32.WS_SYSMENU)) | Win32.WS_POPUP);
-                else if (wParam.ToInt32() == Win32.GWL_EXSTYLE)
-                    change->styleNew = (uint)(change->styleNew & ~(Win32.WS_EX_WINDOWEDGE | Win32.WS_EX_DLGMODALFRAME));
-            }
-            return result;
+            return Win32.ForceBorderlessPopupStyle(hwnd, msg, wParam, lParam);
         }
-        // Under the drawing, the window's own surface: WinUI fills it with the theme's background,
-        // white in the light theme, which the clear frame would show at the corners and behind a
-        // bare widget. Black is what the frame composes as nothing.
+        // DWM treats black as fully transparent when the frame is extended; fill black so light-mode white does not bleed through corners.
         else if (msg == Win32.WM_ERASEBKGND && _clear)
         {
             Win32.GetClientRect(hwnd, out var rect);
             Win32.FillRect(wParam, ref rect, Win32.GetStockObject(Win32.BLACK_BRUSH));
             return new IntPtr(1);
         }
-        else if (msg == Win32.WM_DISPLAYCHANGE || msg == 0x02E0 /* WM_DPICHANGED */)
+        else if (msg == Win32.WM_DISPLAYCHANGE || msg == Win32.WM_DPICHANGED)
         {
             DispatcherQueue.TryEnqueue(Fit);
         }
@@ -241,7 +225,7 @@ internal sealed class WidgetWindow : Window
     {
         var point = e.GetCurrentPoint(_view);
         if (!point.Properties.IsLeftButtonPressed || _config.Locked) return;
-        // Hand the drag to Windows' own move loop; it returns when the button is let go.
+        // Delegate dragging to Win32's native move loop (blocks until release).
         Win32.ReleaseCapture();
         Win32.SendMessage(_hwnd, Win32.WM_NCLBUTTONDOWN, Win32.HTCAPTION, IntPtr.Zero);
         var position = AppWindow.Position;
@@ -287,17 +271,17 @@ internal sealed class WidgetWindow : Window
         }
         menu.Items.Add(dress);
 
-        var colour = new MenuFlyoutSubItem { Text = loc["widget_style_colour"] };
-        var app = new RadioMenuFlyoutItem { Text = loc["win_widget_colour_app"], GroupName = "colour", IsChecked = _config.Palette == "App" };
+        var color = new MenuFlyoutSubItem { Text = loc["widget_style_colour"] };
+        var app = new RadioMenuFlyoutItem { Text = loc["win_widget_colour_app"], GroupName = "color", IsChecked = _config.Palette == "App" };
         app.Click += (_, _) => App.Widgets.Update(_config with { Palette = "App" });
-        colour.Items.Add(app);
+        color.Items.Add(app);
         foreach (var name in Palettes.Names)
         {
-            var item = new RadioMenuFlyoutItem { Text = loc[Controls.Ui.PaletteKey(name)], GroupName = "colour", IsChecked = _config.Palette == name };
+            var item = new RadioMenuFlyoutItem { Text = loc[Controls.Ui.PaletteKey(name)], GroupName = "color", IsChecked = _config.Palette == name };
             item.Click += (_, _) => App.Widgets.Update(_config with { Palette = name });
-            colour.Items.Add(item);
+            color.Items.Add(item);
         }
-        menu.Items.Add(colour);
+        menu.Items.Add(color);
 
         var opacity = new MenuFlyoutSubItem { Text = loc["widget_style_opacity"] };
         foreach (int value in new[] { 100, 85, 70, 55, 40 })

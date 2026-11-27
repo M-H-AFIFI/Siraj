@@ -26,7 +26,6 @@ public sealed partial class AdhanAlertWindow : Window
     private static readonly Stopwatch Clock = Stopwatch.StartNew();
     private static AdhanAlertWindow? _current;
 
-    private readonly PrayerType _prayer;
     private readonly AdhanSkySpec _skySpec;
     private readonly double _born = Clock.Elapsed.TotalSeconds;
     private readonly EqualizerBars _callerEq = new(11, new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255))) { IsActive = true };
@@ -35,9 +34,6 @@ public sealed partial class AdhanAlertWindow : Window
     private bool _sounding = true;
     private bool _closing;
     private float _centerpieceY = 175f;
-#if DEBUG
-    private DispatcherQueueTimer? _shotTimer;
-#endif
 
     public static void ShowFor(PrayerType prayer, DateTimeOffset time)
     {
@@ -47,21 +43,8 @@ public sealed partial class AdhanAlertWindow : Window
         _current.ShowWithoutFocus();
     }
 
-#if DEBUG
-    internal static void ShowDebugShot(PrayerType prayer, DateTimeOffset time, string shotPath, bool finished)
-    {
-        _current?.Close();
-        _current = new AdhanAlertWindow(prayer, time);
-        _current.Closed += (_, _) => _current = null;
-        if (finished) _current.ApplyFinishedState(autoClose: false);
-        _current.ShowWithoutFocus();
-        _current.ScheduleDebugShot(shotPath);
-    }
-#endif
-
     private AdhanAlertWindow(PrayerType prayer, DateTimeOffset time)
     {
-        _prayer = prayer;
         _skySpec = AdhanSkySpec.For(prayer);
         InitializeComponent();
 
@@ -318,33 +301,4 @@ public sealed partial class AdhanAlertWindow : Window
         double seconds = Clock.Elapsed.TotalSeconds - _born;
         AdhanSkyRenderer.Draw(args.DrawingSession, sender, w, h, _skySpec, _centerpieceY, seconds, _sounding, Kit.Motion);
     }
-
-#if DEBUG
-    private void ScheduleDebugShot(string shotPath)
-    {
-        _shotTimer = DispatcherQueue.CreateTimer();
-        _shotTimer.Interval = TimeSpan.FromSeconds(2);
-        _shotTimer.IsRepeating = false;
-        _shotTimer.Tick += async (_, _) =>
-        {
-            try
-            {
-                var bitmap = new Microsoft.UI.Xaml.Media.Imaging.RenderTargetBitmap();
-                await bitmap.RenderAsync(Root);
-                var pixels = await bitmap.GetPixelsAsync();
-                if (File.Exists(shotPath)) File.Delete(shotPath);
-                using var fs = File.Create(shotPath);
-                using var stream = fs.AsRandomAccessStream();
-                var encoder = await Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId, stream);
-                encoder.SetPixelData(Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8, Windows.Graphics.Imaging.BitmapAlphaMode.Premultiplied,
-                    (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 96, 96,
-                    System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.ToArray(pixels));
-                await encoder.FlushAsync();
-            }
-            catch (Exception e) { Log.Error("adhan shot", e); }
-            App.Quit();
-        };
-        _shotTimer.Start();
-    }
-#endif
 }

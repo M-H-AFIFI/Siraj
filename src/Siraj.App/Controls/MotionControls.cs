@@ -175,7 +175,11 @@ internal sealed class EqualizerBars : UserControl
     public bool IsActive
     {
         get => _active;
-        set { _active = value; UpdateState(); }
+        set
+        {
+            _active = value;
+            UpdateState();
+        }
     }
 
     public EqualizerBars(double height = 16, Brush? brush = null)
@@ -197,7 +201,11 @@ internal sealed class EqualizerBars : UserControl
             _timer.Tick += (_, _) => Step();
             UpdateState();
         };
-        Unloaded += (_, _) => { _timer?.Stop(); _timer = null; };
+        Unloaded += (_, _) =>
+        {
+            _timer?.Stop();
+            _timer = null;
+        };
     }
 
     private void UpdateState()
@@ -208,7 +216,9 @@ internal sealed class EqualizerBars : UserControl
         {
             _timer.Stop();
             double h = Height;
-            _bars[0].Height = h * 0.45; _bars[1].Height = h * 0.80; _bars[2].Height = h * 0.55;
+            _bars[0].Height = h * 0.45;
+            _bars[1].Height = h * 0.80;
+            _bars[2].Height = h * 0.55;
         }
     }
 
@@ -236,13 +246,25 @@ internal sealed class WavyProgressBar : UserControl
     public double Fraction
     {
         get => _fraction;
-        set { if (!_dragging) { _fraction = Math.Clamp(value, 0, 1); _canvas.Invalidate(); } }
+        set
+        {
+            if (!_dragging)
+            {
+                _fraction = Math.Clamp(value, 0, 1);
+                _canvas.Invalidate();
+            }
+        }
     }
 
     public bool IsPlaying
     {
         get => _playing;
-        set { _playing = value; UpdateTimer(); _canvas.Invalidate(); }
+        set
+        {
+            _playing = value;
+            UpdateTimer();
+            _canvas.Invalidate();
+        }
     }
 
     public WavyProgressBar()
@@ -262,13 +284,20 @@ internal sealed class WavyProgressBar : UserControl
             _timer.Tick += (_, _) => _canvas.Invalidate();
             UpdateTimer();
         };
-        Unloaded += (_, _) => { _timer?.Stop(); _timer = null; };
+        Unloaded += (_, _) =>
+        {
+            _timer?.Stop();
+            _timer = null;
+        };
     }
 
     private void UpdateTimer()
     {
         if (_timer == null) return;
-        if (_playing && Kit.Motion) _timer.Start(); else _timer.Stop();
+        if (_playing && Kit.Motion)
+            _timer.Start();
+        else
+            _timer.Stop();
     }
 
     private void UpdateFromPointer(PointerRoutedEventArgs e)

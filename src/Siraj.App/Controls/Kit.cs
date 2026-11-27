@@ -60,7 +60,6 @@ internal static class Kit
             column.Children.Add(head);
         }
         column.Children.Add(body);
-        Entrance(body);
         var wrapper = new Grid { HorizontalAlignment = HorizontalAlignment.Stretch };
         wrapper.Children.Add(column);
         return (new ScrollViewer
@@ -85,12 +84,16 @@ internal static class Kit
         var move = c.CreateVector3KeyFrameAnimation();
         move.InsertKeyFrame(0, new Vector3(0, 6, 0));
         move.InsertKeyFrame(1, Vector3.Zero, ease);
-        move.Duration = dur; move.DelayTime = delay; move.DelayBehavior = AnimationDelayBehavior.SetInitialValueBeforeDelay;
+        move.Duration = dur;
+        move.DelayTime = delay;
+        move.DelayBehavior = AnimationDelayBehavior.SetInitialValueBeforeDelay;
 
         var fade = c.CreateScalarKeyFrameAnimation();
         fade.InsertKeyFrame(0, 0);
         fade.InsertKeyFrame(1, 1, ease);
-        fade.Duration = TimeSpan.FromMilliseconds(95); fade.DelayTime = delay; fade.DelayBehavior = AnimationDelayBehavior.SetInitialValueBeforeDelay;
+        fade.Duration = TimeSpan.FromMilliseconds(95);
+        fade.DelayTime = delay;
+        fade.DelayBehavior = AnimationDelayBehavior.SetInitialValueBeforeDelay;
 
         visual.StartAnimation("Translation", move);
         visual.StartAnimation("Opacity", fade);
@@ -112,22 +115,6 @@ internal static class Kit
         anim.InsertKeyFrame(1f, target, ease);
         anim.Duration = TimeSpan.FromMilliseconds(ms);
         visual.StartAnimation("Translation", anim);
-    }
-
-    public static void SpringTo(UIElement element, Vector3 target, float damping = 0.90f, int periodMs = 75)
-    {
-        ElementCompositionPreview.SetIsTranslationEnabled(element, true);
-        var visual = ElementCompositionPreview.GetElementVisual(element);
-        if (!Motion)
-        {
-            visual.Properties.InsertVector3("Translation", target);
-            return;
-        }
-        var spring = visual.Compositor.CreateSpringVector3Animation();
-        spring.FinalValue = target;
-        spring.DampingRatio = damping;
-        spring.Period = TimeSpan.FromMilliseconds(periodMs);
-        visual.StartAnimation("Translation", spring);
     }
 
     public static void FadeTo(UIElement element, float opacity, int ms = 90)
@@ -322,8 +309,6 @@ internal static class Kit
         };
     }
 
-    public static void Entrance(Panel panel) { }
-
     public static TextBlock Text(string text, string style = "SirajBody", double? size = null, bool bold = false, Brush? brush = null)
     {
         var t = Ui.Text(text, style);
@@ -427,10 +412,18 @@ internal static class Kit
         if (card is FrameworkElement fe)
             fe.SizeChanged += (_, e) => card.CenterPoint = new Vector3((float)e.NewSize.Width / 2, (float)e.NewSize.Height / 2, 0);
         card.PointerEntered += (_, _) => card.Translation = new Vector3(0, -2f, 0);
-        card.PointerExited += (_, _) => { card.Translation = Vector3.Zero; card.Scale = Vector3.One; };
-        card.PointerCanceled += (_, _) => { card.Translation = Vector3.Zero; card.Scale = Vector3.One; };
+        card.PointerExited += (_, _) =>
+        {
+            card.Translation = Vector3.Zero;
+            card.Scale = Vector3.One;
+        };
+        card.PointerCanceled += (_, _) =>
+        {
+            card.Translation = Vector3.Zero;
+            card.Scale = Vector3.One;
+        };
         card.PointerCaptureLost += (_, _) => card.Scale = Vector3.One;
-        // A button marks the press handled; listen anyway.
+        // Subscribe with handledEventsToo because Button marks pointer press and release handled.
         card.AddHandler(UIElement.PointerPressedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler((_, _) => card.Scale = new Vector3(0.985f, 0.985f, 1)), true);
         card.AddHandler(UIElement.PointerReleasedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler((_, _) => card.Scale = Vector3.One), true);
     }
@@ -577,8 +570,17 @@ internal sealed class Ring : Grid
         _track.Stroke = Kit.B("SirajSurfaceContainerHighBrush");
         _arc.Stroke = Kit.B("SirajPrimaryBrush");
         SizeChanged += (_, _) => Draw(_shown);
-        Loaded += (_, _) => { _track.StrokeThickness = Thickness; _arc.StrokeThickness = Thickness; Draw(_shown); };
-        Unloaded += (_, _) => { _anim?.Stop(); _anim = null; };
+        Loaded += (_, _) =>
+        {
+            _track.StrokeThickness = Thickness;
+            _arc.StrokeThickness = Thickness;
+            Draw(_shown);
+        };
+        Unloaded += (_, _) =>
+        {
+            _anim?.Stop();
+            _anim = null;
+        };
     }
 
     public Brush Fill { set => _arc.Stroke = value; }
@@ -623,7 +625,11 @@ internal sealed class Ring : Grid
         double size = Math.Min(ActualWidth, ActualHeight);
         if (size <= 0) return;
         double r = (size - Thickness) / 2, cx = ActualWidth / 2, cy = ActualHeight / 2;
-        if (fraction <= 0) { _arc.Data = null; return; }
+        if (fraction <= 0)
+        {
+            _arc.Data = null;
+            return;
+        }
         double f = Math.Min(fraction, 0.9999);
         double angle = f * 2 * Math.PI;
         var start = new Windows.Foundation.Point(cx, cy - r);

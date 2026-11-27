@@ -112,7 +112,6 @@ public sealed class NowPlayingBar : UserControl
         Grid.SetColumn(controls, 2);
         row.Children.Add(controls);
 
-        // Subtle playback progress hairline along the bottom edge of the pill
         _progressFill = new Border
         {
             Height = 2.5, HorizontalAlignment = HorizontalAlignment.Left,

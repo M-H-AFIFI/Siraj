@@ -38,7 +38,7 @@ internal sealed class PageCurl
             return;
         }
 
-        // The leaf in strips, from the spine to the free edge.
+        // Slice the turning page into vertical strips with perspective projection.
         int n = Math.Clamp((int)(w / 4), 24, 180);
         float du = w / n;
         float turn = MathF.PI * t;
@@ -58,7 +58,7 @@ internal sealed class PageCurl
         float Screen(int i) => spine - xs[i] * eye / (eye - zs[i]);
         float Scale(int i) => eye / (eye - zs[i]);
 
-        // A single page's leaf goes away from the reader's page and is let go as it comes down.
+        // Fade out single-page turns near completion.
         float alpha = Single ? Math.Clamp((0.86f - t) / 0.3f, 0, 1) : 1;
 
         DrawCastShadow(ds, t, Screen, n, spine, top, h);
@@ -70,19 +70,19 @@ internal sealed class PageCurl
             float s = (Scale(i) + Scale(i + 1)) / 2;
             float left = Math.Min(x0, x1), right = Math.Max(x0, x1);
             if (right - left < 0.05f) continue;
-            // A sliver more each side, or hairlines of the desk show between strips.
+            // Overlap strips slightly to avoid subpixel seams.
             var dest = new Rect(left - 0.6, midY - h / 2 * s, right - left + 1.2, h * s);
             bool front = x1 < x0;
             float u0 = i * du, u1 = (i + 1) * du;
             var face = front ? Front : Back;
             if (face != null)
             {
-                // The front is read with the spine at its right; the back with the spine at its left.
+                // Front maps from the right spine; back maps from the left spine.
                 var source = front ? new Rect(w - u1, 0, du, h) : new Rect(u0, 0, du, h);
                 ds.DrawImage(face, dest, Scaled(source, face, w, h), alpha, CanvasImageInterpolation.Linear);
             }
 
-            // Light: full when the strip faces the reader, falling away as it tilts; a sheen near the crest of the curl.
+            // Shade strips by tilt angle and add a highlight near the curl crest.
             float facing = MathF.Abs(MathF.Cos(angles[i]));
             float dark = (1 - facing) * (IsDarkPaper ? 0.55f : 0.42f);
             if (dark > 0.01f) ds.FillRectangle(dest, Color.FromArgb((byte)(255 * dark * alpha), 0, 0, 0));
@@ -91,7 +91,6 @@ internal sealed class PageCurl
             if (sheen > 0.01f && !IsDarkPaper) ds.FillRectangle(dest, Color.FromArgb((byte)(255 * sheen * alpha), 255, 255, 255));
         }
 
-        // The free edge, a hairline of paper seen end-on.
         float edgeX = Screen(n), edgeS = Scale(n);
         ds.DrawLine(edgeX, midY - h / 2 * edgeS, edgeX, midY + h / 2 * edgeS, Color.FromArgb((byte)(40 * alpha), 0, 0, 0), 0.8f);
     }
@@ -109,13 +108,11 @@ internal sealed class PageCurl
         }
         float strength = (IsDarkPaper ? 0.55f : 0.32f) * MathF.Sqrt(lift);
         float reach = 14 + (float)Leaf.Width * 0.22f * lift;
-        // On the page uncovered, from the leaf's left reach outwards...
+        // Cast shadow on the uncovered page, target page, and gutter.
         if (min < spine)
             Band(ds, min, min - reach, strength, Math.Max((float)Leaf.X, min - reach), min, top, h);
-        // ...and on the page it is coming down on, ahead of it.
         if (max > spine && (Landing != null || !Single))
             Band(ds, max, max + reach, strength * (Single ? 0.6f : 1), max, Math.Min((float)LandingRect.Right, max + reach), top, h);
-        // The standing leaf darkens the gutter on both sides.
         float gutter = (float)Leaf.Width * 0.35f;
         Band(ds, spine, spine - gutter, strength * 0.45f, Math.Max((float)Leaf.X, spine - gutter), spine, top, h);
         if (!Single) Band(ds, spine, spine + gutter, strength * 0.45f, spine, spine + gutter, top, h);

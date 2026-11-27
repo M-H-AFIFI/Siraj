@@ -40,7 +40,7 @@ internal sealed class TaskbarFlyoutWindow : Window
     private readonly StackPanel _rows = new() { Spacing = 3, Margin = new Thickness(0, 6, 0, 4) };
     private readonly TextBlock _verseText = new()
     {
-        FontFamily = new FontFamily("ms-appx:///Assets/Fonts/Amiri-Regular.ttf#Amiri"),
+        FontFamily = new FontFamily("ms-appx:///Assets/Quran/quran_amiri.ttf#Amiri"),
         FontSize = 15,
         TextWrapping = TextWrapping.Wrap,
         TextAlignment = TextAlignment.Center,
@@ -57,9 +57,6 @@ internal sealed class TaskbarFlyoutWindow : Window
     private bool _subclassRemoved;
     private long _shownAtTick;
     private long _hiddenAtTick;
-#if DEBUG
-    private bool _pinnedForDebug;
-#endif
 
     public IntPtr Handle => _hwnd;
     public bool IsShown => !_closing && AppWindow.IsVisible;
@@ -77,9 +74,21 @@ internal sealed class TaskbarFlyoutWindow : Window
 
         _muteBtn.Content = _muteIcon;
         _muteBtn.Click += (_, _) => ToggleMute();
-        _openBtn.Click += (_, _) => { HideFlyout(); App.ShowMainWindow("prayer"); };
-        _refreshBtn.Click += (_, _) => { App.Clock.Recompute(); Refresh(); };
-        _settingsBtn.Click += (_, _) => { HideFlyout(); App.ShowMainWindow("widgets"); };
+        _openBtn.Click += (_, _) =>
+        {
+            HideFlyout();
+            App.ShowMainWindow("prayer");
+        };
+        _refreshBtn.Click += (_, _) =>
+        {
+            App.Clock.Recompute();
+            Refresh();
+        };
+        _settingsBtn.Click += (_, _) =>
+        {
+            HideFlyout();
+            App.ShowMainWindow("widgets");
+        };
 
         var header = new Grid { ColumnSpacing = 4, Margin = new Thickness(2, 0, 2, 4) };
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -139,9 +148,6 @@ internal sealed class TaskbarFlyoutWindow : Window
 
         Activated += (_, e) =>
         {
-#if DEBUG
-            if (_pinnedForDebug) return;
-#endif
             if (e.WindowActivationState == WindowActivationState.Deactivated)
             {
                 // Ignore transient deactivation events fired while the popup is still taking focus.
@@ -432,18 +438,7 @@ internal sealed class TaskbarFlyoutWindow : Window
     private IntPtr OnMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam, nuint id, nuint data)
     {
         if (msg == Win32.WM_STYLECHANGING)
-        {
-            var result = Win32.DefSubclassProc(hwnd, msg, wParam, lParam);
-            unsafe
-            {
-                var change = (Win32.STYLESTRUCT*)lParam;
-                if (wParam.ToInt32() == Win32.GWL_STYLE)
-                    change->styleNew = (uint)((change->styleNew & ~(Win32.WS_CAPTION | Win32.WS_THICKFRAME | Win32.WS_SYSMENU)) | Win32.WS_POPUP);
-                else if (wParam.ToInt32() == Win32.GWL_EXSTYLE)
-                    change->styleNew = (uint)(change->styleNew & ~(Win32.WS_EX_WINDOWEDGE | Win32.WS_EX_DLGMODALFRAME));
-            }
-            return result;
-        }
+            return Win32.ForceBorderlessPopupStyle(hwnd, msg, wParam, lParam);
         if (msg == Win32.WM_NCDESTROY)
         {
             if (!_subclassRemoved)
@@ -466,42 +461,4 @@ internal sealed class TaskbarFlyoutWindow : Window
         Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0)),
         BorderThickness = new Thickness(0),
     };
-
-#if DEBUG
-    internal void ShowDebugShot(string path)
-    {
-        _pinnedForDebug = true;
-        Refresh();
-        ApplyTheme();
-        double scale = Win32.GetDpiForWindow(_hwnd) / 96.0;
-        if (scale <= 0) scale = 1.0;
-        _root.Measure(new Windows.Foundation.Size(PopupWidth, 900));
-        double hDip = Math.Clamp(_root.DesiredSize.Height, 340, 520);
-        AppWindow.MoveAndResize(new RectInt32(200, 200, (int)Math.Ceiling(PopupWidth * scale), (int)Math.Ceiling(hDip * scale)));
-        AppWindow.Show(true);
-        Activate();
-        var timer = DispatcherQueue.CreateTimer();
-        timer.Interval = TimeSpan.FromMilliseconds(900);
-        timer.IsRepeating = false;
-        timer.Tick += async (_, _) =>
-        {
-            try
-            {
-                var bitmap = new Microsoft.UI.Xaml.Media.Imaging.RenderTargetBitmap();
-                await bitmap.RenderAsync(_root);
-                var pixels = await bitmap.GetPixelsAsync();
-                if (File.Exists(path)) File.Delete(path);
-                using var fs = File.Create(path);
-                using var stream = fs.AsRandomAccessStream();
-                var encoder = await Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId, stream);
-                encoder.SetPixelData(Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8, Windows.Graphics.Imaging.BitmapAlphaMode.Premultiplied,
-                    (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 96, 96, System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.ToArray(pixels));
-                await encoder.FlushAsync();
-            }
-            catch (Exception ex) { Log.Error("taskbar flyout shot", ex); }
-            App.Quit();
-        };
-        timer.Start();
-    }
-#endif
 }

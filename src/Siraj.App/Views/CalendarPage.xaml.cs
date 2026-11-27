@@ -33,8 +33,17 @@ public sealed partial class CalendarPage : Page
         _body = body;
         Content = root;
 
-        Loaded += (_, _) => { App.Theme.Changed += Refresh; App.Clock.DayChanged += Refresh; Refresh(); };
-        Unloaded += (_, _) => { App.Theme.Changed -= Refresh; App.Clock.DayChanged -= Refresh; };
+        Loaded += (_, _) =>
+        {
+            App.Theme.Changed += Refresh;
+            App.Clock.DayChanged += Refresh;
+            Refresh();
+        };
+        Unloaded += (_, _) =>
+        {
+            App.Theme.Changed -= Refresh;
+            App.Clock.DayChanged -= Refresh;
+        };
     }
 
     private static DateOnly Today => App.Clock.Place?.Today(App.Clock.Now) ?? DateOnly.FromDateTime(App.Clock.Now.LocalDateTime);
@@ -232,7 +241,11 @@ public sealed partial class CalendarPage : Page
                 BorderThickness = new Thickness(isSelected && !isToday ? 1.5 : 1),
             };
             var captured = gDate;
-            btn.Click += (_, _) => { _selectedDate = captured; Refresh(); };
+            btn.Click += (_, _) =>
+            {
+                _selectedDate = captured;
+                Refresh();
+            };
             Grid.SetColumn(btn, col);
             Grid.SetRow(btn, row);
             grid.Children.Add(btn);
@@ -322,8 +335,16 @@ public sealed partial class CalendarPage : Page
     private void StepMonth(int delta)
     {
         _viewMonth += delta;
-        if (_viewMonth > 12) { _viewMonth = 1; _viewYear++; }
-        else if (_viewMonth < 1) { _viewMonth = 12; _viewYear--; }
+        if (_viewMonth > 12)
+        {
+            _viewMonth = 1;
+            _viewYear++;
+        }
+        else if (_viewMonth < 1)
+        {
+            _viewMonth = 12;
+            _viewYear--;
+        }
         Refresh();
     }
 }

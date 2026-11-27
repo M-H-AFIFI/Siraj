@@ -34,43 +34,8 @@ internal sealed class MediaHubService : IDisposable
     public bool IsPlaying { get; private set; }
     public bool IsBuffering { get; private set; }
     public string? Error { get; private set; }
-#if DEBUG
-    public TimeSpan Position => _previewPosition ?? _player.PlaybackSession?.Position ?? TimeSpan.Zero;
-    public TimeSpan Duration => _previewDuration ?? _player.PlaybackSession?.NaturalDuration ?? TimeSpan.Zero;
-    private TimeSpan? _previewPosition;
-    private TimeSpan? _previewDuration;
-#else
     public TimeSpan Position => _player.PlaybackSession?.Position ?? TimeSpan.Zero;
     public TimeSpan Duration => _player.PlaybackSession?.NaturalDuration ?? TimeSpan.Zero;
-#endif
-
-#if DEBUG
-    public void LoadDemoPreview()
-    {
-        var reciter = ListeningLibrary.AllReciters[0];
-        string? art = ListeningLibrary.PortraitFiles.TryGetValue(reciter.Id, out var f) ? $"Portraits/{f}" : null;
-        string lang = Loc.Current.Language;
-        _queue.Clear();
-        _queue.Add(new ListenTrack(
-            $"{reciter.Id}:55",
-            SurahTitle(55, lang),
-            reciter.Name(lang),
-            new Uri("https://example.invalid/055.mp3"),
-            art,
-            SurahNumber: 55,
-            ReciterId: reciter.Id));
-        _queueIndex = 0;
-        Kind = MediaKind.Listen;
-        CurrentStation = null;
-        IsPlaying = true;
-        IsBuffering = false;
-        ActiveAmbientId = ListeningLibrary.AmbientSounds[0].Id;
-        _previewPosition = TimeSpan.FromMinutes(4) + TimeSpan.FromSeconds(28);
-        _previewDuration = TimeSpan.FromMinutes(11) + TimeSpan.FromSeconds(52);
-        Changed?.Invoke();
-        PositionTick?.Invoke();
-    }
-#endif
     public bool Shuffle { get; private set; }
     public RepeatMode Repeat { get; private set; } = RepeatMode.Off;
     public double Speed { get; private set; } = 1.0;
@@ -78,7 +43,6 @@ internal sealed class MediaHubService : IDisposable
     public TimeSpan? SleepRemaining => _sleepAt is { } at ? (at > DateTimeOffset.Now ? at - DateTimeOffset.Now : TimeSpan.Zero) : null;
     public bool SleepAtEndOfTrack => _sleepEndOfTrack;
 
-    // Ambient sound state
     public string? ActiveAmbientId { get; private set; }
     public bool AmbientLoading { get; private set; }
     public double AmbientVolume { get; private set; } = 0.35;
@@ -105,7 +69,11 @@ internal sealed class MediaHubService : IDisposable
             Changed?.Invoke();
         });
         _player.CommandManager.IsEnabled = true;
-        App.Adhan.PlayingChanged += p => { if (p != null && IsPlaying) _ui.TryEnqueue(Pause); };
+        App.Adhan.PlayingChanged += p =>
+        {
+            if (p != null && IsPlaying)
+                _ui.TryEnqueue(Pause);
+        };
 
         _tick = _ui.CreateTimer();
         _tick.Interval = TimeSpan.FromMilliseconds(500);
@@ -149,7 +117,12 @@ internal sealed class MediaHubService : IDisposable
             Changed?.Invoke();
             return;
         }
-        if (Repeat == RepeatMode.One) { Seek(TimeSpan.Zero); _player.Play(); return; }
+        if (Repeat == RepeatMode.One)
+        {
+            Seek(TimeSpan.Zero);
+            _player.Play();
+            return;
+        }
         Next(auto: true);
     }
 
@@ -337,15 +310,31 @@ internal sealed class MediaHubService : IDisposable
             OpenCurrentTrack();
             return;
         }
-        if (_queueIndex + 1 < _queue.Count) { _queueIndex++; OpenCurrentTrack(); }
-        else if (Repeat == RepeatMode.All || !auto) { _queueIndex = 0; OpenCurrentTrack(); }
-        else { IsPlaying = false; Changed?.Invoke(); }
+        if (_queueIndex + 1 < _queue.Count)
+        {
+            _queueIndex++;
+            OpenCurrentTrack();
+        }
+        else if (Repeat == RepeatMode.All || !auto)
+        {
+            _queueIndex = 0;
+            OpenCurrentTrack();
+        }
+        else
+        {
+            IsPlaying = false;
+            Changed?.Invoke();
+        }
     }
 
     public void Previous()
     {
         if (Kind != MediaKind.Listen || _queue.Count == 0) return;
-        if (Position.TotalSeconds > 4) { Seek(TimeSpan.Zero); return; }
+        if (Position.TotalSeconds > 4)
+        {
+            Seek(TimeSpan.Zero);
+            return;
+        }
         _queueIndex = (_queueIndex - 1 + _queue.Count) % _queue.Count;
         OpenCurrentTrack();
     }
@@ -360,7 +349,11 @@ internal sealed class MediaHubService : IDisposable
 
     public void SeekBy(int seconds) => Seek(Position + TimeSpan.FromSeconds(seconds));
 
-    public void ToggleShuffle() { Shuffle = !Shuffle; Changed?.Invoke(); }
+    public void ToggleShuffle()
+    {
+        Shuffle = !Shuffle;
+        Changed?.Invoke();
+    }
 
     public void CycleRepeat()
     {
@@ -426,7 +419,12 @@ internal sealed class MediaHubService : IDisposable
         catch (Exception e)
         {
             Log.Error("ambient download", e);
-            _ui.TryEnqueue(() => { AmbientLoading = false; ActiveAmbientId = null; Changed?.Invoke(); });
+            _ui.TryEnqueue(() =>
+            {
+                AmbientLoading = false;
+                ActiveAmbientId = null;
+                Changed?.Invoke();
+            });
         }
     }
 

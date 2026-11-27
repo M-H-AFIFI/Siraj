@@ -26,7 +26,7 @@ internal sealed class QuranPlayer
     public QuranPlayer(DispatcherQueue dispatcher)
     {
         _dispatcher = dispatcher;
-        // The adhan comes first.
+        // Pause recitation when an adhan starts.
         App.Adhan.PlayingChanged += prayer =>
         {
             if (prayer != null && IsPlaying) Pause();
@@ -70,7 +70,7 @@ internal sealed class QuranPlayer
         }
         else
         {
-            // A surah recording: the ayah is found from the timings, where the database has them.
+            // For full-surah recordings, track the active ayah from segment timestamps.
             _segments = db.Segments(reciter.Id, surah);
             var item = new MediaPlaybackItem(MediaSource.CreateFromUri(Reciters.SurahUrl(reciter, surah)));
             var display = item.GetDisplayProperties();
@@ -98,8 +98,16 @@ internal sealed class QuranPlayer
             Stop();
         });
         player.CommandManager.IsEnabled = true;
-        player.CommandManager.NextReceived += (_, a) => { a.Handled = true; _dispatcher.TryEnqueue(Next); };
-        player.CommandManager.PreviousReceived += (_, a) => { a.Handled = true; _dispatcher.TryEnqueue(Previous); };
+        player.CommandManager.NextReceived += (_, a) =>
+        {
+            a.Handled = true;
+            _dispatcher.TryEnqueue(Next);
+        };
+        player.CommandManager.PreviousReceived += (_, a) =>
+        {
+            a.Handled = true;
+            _dispatcher.TryEnqueue(Previous);
+        };
         _player = player;
         IsPlaying = true;
         if (_list == null) player.Play();
@@ -116,7 +124,7 @@ internal sealed class QuranPlayer
     private void Ended()
     {
         if (_player == null) return;
-        // The list ends after the last ayah; a surah recording ends with the surah.
+        // Advance to the next surah only after the last item in the playback list.
         if (_list != null && _list.CurrentItemIndex + 1 < _list.Items.Count) return;
         int surah = _surah;
         Stop();
@@ -155,11 +163,19 @@ internal sealed class QuranPlayer
 
     private void Seek(int surah, int ayah)
     {
-        if (_player == null || surah != _surah) { Play(surah, ayah); return; }
+        if (_player == null || surah != _surah)
+        {
+            Play(surah, ayah);
+            return;
+        }
         if (_list != null)
         {
             int index = ayah - _firstAyah;
-            if (index < 0 || index >= _list.Items.Count) { Play(surah, ayah); return; }
+            if (index < 0 || index >= _list.Items.Count)
+            {
+                Play(surah, ayah);
+                return;
+            }
             _list.MoveTo((uint)index);
             SetCurrent(surah, ayah);
         }

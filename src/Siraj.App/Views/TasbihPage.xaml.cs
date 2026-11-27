@@ -131,7 +131,7 @@ public sealed partial class TasbihPage : Page
             Width = 260, Height = 260, Thickness = 14, Smooth = true,
             Track = new SolidColorBrush(ThemeService.ToColor(scheme.Primary, scheme.IsDark ? 0.16f : 0.11f)),
         };
-        var centre = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Spacing = 0 };
+        var center = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Spacing = 0 };
         _count = new TextBlock
         {
             FontSize = 72, FontWeight = FontWeights.SemiBold, FontFamily = (FontFamily)Application.Current.Resources["SirajFont"],
@@ -139,9 +139,9 @@ public sealed partial class TasbihPage : Page
         };
         _goalText = Kit.Text("", "SirajCaption", 14);
         _goalText.HorizontalAlignment = HorizontalAlignment.Center;
-        centre.Children.Add(_count);
-        centre.Children.Add(_goalText);
-        _ring.Children.Add(centre);
+        center.Children.Add(_count);
+        center.Children.Add(_goalText);
+        _ring.Children.Add(center);
         ringWrap.Children.Add(_ring);
         _counter = new Button
         {
@@ -296,7 +296,11 @@ public sealed partial class TasbihPage : Page
     private void Select(int index)
     {
         if (index == State.Phrase) return;
-        App.Journal.Update(j => { j.Tasbih.Phrase = index; j.Tasbih.Count = 0; });
+        App.Journal.Update(j =>
+        {
+            j.Tasbih.Phrase = index;
+            j.Tasbih.Count = 0;
+        });
         Build();
     }
 
@@ -309,7 +313,11 @@ public sealed partial class TasbihPage : Page
         App.Journal.Update(j =>
         {
             j.Tasbih.Count = next;
-            if (j.Tasbih.Day != today) { j.Tasbih.Day = today; j.Tasbih.Today = 0; }
+            if (j.Tasbih.Day != today)
+            {
+                j.Tasbih.Day = today;
+                j.Tasbih.Today = 0;
+            }
             j.Tasbih.Today++;
             j.Tasbih.Total++;
         });

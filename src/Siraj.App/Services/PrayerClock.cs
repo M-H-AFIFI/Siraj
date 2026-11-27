@@ -65,7 +65,7 @@ internal sealed class PrayerClock
         _timer.Stop();
         if (_secondSubscribers > 0)
         {
-            // Aligned to the second, so a countdown never shows the same second twice.
+            // Align ticks to the second boundary so countdowns do not repeat a second.
             _timer.Interval = TimeSpan.FromMilliseconds(1000 - DateTime.Now.Millisecond + 5);
         }
         else
@@ -79,13 +79,15 @@ internal sealed class PrayerClock
     private void OnTick()
     {
         var now = Now;
-        if (Day == null || Place == null) { Recompute(); }
+        if (Day == null || Place == null)
+        {
+            Recompute();
+        }
         else
         {
             var state = PrayerState.At(Day, now);
             long minute = now.ToUnixTimeSeconds() / 60;
-            // A new date at the place, a prayer window that closed (so "next" moves on), or a
-            // state that ran off the end of the list: work the day out again. At most every 5 s.
+            // Recompute on date rollover or prayer-window transitions, throttled to once per 5 seconds.
             bool stale = Place.Today(now) != Day.Date || state == null ||
                          (State is PrayerState.InPrayer && state is PrayerState.UpcomingAzan) ||
                          (State is PrayerState.UpcomingAzan u && now >= u.Prayer.Time);
@@ -112,7 +114,7 @@ internal sealed class PrayerClock
         }
         var day = PrayerCalculator.Today(Place, settings.Calculation, now);
         var calendar = HijriCalendars.ForSettings(Place.Country, settings.HijriMethod, settings.HijriAdjustment);
-        // The calendar works out the coming year's months the first time it is asked; off the UI thread.
+        // Precompute Hijri year tables off the UI thread on first selection.
         if (!ReferenceEquals(calendar, HijriCalendars.Current))
             Task.Run(() => HijriCalendars.Select(calendar, day.Date)).ContinueWith(_ => App.Dispatcher.TryEnqueue(() =>
             {

@@ -31,17 +31,24 @@ public sealed partial class HadithPage : Page
         var tools = new Grid { ColumnSpacing = 10 };
         tools.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         tools.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        tools.Children.Add(Kit.Search(loc["hadith_search_hint"], q => { _query = q; Fill(); }));
+        tools.Children.Add(Kit.Search(loc["hadith_search_hint"], q =>
+        {
+            _query = q;
+            Fill();
+        }));
         var categories = new List<(string?, string)> { (null, loc.Format("hadith_filter_all", loc.Number(Hadiths.All.Count))) };
         categories.AddRange(Hadiths.Categories.Select(c => ((string?)c.En, Hadiths.Category(c.En, c.Ar, loc.Language))));
-        var picker = Ui.Choice(categories, null, c => { _category = c; Fill(); }, 200);
+        var picker = Ui.Choice(categories, null, c =>
+        {
+            _category = c;
+            Fill();
+        }, 200);
         Grid.SetColumn(picker, 1);
         tools.Children.Add(picker);
         header.Children.Add(tools);
 
         _view = new MasterDetail(header) { ListWidth = 400 };
         _view.List = _list;
-        Kit.Entrance(_list);
         Host.Children.Add(_view);
         var today = Hadiths.ForDay(App.Clock.Place?.Today(App.Clock.Now) ?? DateOnly.FromDateTime(App.Clock.Now.LocalDateTime));
         _selected = today.Id;
@@ -156,7 +163,6 @@ public sealed partial class HadithPage : Page
         }));
         actions.Children.Add(copied);
         stack.Children.Add(actions);
-        Kit.Entrance(stack);
         return Kit.Card(stack, new Thickness(28, 24, 28, 24));
     }
 }

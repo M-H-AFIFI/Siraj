@@ -26,7 +26,11 @@ internal sealed class QuranService
         // stowed 0x80073D54 in unpackaged desktop apps, which fails fast if run inside XAML Loaded.
         if (Status == State.Ready) _ = Task.Run(() =>
         {
-            try { _ = Database.Surahs(); App.Dispatcher.TryEnqueue(() => Changed?.Invoke()); }
+            try
+            {
+                _ = Database.Surahs();
+                App.Dispatcher.TryEnqueue(() => Changed?.Invoke());
+            }
             catch { }
         });
     }
@@ -75,16 +79,29 @@ internal sealed class QuranService
             {
                 await _assets.InstallAsync(Http, progress, token);
                 Log.Info("Quran assets installed");
-                App.Dispatcher.TryEnqueue(() => { Status = State.Ready; Changed?.Invoke(); });
+                App.Dispatcher.TryEnqueue(() =>
+                {
+                    Status = State.Ready;
+                    Changed?.Invoke();
+                });
             }
             catch (OperationCanceledException)
             {
-                App.Dispatcher.TryEnqueue(() => { Status = State.Missing; Changed?.Invoke(); });
+                App.Dispatcher.TryEnqueue(() =>
+                {
+                    Status = State.Missing;
+                    Changed?.Invoke();
+                });
             }
             catch (Exception e)
             {
                 Log.Error("Quran download", e);
-                App.Dispatcher.TryEnqueue(() => { Status = State.Failed; Error = e.Message; Changed?.Invoke(); });
+                App.Dispatcher.TryEnqueue(() =>
+                {
+                    Status = State.Failed;
+                    Error = e.Message;
+                    Changed?.Invoke();
+                });
             }
         }, token);
     }

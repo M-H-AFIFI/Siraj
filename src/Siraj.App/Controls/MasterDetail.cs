@@ -64,7 +64,11 @@ internal sealed class MasterDetail : Grid
     private void Arrange(double width)
     {
         bool narrow = width < 860;
-        if (narrow == _narrow && ColumnDefinitions[0].Width.Value > 0) { Apply(); return; }
+        if (narrow == _narrow && ColumnDefinitions[0].Width.Value > 0)
+        {
+            Apply();
+            return;
+        }
         _narrow = narrow;
         Apply();
     }

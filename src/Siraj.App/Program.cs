@@ -17,34 +17,25 @@ public static partial class Program
 
         if (args.Contains("--uninstall"))
         {
-            // Run by the uninstaller: take away what Siraj registered for the user.
+            // Called by the uninstaller to remove startup and notification registrations.
             Autostart.Set(false);
             Notifier.UnregisterAll();
             return 0;
         }
 
-#if DEBUG
-        bool isolatedShot = args.Any(a => a.StartsWith("--shot="));
-        if (!isolatedShot)
-        {
-#endif
         var instance = AppInstance.FindOrRegisterForKey(InstanceKey);
         if (!instance.IsCurrent)
         {
-            // --quit (from the installer and uninstaller) travels the same way and closes the running copy.
+            // Forward activation (including --quit from the installer) to the running instance.
             Redirect(instance, AppInstance.GetCurrent().GetActivatedEventArgs());
             return 0;
         }
         if (args.Contains("--quit"))
         {
-            // Nothing running to close.
             instance.UnregisterKey();
             return 0;
         }
         instance.Activated += (_, e) => App.OnRedirected(e);
-#if DEBUG
-        }
-#endif
 
         App.StartArgs = args;
         Application.Start(p =>

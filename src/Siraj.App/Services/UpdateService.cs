@@ -295,31 +295,6 @@ internal sealed class UpdateService : IDisposable
         Publish(Snapshot with { BannerDismissed = true });
     }
 
-#if DEBUG
-    public void LoadDemoState(string mode = "available")
-    {
-        var demo = new UpdateRelease(
-            new AppVersion(CurrentVersion.Major, CurrentVersion.Minor + 1, 0),
-            Architecture,
-            $"SirajSetup-{CurrentVersion.Major}.{CurrentVersion.Minor + 1}.0-{Architecture}.exe",
-            "https://example.invalid/SirajSetup-demo.exe",
-            null,
-            null,
-            76_400_000,
-            "Smoother animations, customizable taskbar prayer bar, and faster Quran page loading.",
-            null,
-            DateTimeOffset.UtcNow);
-
-        Publish(mode.ToLowerInvariant() switch
-        {
-            "downloading" => new UpdateSnapshot(UpdateState.Downloading, demo, Progress: 0.62, DownloadedBytes: 47_368_000, TotalBytes: 76_400_000),
-            "ready" => new UpdateSnapshot(UpdateState.ReadyToInstall, demo, Progress: 1.0, DownloadedPath: Path.Combine(UpdatesDirectory, demo.FileName)),
-            "updated" => new UpdateSnapshot(UpdateState.Idle, JustUpdated: true),
-            _ => new UpdateSnapshot(UpdateState.Available, demo),
-        });
-    }
-#endif
-
     private async Task<string> ReadTextAsync(string url, CancellationToken ct)
     {
         if (url.StartsWith("file://", StringComparison.OrdinalIgnoreCase))

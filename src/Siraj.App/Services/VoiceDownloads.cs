@@ -62,7 +62,7 @@ internal static class VoiceDownloads
                 await source.CopyToAsync(target, cancel);
             }
             var info = new FileInfo(temp);
-            // The CDN's own size, give or take a re-encode; and an MP3 (ID3 tag or frame sync) inside.
+            // Reject truncated or corrupt downloads by checking size tolerance and MP3 header/frame sync.
             if (info.Length < recording.Bytes * 0.8 || info.Length > recording.Bytes * 1.25 || !LooksLikeMp3(temp))
             {
                 Log.Error($"rejected {url}: {info.Length} bytes");

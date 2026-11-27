@@ -24,20 +24,27 @@ public sealed partial class RadioPage : Page
         var (root, body) = Kit.Page(loc["radio_stations_title"], loc["radio_hero_subtitle"], 1140,
             back: () => App.MainWindowInstance?.Navigate("listen"));
 
-        // Live badge + search bar + sliding filter pills (persistent so typing never loses focus)
         var liveHeader = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         liveHeader.Children.Add(new Ellipse { Width = 9, Height = 9, Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 229, 57, 53)), VerticalAlignment = VerticalAlignment.Center });
         liveHeader.Children.Add(Kit.Pill(loc["radio_live_badge"], "SirajPrimarySoftBrush", "SirajPrimaryBrush"));
         body.Children.Add(liveHeader);
 
-        body.Children.Add(Kit.Search(loc["radio_search_hint"], q => { _query = q; FillStations(); }));
+        body.Children.Add(Kit.Search(loc["radio_search_hint"], q =>
+        {
+            _query = q;
+            FillStations();
+        }));
         body.Children.Add(Ui.Segments<RadioFilter>(
         [
             (RadioFilter.All, loc["radio_filter_all"]),
             (RadioFilter.Broadcasts, loc["radio_filter_broadcasts"]),
             (RadioFilter.Reciters, loc["radio_filter_reciters"]),
             (RadioFilter.TafsirAndSunnah, loc["radio_filter_tafsir_sunnah"]),
-        ], _filter, f => { _filter = f; FillStations(); }));
+        ], _filter, f =>
+        {
+            _filter = f;
+            FillStations();
+        }));
         body.Children.Add(_listHost);
 
         Content = root;

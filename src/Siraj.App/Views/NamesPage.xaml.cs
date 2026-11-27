@@ -27,7 +27,11 @@ public sealed partial class NamesPage : Page
         titles.Children.Add(Ui.Text(loc["hub_names_desc"], "SirajCaption"));
         titleRow.Children.Add(titles);
         header.Children.Add(titleRow);
-        header.Children.Add(Kit.Search(loc["names_of_allah_search_hint"], q => { _query = q; Fill(); }));
+        header.Children.Add(Kit.Search(loc["names_of_allah_search_hint"], q =>
+        {
+            _query = q;
+            Fill();
+        }));
 
         _view = new MasterDetail(header) { ListWidth = 460 };
         _view.List = _grid;
@@ -65,7 +69,7 @@ public sealed partial class NamesPage : Page
         ar.HorizontalAlignment = HorizontalAlignment.Center;
         ar.LineHeight = 44;
         stack.Children.Add(ar);
-        // The Arabic "meaning" is the name again without its marks: in Arabic the name says it all.
+        // Skip transliteration in Arabic.
         if (loc.Language != "ar")
         {
             var tr = Kit.Text(name.Transliteration, "SirajCaption", 12);
@@ -121,9 +125,6 @@ public sealed partial class NamesPage : Page
             var tr = Kit.Text(name.Transliteration, "SirajTitle", 24, brush: Kit.B("SirajOnPrimaryContainerBrush"));
             tr.HorizontalAlignment = HorizontalAlignment.Center;
             hero.Children.Add(tr);
-        }
-        if (lang != "ar")
-        {
             var meaning = Kit.Text(name.Meaning(lang), "SirajHeading", 18, brush: Kit.B("SirajOnPrimaryContainerBrush"));
             meaning.HorizontalAlignment = HorizontalAlignment.Center;
             meaning.HorizontalTextAlignment = TextAlignment.Center;
@@ -138,7 +139,7 @@ public sealed partial class NamesPage : Page
 
         var quote = new StackPanel { Spacing = 6 };
         var text = Kit.Text(loc["names_hadith_text"], "SirajBody");
-        // Arabic has no italic: a slanted copy of the letters only looks broken.
+        // Skip italic on RTL text; synthetic slant distorts Arabic script.
         if (!loc.IsRtl) text.FontStyle = Windows.UI.Text.FontStyle.Italic;
         quote.Children.Add(text);
         quote.Children.Add(Kit.Text(loc["names_hadith_source"], "SirajCaption"));
@@ -147,7 +148,6 @@ public sealed partial class NamesPage : Page
             BorderBrush = Kit.B("SirajGoldBrush"), BorderThickness = new Thickness(3, 0, 0, 0),
             Padding = new Thickness(16, 4, 16, 4), Margin = new Thickness(4, 4, 4, 12), Child = quote,
         });
-        Kit.Entrance(stack);
         return stack;
     }
 }

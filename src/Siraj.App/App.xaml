@@ -10,7 +10,6 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- The accent WinUI's own controls draw with; ThemeService sets it from the palette. -->
             <Color x:Key="SystemAccentColor">#FF059669</Color>
             <Color x:Key="SystemAccentColorDark1">#FF059669</Color>
             <Color x:Key="SystemAccentColorDark2">#FF047854</Color>
@@ -19,7 +18,6 @@
             <Color x:Key="SystemAccentColorLight2">#FF34D399</Color>
             <Color x:Key="SystemAccentColorLight3">#FF71E0B8</Color>
 
-            <!-- Core palette brushes; ThemeService updates their colours in place. -->
             <SolidColorBrush x:Key="SirajPrimaryBrush" Color="#059669" />
             <SolidColorBrush x:Key="SirajOnPrimaryBrush" Color="#FFFFFF" />
             <SolidColorBrush x:Key="SirajPrimaryContainerBrush" Color="#D1FAE5" />
@@ -38,7 +36,6 @@
             <SolidColorBrush x:Key="SirajOutlineVariantBrush" Color="#CFD1D4" />
             <SolidColorBrush x:Key="SirajGoldBrush" Color="#8A6A16" />
 
-            <!-- Liquid Glass & tinted accent brushes; ThemeService updates GPU blur & stops in place. -->
             <theme:SirajGlassBrush x:Key="SirajGlassCardBrush" Role="Card" />
             <theme:SirajGlassBrush x:Key="SirajGlassElevatedBrush" Role="Elevated" />
             <theme:SirajGlassBrush x:Key="SirajGlassPillBrush" Role="Pill" />
@@ -55,7 +52,6 @@
             <SolidColorBrush x:Key="SirajGoldSoftBrush" Color="#24D4AF37" />
             <SolidColorBrush x:Key="SirajDividerBrush" Color="#1F059669" />
 
-            <!-- Outfit, the UI face; Arabic and Urdu fall back cleanly to Segoe UI. -->
             <FontFamily x:Key="SirajFont">ms-appx:///Assets/Fonts/Outfit.ttf#Outfit, Segoe UI Variable Text, Segoe UI</FontFamily>
             <FontFamily x:Key="SirajArabicFont">ms-appx:///Assets/Quran/quran_amiri.ttf#Amiri</FontFamily>
             <FontFamily x:Key="SirajQuranFont">ms-appx:///Assets/Quran/quran_digitalkhatt_v2.otf#DigitalKhatt New Madina</FontFamily>

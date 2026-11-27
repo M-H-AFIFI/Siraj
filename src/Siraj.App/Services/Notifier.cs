@@ -18,7 +18,7 @@ internal static class Notifier
         }
         catch (Exception e)
         {
-            // Notifications are a courtesy on top of the adhan, which plays regardless.
+            // Log and continue; adhan audio still plays without toast notifications.
             Log.Error("notification registration failed", e);
         }
     }

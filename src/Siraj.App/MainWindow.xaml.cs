@@ -37,9 +37,6 @@ public sealed partial class MainWindow : Window
     private string _page = "prayer";
     private bool _compact;
     private bool _pillVisible;
-#if DEBUG
-    private Microsoft.UI.Dispatching.DispatcherQueueTimer? _shotTimer;
-#endif
     private readonly Dictionary<string, (Button Btn, SirajVectorIcon Icon, TextBlock Label, EqualizerBars? Eq, NavSpec Spec, int PrimaryIndex)> _navButtons = new();
 
     public static bool IsActive { get; private set; }
@@ -99,14 +96,7 @@ public sealed partial class MainWindow : Window
             IsActive = false;
             ActiveChanged?.Invoke();
         };
-#if DEBUG
-        if (App.StartArgs.FirstOrDefault(a => a.StartsWith("--page=")) is { } initialPage)
-            _page = initialPage["--page=".Length..];
-#endif
         Rebuild();
-#if DEBUG
-        DebugHooks();
-#endif
     }
 
     internal void OpenFullPlayer() => FullPlayer.Open();
@@ -379,7 +369,11 @@ public sealed partial class MainWindow : Window
         row.Children.Add(icon);
         Grid.SetColumn(label, 1);
         row.Children.Add(label);
-        if (eq != null) { Grid.SetColumn(eq, 2); row.Children.Add(eq); }
+        if (eq != null)
+        {
+            Grid.SetColumn(eq, 2);
+            row.Children.Add(eq);
+        }
 
         var btn = new Button
         {
@@ -399,26 +393,26 @@ public sealed partial class MainWindow : Window
         _navButtons[spec.Tag] = (btn, icon, label, eq, spec, primaryIndex);
     }
 
-    private string ActiveRailTag() => _page switch
+    private static string RailTagOf(string page) => page switch
     {
         "reader" or "khatma" => "quran",
         "radio" => "listen",
         "adhkar" or "tasbih" or "hadith" or "names" or "fasting" or "zakat" or "calendar" => "worship",
-        _ => _navButtons.ContainsKey(_page) ? _page : "prayer",
+        _ => page,
     };
+
+    private string ActiveRailTag()
+    {
+        string tag = RailTagOf(_page);
+        return _navButtons.ContainsKey(tag) ? tag : "prayer";
+    }
 
     private static bool IsSubpage(string page) => page is
         "reader" or "khatma" or "radio" or "adhkar" or "tasbih" or "hadith" or "names" or "fasting" or "zakat" or "calendar";
 
-    private int PrimaryIndexOf(string page)
+    private static int PrimaryIndexOf(string page)
     {
-        string tag = page switch
-        {
-            "reader" or "khatma" => "quran",
-            "radio" => "listen",
-            "adhkar" or "tasbih" or "hadith" or "names" or "fasting" or "zakat" or "calendar" => "worship",
-            _ => page,
-        };
+        string tag = RailTagOf(page);
         for (int i = 0; i < PrimaryNav.Length; i++)
             if (PrimaryNav[i].Tag == tag) return i;
         return -1;
@@ -546,7 +540,6 @@ public sealed partial class MainWindow : Window
             _ => typeof(PrayerPage),
         };
 
-        // Start sliding the rail pill immediately before Frame navigation so feedback is instantaneous.
         UpdateNavVisuals(animatePill: hadContent);
 
         PageTransitionKind kind = PageTransitionKind.None;
@@ -577,7 +570,11 @@ public sealed partial class MainWindow : Window
 
     internal void OpenReader(ReaderArgs args)
     {
-        if (App.Quran.Status != QuranService.State.Ready) { Navigate("quran", force: true); return; }
+        if (App.Quran.Status != QuranService.State.Ready)
+        {
+            Navigate("quran", force: true);
+            return;
+        }
         _page = "reader";
         UpdateNavVisuals(animatePill: true);
         ContentFrame.Navigate(typeof(ReaderPage), args, new SuppressNavigationTransitionInfo());
@@ -602,81 +599,4 @@ public sealed partial class MainWindow : Window
             Notifier.ShowText(Loc.Current["win_tray_hint_title"], Loc.Current["win_tray_hint_body"]);
         }
     }
-
-#if DEBUG
-    // --page=<name> opens at a page, --size=<w>x<h> sizes the window, --shot=<file.png> saves a snapshot and exits.
-    private void DebugHooks()
-    {
-        string? Arg(string name) => App.StartArgs.FirstOrDefault(a => a.StartsWith(name))?[name.Length..];
-        if (Arg("--size=") is { } size && size.Split('x') is [var sw, var sh] && int.TryParse(sw, out int w) && int.TryParse(sh, out int h))
-        {
-            double scale = Win32.GetDpiForWindow(WinRT.Interop.WindowNative.GetWindowHandle(this)) / 96.0;
-            AppWindow.Resize(new SizeInt32((int)(w * scale), (int)(h * scale)));
-        }
-        if (Arg("--page=") is { } page && App.Settings.Current.SetupDone)
-        {
-            if (page == "reader" && App.Settings.Current.LastRead is { } last) OpenReader(new ReaderArgs(last.Page));
-            else Navigate(page, force: true);
-        }
-        if (Arg("--demo-player=") is { } demo)
-        {
-            App.Media.LoadDemoPreview();
-            MiniPlayer.Refresh();
-            if (demo == "full") FullPlayer.Open();
-        }
-        if (App.StartArgs.Contains("--demo-update"))
-        {
-            App.Updates.LoadDemoState("available");
-            RefreshUpdateBanner();
-        }
-        else if (Arg("--demo-update=") is { } demoUpdate)
-        {
-            App.Updates.LoadDemoState(demoUpdate);
-            RefreshUpdateBanner();
-        }
-        if (Arg("--shot=") is not { } shot) return;
-        double? scrollTarget = double.TryParse(Arg("--scroll="), out double sy) ? sy : null;
-        _shotTimer = DispatcherQueue.CreateTimer();
-        _shotTimer.Interval = TimeSpan.FromSeconds(int.TryParse(Arg("--shot-delay="), out int d) ? d : 3);
-        _shotTimer.IsRepeating = false;
-        _shotTimer.Tick += async (_, _) =>
-        {
-            Log.Info($"shot tick: {shot}");
-            try
-            {
-                if (scrollTarget is { } offset && FindFirst<ScrollViewer>(ContentFrame) is { } sv)
-                {
-                    sv.ChangeView(null, offset, null, disableAnimation: true);
-                    await Task.Delay(250);
-                }
-                var bitmap = new Microsoft.UI.Xaml.Media.Imaging.RenderTargetBitmap();
-                await bitmap.RenderAsync(Root);
-                var pixels = await bitmap.GetPixelsAsync();
-                if (File.Exists(shot)) File.Delete(shot);
-                using var fs = File.Create(shot);
-                using var stream = fs.AsRandomAccessStream();
-                var encoder = await Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId, stream);
-                encoder.SetPixelData(Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8, Windows.Graphics.Imaging.BitmapAlphaMode.Premultiplied,
-                    (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 96, 96, System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.ToArray(pixels));
-                await encoder.FlushAsync();
-                Log.Info($"shot saved: {bitmap.PixelWidth}x{bitmap.PixelHeight}");
-            }
-            catch (Exception e) { Log.Error("shot", e); }
-            App.Quit();
-        };
-        _shotTimer.Start();
-    }
-
-    private static T? FindFirst<T>(DependencyObject root) where T : DependencyObject
-    {
-        int count = VisualTreeHelper.GetChildrenCount(root);
-        for (int i = 0; i < count; i++)
-        {
-            var child = VisualTreeHelper.GetChild(root, i);
-            if (child is T hit) return hit;
-            if (FindFirst<T>(child) is { } nested) return nested;
-        }
-        return null;
-    }
-#endif
 }

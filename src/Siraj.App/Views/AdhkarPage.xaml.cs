@@ -55,7 +55,12 @@ public sealed partial class AdhkarPage : Page
         var (root, body) = Kit.Page(loc["win_nav_adhkar"], loc["azkar_screen_verse"],
             back: () => App.MainWindowInstance?.Navigate("worship"));
         body.Children.Add(Hero());
-        body.Children.Add(Kit.Search(loc["azkar_search_hint"], q => { _query = q; FillGroups(); FillChapters(); }));
+        body.Children.Add(Kit.Search(loc["azkar_search_hint"], q =>
+        {
+            _query = q;
+            FillGroups();
+            FillChapters();
+        }));
         var tabs = Ui.Segments(Enum.GetValues<AdhkarTab>().Select(t => (t, t.Label(loc.Language))).ToList(), _tab, t =>
         {
             _tab = t;
@@ -288,7 +293,6 @@ public sealed partial class AdhkarPage : Page
         var body = new StackPanel { Spacing = 12 };
         var column = new StackPanel { MaxWidth = 860, Padding = new Thickness(32, 8, 32, 48), Spacing = 16 };
 
-        // The header: back, the set's name, the options, and how far today has got.
         var header = new Grid { ColumnSpacing = 8 };
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -350,7 +354,7 @@ public sealed partial class AdhkarPage : Page
             card.Click += (_, _) =>
             {
                 int count = counts.GetValueOrDefault(dhikr.Id);
-                // A dhikr said once unticks on a second click; a counted one stays finished at its count.
+                // Single-count dhikr toggles off on a second click; multi-count stays at target.
                 int next = count >= dhikr.Count ? (dhikr.Count == 1 ? 0 : count) : count + 1;
                 if (next == count) return;
                 counts[dhikr.Id] = next;
@@ -360,7 +364,7 @@ public sealed partial class AdhkarPage : Page
                 UpdateProgress();
                 if (next >= dhikr.Count)
                 {
-                    // On to the next one not yet said, below this one.
+                    // Scroll to the next incomplete dhikr.
                     var after = cards.Skip(index + 1).Zip(items.Skip(index + 1)).FirstOrDefault(p => counts.GetValueOrDefault(p.Second.Id) < p.Second.Count);
                     after.First?.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = Kit.Motion, VerticalAlignmentRatio = 0.25 });
                 }

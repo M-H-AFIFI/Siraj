@@ -22,7 +22,11 @@ public sealed partial class SetupPage : Page
         Kit.Lift(BackButton);
         Kit.Lift(NextButton);
         ProgressTrack.SizeChanged += (_, _) => UpdateProgress(animate: false);
-        Loaded += (_, _) => { App.Settings.Changed += OnSettings; UpdateProgress(animate: false); };
+        Loaded += (_, _) =>
+        {
+            App.Settings.Changed += OnSettings;
+            UpdateProgress(animate: false);
+        };
         Unloaded += (_, _) => App.Settings.Changed -= OnSettings;
         Show(0);
     }
@@ -33,7 +37,7 @@ public sealed partial class SetupPage : Page
 
     private void OnSettings(AppSettings old, AppSettings updated) => DispatcherQueue.TryEnqueue(() =>
     {
-        // The language step rebuilds the whole window; the place and look steps redraw themselves.
+        // Language changes rebuild the window; location and theme changes refresh this step.
         if (old.Location != updated.Location || old.Palette != updated.Palette || old.ThemeMode != updated.ThemeMode) Show(0);
     });
 
@@ -73,12 +77,24 @@ public sealed partial class SetupPage : Page
         var body = new StackPanel { Spacing = 14 };
         switch (_step)
         {
-            case 0: LanguageStep(body); break;
-            case 1: Location(body); break;
-            case 2: Calculation(body); break;
-            case 3: Alerts(body); break;
-            case 4: Look(body); break;
-            default: Desktop(body); break;
+            case 0:
+                LanguageStep(body);
+                break;
+            case 1:
+                Location(body);
+                break;
+            case 2:
+                Calculation(body);
+                break;
+            case 3:
+                Alerts(body);
+                break;
+            case 4:
+                Look(body);
+                break;
+            default:
+                Desktop(body);
+                break;
         }
         StepBody.Content = body;
         if (direction != 0)
@@ -154,7 +170,7 @@ public sealed partial class SetupPage : Page
         var loc = Loc.Current;
         TitleText.Text = loc["onboarding_calc_title"];
         var country = S.Location?.Country;
-        // Chosen for the country where Siraj knows its convention; the widely used default elsewhere.
+        // Show regional hint when a country-specific calculation method is selected.
         DescText.Text = loc[CalculationMethods.RecommendedFor(country) == CalculationMethods.FallbackMethod
             ? "onboarding_calc_hint_general" : "onboarding_calc_hint_local"];
         var methods = CalculationMethods.All.Select(m => (m.Id, m.Name(loc.Language))).ToList();

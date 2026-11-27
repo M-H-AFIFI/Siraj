@@ -73,7 +73,6 @@ public sealed partial class WidgetsPage : Page
         TaskbarSection.Children.Clear();
         TaskbarSection.Children.Add(Ui.SectionWithIcon(loc["win_taskbar_title"], "desktop_windows"));
 
-        // Live preview on a miniature Windows 11 taskbar strip where the pill moves across the full width.
         _tbPreview = new TaskbarPillView(cfg, live: true) { VerticalAlignment = VerticalAlignment.Center };
         var previewStrip = BuildTaskbarPreviewStrip(_tbPreview);
         SyncPreviewPosition(cfg);
@@ -131,7 +130,6 @@ public sealed partial class WidgetsPage : Page
             ("solid", loc["win_taskbar_style_solid"]),
         ], cfg.Style, v => Mutate(c => c with { Style = v }));
 
-        // Color swatches: "App" + all 12 Siraj palettes.
         var colorGrid = BuildTaskbarColorSwatches(cfg.Palette, p => Mutate(c => c with { Palette = p }));
 
         var textColorSeg = Ui.Segments(
@@ -160,7 +158,6 @@ public sealed partial class WidgetsPage : Page
             ("custom", loc["win_taskbar_pos_custom"]),
         ], cfg.Position, v => Mutate(c => c with { Position = v, OffsetX = 0 }));
 
-        // Full-width taskbar position slider (0% far left -> 100% far right).
         _posPctLabel = Ui.Text(loc.Percent(cfg.CustomPositionPercent), "SirajCaption");
         _posPctLabel.MinWidth = 44;
         _posPctLabel.VerticalAlignment = VerticalAlignment.Center;
@@ -362,7 +359,6 @@ public sealed partial class WidgetsPage : Page
 
         var container = new Grid { Height = 54, FlowDirection = FlowDirection.LeftToRight };
 
-        // Subtle colored wallpaper glow behind the taskbar strip so Glass and Text-only modes stand out clearly.
         container.Children.Add(new Border
         {
             Background = new LinearGradientBrush
@@ -378,7 +374,6 @@ public sealed partial class WidgetsPage : Page
             },
         });
 
-        // Mock taskbar icons on the opposite edge from the tray so Center (50%) previews over clean space.
         var chrome = new Grid { Padding = new Thickness(16, 4, 16, 4) };
         var apps = new StackPanel
         {
@@ -415,7 +410,6 @@ public sealed partial class WidgetsPage : Page
         chrome.Children.Add(tray);
         container.Children.Add(chrome);
 
-        // Full-width track holding the live pill so left / center / right / 0..100% movement previews accurately.
         _previewTrack = new Grid { Padding = new Thickness(12, 6, 12, 6) };
         _previewTrack.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80, GridUnitType.Star) });
         _previewTrack.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });

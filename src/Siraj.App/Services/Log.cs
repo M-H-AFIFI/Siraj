@@ -30,7 +30,7 @@ internal static class Log
         }
         catch
         {
-            // Logging must never take the app down.
+            // Ignore logging I/O failures.
         }
     }
 }

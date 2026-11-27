@@ -69,12 +69,10 @@ internal sealed class ThemeService
         Set(r, "SirajOutlineVariantBrush", Scheme.OutlineVariant);
         Set(r, "SirajGoldBrush", Scheme.Gold);
 
-        // Soft accent & divider brushes
         Set(r, "SirajPrimarySoftBrush", WithAlpha(Scheme.Primary, dark ? 0.18f : 0.11f));
         Set(r, "SirajPrimaryBorderBrush", WithAlpha(Scheme.Primary, dark ? 0.34f : 0.22f));
         Set(r, "SirajGoldSoftBrush", WithAlpha(Scheme.Gold, dark ? 0.20f : 0.14f));
 
-        // Glass (GPU Gaussian blur + 5-stop specular rim) vs Atmospheric vs Solid card & chrome brushes
         // Touch deferred App.xaml glass brushes so they register before UpdateRole pushes active colors.
         _ = r["SirajGlassCardBrush"];
         _ = r["SirajGlassElevatedBrush"];
@@ -116,7 +114,6 @@ internal sealed class ThemeService
             Set(r, "SirajDividerBrush", WithAlpha(Scheme.OutlineVariant, 0.55f));
         }
 
-        // WinUI accent controls follow the chosen palette
         var light = Palettes.Scheme(s.Palette, false, false).Primary;
         var darkPrimary = Palettes.Scheme(s.Palette, true, false).Primary;
         var black0 = Argb.Hex(0xFF000000);
@@ -142,12 +139,12 @@ internal sealed class ThemeService
 
     private static Argb WithAlpha(Argb c, float a) => new((byte)Math.Clamp(a * 255f, 0, 255), c.R, c.G, c.B);
 
-    private static void Set(ResourceDictionary dictionary, string key, Argb colour)
+    private static void Set(ResourceDictionary dictionary, string key, Argb color)
     {
         if (dictionary.TryGetValue(key, out var value) && value is SolidColorBrush brush)
-            brush.Color = ToColor(colour);
+            brush.Color = ToColor(color);
         else
-            dictionary[key] = new SolidColorBrush(ToColor(colour));
+            dictionary[key] = new SolidColorBrush(ToColor(color));
     }
 
     private static void SetGradient5(ResourceDictionary dictionary, string key, Argb c0, Argb c1, Argb c2, Argb c3, Argb c4)

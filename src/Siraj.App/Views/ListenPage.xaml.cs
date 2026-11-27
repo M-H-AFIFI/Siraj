@@ -50,7 +50,11 @@ public sealed partial class ListenPage : Page
     private string CurrentStateKey() =>
         $"{App.Theme.Scheme.Primary}|{App.Theme.IsDark}|{App.Theme.IsGlass}|{App.Media.Kind}|{App.Media.CurrentTrack?.Id}|{App.Media.IsPlaying}|{App.Media.ActiveAmbientId}|{_selectedReciter?.Id}|{_selectedRare?.Id}";
 
-    private void OnThemeChanged() { _builtStateKey = ""; RebuildView(); }
+    private void OnThemeChanged()
+    {
+        _builtStateKey = "";
+        RebuildView();
+    }
 
     private void OnMediaChanged()
     {
@@ -108,7 +112,11 @@ public sealed partial class ListenPage : Page
         actionsRow.Children.Add(radioBtn);
         body.Children.Add(actionsRow);
 
-        var searchBox = Kit.Search(loc["listen_search_hint"], q => { _query = q; FillHubReciters(); });
+        var searchBox = Kit.Search(loc["listen_search_hint"], q =>
+        {
+            _query = q;
+            FillHubReciters();
+        });
         searchBox.Text = _query;
         body.Children.Add(searchBox);
 
@@ -118,7 +126,11 @@ public sealed partial class ListenPage : Page
             (ListenFilter.Murattal, loc["listen_filter_murattal"]),
             (ListenFilter.Mujawwad, loc["listen_filter_mujawwad"]),
             (ListenFilter.Riwayah, $"{loc["listen_riwayah_warsh_short"]} / {loc["listen_riwayah_qalun_short"]}"),
-        ], _filter, f => { _filter = f; FillHubReciters(); }));
+        ], _filter, f =>
+        {
+            _filter = f;
+            FillHubReciters();
+        }));
 
         _hubListHost = new StackPanel { Spacing = 14 };
         body.Children.Add(_hubListHost);
@@ -172,7 +184,11 @@ public sealed partial class ListenPage : Page
                     Grid.SetColumn(playRare, 2);
                     grid.Children.Add(playRare);
 
-                    _hubListHost.Children.Add(Kit.CardButton(grid, () => { _selectedRare = col; RebuildView(); },
+                    _hubListHost.Children.Add(Kit.CardButton(grid, () =>
+                    {
+                        _selectedRare = col;
+                        RebuildView();
+                    },
                         name: rare.Name(loc.Language), padding: new Thickness(18, 16, 18, 16)));
                 }
             }
@@ -243,7 +259,12 @@ public sealed partial class ListenPage : Page
             Grid.SetColumn(play, 2);
             grid.Children.Add(play);
 
-            var card = Kit.CardButton(grid, () => { _selectedReciter = r; _surahQuery = ""; RebuildView(); },
+            var card = Kit.CardButton(grid, () =>
+            {
+                _selectedReciter = r;
+                _surahQuery = "";
+                RebuildView();
+            },
                 name: reciter.Name(loc.Language), padding: new Thickness(14, 12, 14, 12));
             if (activeHere) card.BorderBrush = Kit.B("SirajPrimaryBrush");
             cards.Add(card);
@@ -256,7 +277,11 @@ public sealed partial class ListenPage : Page
         var loc = Loc.Current;
         _hubListHost = null;
         var (root, body) = Kit.Page(reciter.Name(loc.Language), reciter.Riwayah ?? loc["listen_riwayah"], 980,
-            back: () => { _selectedReciter = null; RebuildView(); });
+            back: () =>
+            {
+                _selectedReciter = null;
+                RebuildView();
+            });
 
         string? art = ListeningLibrary.PortraitFiles.TryGetValue(reciter.Id, out var f) ? $"Portraits/{f}" : null;
         bool playingReciter = App.Media.Kind == MediaKind.Listen && App.Media.CurrentTrack?.ReciterId == reciter.Id && App.Media.IsPlaying;
@@ -287,7 +312,11 @@ public sealed partial class ListenPage : Page
         hero.Children.Add(info);
         body.Children.Add(Kit.Card(hero, new Thickness(24)));
 
-        var search = Kit.Search(loc["listen_search_surah_hint"], q => { _surahQuery = q; FillReciterSurahs(reciter); });
+        var search = Kit.Search(loc["listen_search_surah_hint"], q =>
+        {
+            _surahQuery = q;
+            FillReciterSurahs(reciter);
+        });
         search.Text = _surahQuery;
         body.Children.Add(search);
 
@@ -367,7 +396,11 @@ public sealed partial class ListenPage : Page
         _hubListHost = null;
         _surahListHost = null;
         var (root, body) = Kit.Page(collection.Name(loc.Language), loc["listen_zaher_bio"], 980,
-            back: () => { _selectedRare = null; RebuildView(); });
+            back: () =>
+            {
+                _selectedRare = null;
+                RebuildView();
+            });
 
         var hero = new Grid { ColumnSpacing = 20 };
         hero.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });

@@ -568,15 +568,24 @@ internal sealed class SkyGeometry : IDisposable
 
     private void DisposeResources()
     {
-        ArcPath?.Dispose(); ArcPath = null;
-        FarRidgePath?.Dispose(); FarRidgePath = null;
-        MidDunePath?.Dispose(); MidDunePath = null;
-        MosquePath?.Dispose(); MosquePath = null;
-        PalmsPath?.Dispose(); PalmsPath = null;
-        GatePath?.Dispose(); GatePath = null;
-        FinialPath?.Dispose(); FinialPath = null;
-        MinaretCrescentsPath?.Dispose(); MinaretCrescentsPath = null;
-        ReflectionMask?.Dispose(); ReflectionMask = null;
+        ArcPath?.Dispose();
+        ArcPath = null;
+        FarRidgePath?.Dispose();
+        FarRidgePath = null;
+        MidDunePath?.Dispose();
+        MidDunePath = null;
+        MosquePath?.Dispose();
+        MosquePath = null;
+        PalmsPath?.Dispose();
+        PalmsPath = null;
+        GatePath?.Dispose();
+        GatePath = null;
+        FinialPath?.Dispose();
+        FinialPath = null;
+        MinaretCrescentsPath?.Dispose();
+        MinaretCrescentsPath = null;
+        ReflectionMask?.Dispose();
+        ReflectionMask = null;
         foreach (var c in Clouds) c.Dispose();
         Clouds.Clear();
     }
@@ -632,14 +641,12 @@ internal static class SkyRenderer
         float orbX = geo.BezierX(f.Arc.Progress);
         float orbY = geo.BezierY(f.Arc.Progress);
 
-        // Sky gradient down to the horizon line (clamped below behind the pool).
         using (var sky = new CanvasLinearGradientBrush(rc, Stops(c.Sky))
         { StartPoint = Vector2.Zero, EndPoint = new Vector2(0f, horizonY) })
         {
             ds.FillRectangle(0f, 0f, w, h, sky);
         }
 
-        // Horizon bloom anchored under the sun or moon.
         var bloomCol = isDay ? ThemeService.ToColor(c.OrbGlow) : Color.FromArgb(255, 203, 213, 225);
         float bloomR = w * 0.62f;
         using (var bloom = new CanvasRadialGradientBrush(rc, [
@@ -651,7 +658,6 @@ internal static class SkyRenderer
             ds.FillCircle(orbX, horizonY, bloomR, bloom);
         }
 
-        // Low sun atmospheric scatter around the orb.
         if (isDay)
         {
             float low = Math.Clamp(1f - (1f - MathF.Abs(f.Arc.Progress - 0.5f) * 2f) / 0.45f, 0f, 1f);
@@ -748,7 +754,6 @@ internal static class SkyRenderer
             if (moonAlpha > 0.02f) DrawCelestialMoon(ds, rc, orb, f.Moon.PhaseFraction, (float)f.Moon.Illumination, moonAlpha, orbBreath);
         }
 
-        // Two offscreen volumetric cloud decks in front of the arc and sun/moon.
         float nightness = isDay ? c.StarAlpha * 0.5f : c.StarAlpha;
         float cloudFade = c.CloudAlpha + (SkyClouds.NightCloudStrength - c.CloudAlpha) * Math.Clamp(nightness, 0f, 1f);
         float cloudT = MathF.Floor(t * 15f) / 15f;
@@ -776,7 +781,6 @@ internal static class SkyRenderer
         var duneTop = Argb.Lerp(ink, horizonSky, 0.10f + 0.16f * daylight);
         var stone = Argb.Lerp(ink, horizonSky, 0.07f + 0.19f * daylight);
 
-        // Warm haze settling on the horizon line.
         using (var haze = new CanvasLinearGradientBrush(rc, [
             new CanvasGradientStop { Position = 0f, Color = ThemeService.ToColor(c.OrbGlow, 0f) },
             new CanvasGradientStop { Position = 1f, Color = ThemeService.ToColor(c.OrbGlow, isDay ? 0.16f : 0.09f) },
@@ -810,7 +814,6 @@ internal static class SkyRenderer
         if (geo.PalmsPath != null)
             ds.FillGeometry(geo.PalmsPath, ThemeService.ToColor(stone));
 
-        // Daytime sun warmth grazing the sunward flank of the domes and palms.
         if (isDay && daylight > 0.05f && geo.MosquePath != null && geo.PalmsPath != null)
         {
             float low = Math.Clamp(MathF.Abs(f.Arc.Progress - 0.5f) * 2f, 0f, 1f);
@@ -1202,16 +1205,16 @@ internal static class SkyRenderer
         return CanvasGeometry.CreatePath(pb);
     }
 
-    internal static void DrawMoon(CanvasDrawingSession ds, ICanvasResourceCreator rc, Vector2 centre, float r, MoonPhase moon, SkyColors c)
+    internal static void DrawMoon(CanvasDrawingSession ds, ICanvasResourceCreator rc, Vector2 center, float r, MoonPhase moon, SkyColors c)
     {
-        ds.FillCircle(centre, r, Rgba(200, 210, 230, 0.18f));
-        using var shape = BuildMoonLimb(rc, centre, r, moon.PhaseFraction);
+        ds.FillCircle(center, r, Rgba(200, 210, 230, 0.18f));
+        using var shape = BuildMoonLimb(rc, center, r, moon.PhaseFraction);
         if (shape == null) return;
         ds.FillGeometry(shape, Rgba(250, 248, 235, 1f));
         using (ds.CreateLayer(1f, shape))
         {
-            ds.FillCircle(centre + new Vector2(r * 0.25f, -r * 0.2f), r * 0.22f, Rgba(180, 180, 170, 0.35f));
-            ds.FillCircle(centre + new Vector2(-r * 0.2f, r * 0.3f), r * 0.16f, Rgba(180, 180, 170, 0.30f));
+            ds.FillCircle(center + new Vector2(r * 0.25f, -r * 0.2f), r * 0.22f, Rgba(180, 180, 170, 0.35f));
+            ds.FillCircle(center + new Vector2(-r * 0.2f, r * 0.3f), r * 0.16f, Rgba(180, 180, 170, 0.30f));
         }
     }
 
@@ -1342,7 +1345,6 @@ internal static class SkyRenderer
             }
         }
 
-        // Ground wash before the mosque and pool.
         float washTop = geo.HorizonY - 4f;
         using (ds.CreateLayer(1f, new Rect(0, washTop, w, MathF.Max(1f, h - washTop))))
         {
@@ -1364,7 +1366,6 @@ internal static class SkyRenderer
 
         using (ds.CreateLayer(1f, new Rect(0, top, w, depth)))
         {
-            // 12 gently swaying horizontal strips of the anisotropically blurred skyline reflection.
             if (geo.ReflectionMask != null && geo.ReflectionHeight > 0)
             {
                 var horizonSky = sky.Sky.Count > 0 ? sky.Sky[^1] : Argb.Hex(0xFF010308);
@@ -1385,7 +1386,6 @@ internal static class SkyRenderer
                 }
             }
 
-            // Soft warm lamp reflection streaks under the 7 lit openings.
             if (lightsAlpha > 0.02f)
             {
                 for (int i = 0; i < geo.ReflectedLightXs.Length; i++)
@@ -1408,7 +1408,6 @@ internal static class SkyRenderer
                 }
             }
 
-            // Top 10 bright stars reflected in still night water.
             if (sky.StarAlpha > 0.5f)
             {
                 float starDim = animate ? 0.85f : 0.70f;
@@ -1426,7 +1425,6 @@ internal static class SkyRenderer
                 }
             }
 
-            // Sun or moon shimmering road on the water + 44 depth-weighted flecks with rolling swell bands.
             if (GetWaterRoad(sky, arc, moon) is { } road)
             {
                 float breath = animate ? 0.88f + 0.12f * MathF.Sin(waveTime * 0.7f) : 0.94f;
@@ -1467,7 +1465,6 @@ internal static class SkyRenderer
             }
         }
 
-        // Lit stone lip + glint point right under orbX.
         float rimPeak = isDay ? 0.34f : 0.18f;
         float rimBase = isDay ? 0.08f : 0.05f;
         float rimCenter = Math.Clamp(orbX / w, 0.05f, 0.95f);
@@ -1603,12 +1600,10 @@ internal static class SkyRenderer
         }
     }
 
-    // Sun rays and meteors
-
     private const int RaySize = 256;
     private static float[]? _rayMask;
     private static CanvasBitmap? _rays;
-    private static uint _raysColour;
+    private static uint _raysColor;
 
     private static float SunLow(float progress, float span)
     {
@@ -1629,24 +1624,24 @@ internal static class SkyRenderer
         ds.Transform = saved;
     }
 
-    private static CanvasBitmap RayPicture(ICanvasResourceCreator rc, Color colour)
+    private static CanvasBitmap RayPicture(ICanvasResourceCreator rc, Color color)
     {
-        uint key = (uint)(colour.R << 16 | colour.G << 8 | colour.B);
-        if (_rays != null && _raysColour == key && ReferenceEquals(_rays.Device, rc.Device)) return _rays;
+        uint key = (uint)(color.R << 16 | color.G << 8 | color.B);
+        if (_rays != null && _raysColor == key && ReferenceEquals(_rays.Device, rc.Device)) return _rays;
         var mask = _rayMask ??= RayMask();
         var bytes = new byte[RaySize * RaySize * 4];
         for (int i = 0; i < mask.Length; i++)
         {
             float a = mask[i];
             if (a <= 0f) continue;
-            bytes[i * 4] = (byte)(colour.B * a);
-            bytes[i * 4 + 1] = (byte)(colour.G * a);
-            bytes[i * 4 + 2] = (byte)(colour.R * a);
+            bytes[i * 4] = (byte)(color.B * a);
+            bytes[i * 4 + 1] = (byte)(color.G * a);
+            bytes[i * 4 + 2] = (byte)(color.R * a);
             bytes[i * 4 + 3] = (byte)(255 * a);
         }
         _rays?.Dispose();
         _rays = CanvasBitmap.CreateFromBytes(rc, bytes, RaySize, RaySize, DirectXPixelFormat.B8G8R8A8UIntNormalized, 96f, CanvasAlphaMode.Premultiplied);
-        _raysColour = key;
+        _raysColor = key;
         return _rays;
     }
 
@@ -1709,24 +1704,24 @@ internal static class SkyRenderer
         ds.FillCircle(head, 1.1f, Rgba(255, 255, 255, 0.95f * glow));
     }
 
-    private static CanvasLinearGradientBrush Tail(ICanvasResourceCreator rc, Vector2 from, Vector2 to, Color colour) =>
+    private static CanvasLinearGradientBrush Tail(ICanvasResourceCreator rc, Vector2 from, Vector2 to, Color color) =>
         new(rc, [
-            new CanvasGradientStop { Position = 0f, Color = Color.FromArgb(0, colour.R, colour.G, colour.B) },
-            new CanvasGradientStop { Position = 1f, Color = colour },
+            new CanvasGradientStop { Position = 0f, Color = Color.FromArgb(0, color.R, color.G, color.B) },
+            new CanvasGradientStop { Position = 1f, Color = color },
         ]) { StartPoint = from, EndPoint = to };
 
-    private static void Glow(CanvasDrawingSession ds, ICanvasResourceCreator rc, Vector2 centre, float r, Color colour)
+    private static void Glow(CanvasDrawingSession ds, ICanvasResourceCreator rc, Vector2 center, float r, Color color)
     {
-        if (colour.A < 3 || r < 0.5f) return;
+        if (color.A < 3 || r < 0.5f) return;
         using var brush = new CanvasRadialGradientBrush(rc, [
-            new CanvasGradientStop { Position = 0f, Color = colour },
-            new CanvasGradientStop { Position = 1f, Color = Color.FromArgb(0, colour.R, colour.G, colour.B) },
-        ]) { Center = centre, RadiusX = r, RadiusY = r };
-        ds.FillCircle(centre, r, brush);
+            new CanvasGradientStop { Position = 0f, Color = color },
+            new CanvasGradientStop { Position = 1f, Color = Color.FromArgb(0, color.R, color.G, color.B) },
+        ]) { Center = center, RadiusX = r, RadiusY = r };
+        ds.FillCircle(center, r, brush);
     }
 
-    private static CanvasGradientStop[] Stops(IReadOnlyList<Argb> colours) =>
-        colours.Select((col, i) => new CanvasGradientStop { Position = (float)i / Math.Max(1, colours.Count - 1), Color = ThemeService.ToColor(col) }).ToArray();
+    private static CanvasGradientStop[] Stops(IReadOnlyList<Argb> colors) =>
+        colors.Select((col, i) => new CanvasGradientStop { Position = (float)i / Math.Max(1, colors.Count - 1), Color = ThemeService.ToColor(col) }).ToArray();
 
     private static Color Rgba(byte r, byte g, byte b, float a) => Color.FromArgb((byte)Math.Clamp(a * 255f, 0f, 255f), r, g, b);
     private static Color WithA(Color c, float a) => Color.FromArgb((byte)Math.Clamp(a * 255f, 0f, 255f), c.R, c.G, c.B);

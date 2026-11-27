@@ -17,7 +17,7 @@ internal sealed class MoonDisc : UserControl
 
     public MoonDisc()
     {
-        // The lit side is the sky's, not the reading direction's.
+        // Moon phase orientation is astronomical and must not mirror in RTL.
         FlowDirection = FlowDirection.LeftToRight;
         IsTabStop = false;
         Loaded += (_, _) =>
@@ -84,9 +84,9 @@ internal sealed class MoonDisc : UserControl
         if (_phase == null) return;
         float w = (float)sender.ActualWidth, h = (float)sender.ActualHeight;
         float r = Math.Min(w, h) / 2 - 2;
-        var centre = new Vector2(w / 2, h / 2);
+        var center = new Vector2(w / 2, h / 2);
         var colors = SkyTimeline.NightColors;
-        args.DrawingSession.FillCircle(centre, r, ThemeService.ToColor(colors.Sky[2]));
-        SkyRenderer.DrawMoon(args.DrawingSession, sender, centre, r * 0.83f, _phase, colors);
+        args.DrawingSession.FillCircle(center, r, ThemeService.ToColor(colors.Sky[2]));
+        SkyRenderer.DrawMoon(args.DrawingSession, sender, center, r * 0.83f, _phase, colors);
     }
 }

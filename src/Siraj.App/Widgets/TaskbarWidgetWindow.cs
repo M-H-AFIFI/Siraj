@@ -426,25 +426,14 @@ internal sealed class TaskbarWidgetWindow : Window
     private IntPtr OnMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam, nuint id, nuint data)
     {
         if (msg == Win32.WM_STYLECHANGING)
-        {
-            var result = Win32.DefSubclassProc(hwnd, msg, wParam, lParam);
-            unsafe
-            {
-                var change = (Win32.STYLESTRUCT*)lParam;
-                if (wParam.ToInt32() == Win32.GWL_STYLE)
-                    change->styleNew = (uint)((change->styleNew & ~(Win32.WS_CAPTION | Win32.WS_THICKFRAME | Win32.WS_SYSMENU)) | Win32.WS_POPUP);
-                else if (wParam.ToInt32() == Win32.GWL_EXSTYLE)
-                    change->styleNew = (uint)(change->styleNew & ~(Win32.WS_EX_WINDOWEDGE | Win32.WS_EX_DLGMODALFRAME));
-            }
-            return result;
-        }
+            return Win32.ForceBorderlessPopupStyle(hwnd, msg, wParam, lParam);
         if (msg == Win32.WM_ERASEBKGND && _clear)
         {
             Win32.GetClientRect(hwnd, out var rect);
             Win32.FillRect(wParam, ref rect, Win32.GetStockObject(Win32.BLACK_BRUSH));
             return new IntPtr(1);
         }
-        if (msg == Win32.WM_DISPLAYCHANGE || msg == 0x02E0 /* WM_DPICHANGED */)
+        if (msg == Win32.WM_DISPLAYCHANGE || msg == Win32.WM_DPICHANGED)
         {
             QueueSyncPosition();
         }

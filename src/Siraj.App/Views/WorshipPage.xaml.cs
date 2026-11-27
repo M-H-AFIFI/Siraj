@@ -47,7 +47,11 @@ public sealed partial class WorshipPage : Page
     private string CurrentKey() =>
         $"{Today}|{AdhkarGroups.Suggested(TimeOnly.FromDateTime(App.Clock.Now.DateTime))}|{App.Media.Kind}:{App.Media.IsPlaying}:{App.Media.CurrentStation?.Id}:{App.Media.CurrentTrack?.Id}|{App.Theme.Scheme.Primary}|{App.Theme.IsDark}|{App.Theme.IsGlass}|{App.Journal.Current.Tasbih.Today}";
 
-    private void OnDirty() { _builtKey = ""; Refresh(); }
+    private void OnDirty()
+    {
+        _builtKey = "";
+        Refresh();
+    }
 
     private static DateOnly Today => App.Clock.Place?.Today(App.Clock.Now) ?? DateOnly.FromDateTime(App.Clock.Now.LocalDateTime);
 
@@ -350,7 +354,6 @@ public sealed partial class WorshipPage : Page
             cards.Add(Kit.CardButton(stack, () => OpenAdhkarGroup(g), name: group.Title(loc.Language)));
         }
 
-        // Full Hisn al-Muslim / Adhkar browser card
         var allStack = new StackPanel { Spacing = 8 };
         allStack.Children.Add(Kit.IconBadge("dua_hands", 38, 19));
         allStack.Children.Add(Kit.Text(loc["azkar_chapters_title"], "SirajHeading", 15, bold: true));

@@ -14,7 +14,6 @@ internal sealed class AdhanService : IDisposable
     private readonly HashSet<string> _fired = [];
     private IReadOnlyList<PlannedAlert> _plan = [];
     private MediaPlayer? _player;
-    private string? _playingTitle;
 
     public event Action<PrayerType?>? PlayingChanged;
 
@@ -34,7 +33,7 @@ internal sealed class AdhanService : IDisposable
     {
         var settings = App.Settings.Current;
         _plan = settings.Location == null ? [] : AlertPlanner.Plan(settings, settings.Location, DateTimeOffset.Now);
-        // Forget fired alerts that are long past, so the set does not grow for ever.
+        // Prune expired alert keys from _fired.
         _fired.RemoveWhere(k => !_plan.Any(a => a.Key == k));
         Arm();
     }
@@ -54,7 +53,7 @@ internal sealed class AdhanService : IDisposable
         try
         {
             var now = DateTimeOffset.Now;
-            // A day boundary or a stale plan: plan again before deciding anything.
+            // Refresh the plan before checking if it is empty or near its horizon.
             if (_plan.Count == 0 || _plan[^1].At < now.AddHours(20)) Replan();
             foreach (var alert in _plan)
             {
@@ -129,7 +128,7 @@ internal sealed class AdhanService : IDisposable
             Volume = AppPaths.Muted ? 0 : Math.Clamp(App.Settings.Current.AdhanVolume, 0, 100) / 100.0,
             AudioCategory = MediaPlayerAudioCategory.Alerts,
         };
-        // The media flyout and the keyboard's media keys show it and can stop it, as on a phone's lock screen.
+        // Populate SMTC metadata so Windows media controls and media keys can stop the adhan.
         var item = new MediaPlaybackItem(MediaSource.CreateFromUri(new Uri(path)));
         var display = item.GetDisplayProperties();
         display.Type = MediaPlaybackType.Music;
@@ -146,7 +145,6 @@ internal sealed class AdhanService : IDisposable
             Finished(player);
         });
         _player = player;
-        _playingTitle = title;
         Playing = prayer;
         player.Play();
         PlayingChanged?.Invoke(prayer);
@@ -165,7 +163,6 @@ internal sealed class AdhanService : IDisposable
         var player = _player;
         if (player == null) return;
         _player = null;
-        _playingTitle = null;
         Playing = null;
         try
         {

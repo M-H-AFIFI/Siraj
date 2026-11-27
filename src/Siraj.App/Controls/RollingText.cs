@@ -74,12 +74,11 @@ public sealed class RollingText : UserControl
                 face.IsTextScaleFactorEnabled = false;
                 face.LineStackingStrategy = LineStackingStrategy.MaxHeight;
                 face.Padding = new Thickness(0, 2, 0, 2);
-                // Figures of one width, so a 1 rolling in for an 8 does not open a gap in the line.
+                // Tabular numerals prevent horizontal jitter while digits roll.
                 Typography.SetNumeralAlignment(face, FontNumeralAlignment.Tabular);
                 Host.Children.Add(face);
             }
             _faces[0].Text = text;
-            // Faces outside the window are cut off, as on a counter's wheel.
             Host.SizeChanged += (_, e) => Host.Clip = new RectangleGeometry
             {
                 Rect = new Windows.Foundation.Rect(-1, 0, e.NewSize.Width + 2, e.NewSize.Height),
@@ -99,8 +98,11 @@ public sealed class RollingText : UserControl
             Move(leaving, Vector3.Zero, new Vector3(0, travel, 0), 1, 0);
             Move(coming, new Vector3(0, -travel, 0), Vector3.Zero, 0, 1);
             batch.End();
-            // The face gone by is emptied, or the window keeps its width.
-            batch.Completed += (_, _) => { if (_faces[_current] != leaving) leaving.Text = ""; };
+            // Clear the hidden TextBlock so old glyphs do not affect layout width.
+            batch.Completed += (_, _) =>
+            {
+                if (_faces[_current] != leaving) leaving.Text = "";
+            };
         }
 
         private static void Move(UIElement face, Vector3 from, Vector3 to, float fadeFrom, float fadeTo)

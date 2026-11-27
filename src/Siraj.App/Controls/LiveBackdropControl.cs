@@ -30,7 +30,11 @@ public sealed class LiveBackdropControl : UserControl
     public bool Paused
     {
         get => _paused;
-        set { _paused = value; UpdateTimer(); }
+        set
+        {
+            _paused = value;
+            UpdateTimer();
+        }
     }
 
     public LiveBackdropControl()
@@ -81,7 +85,11 @@ public sealed class LiveBackdropControl : UserControl
         return timer;
     }
 
-    private void OnThemeOrSettings() => DispatcherQueue.TryEnqueue(() => { UpdateTimer(); _canvas.Invalidate(); });
+    private void OnThemeOrSettings() => DispatcherQueue.TryEnqueue(() =>
+    {
+        UpdateTimer();
+        _canvas.Invalidate();
+    });
 
     private void OnSettings(Core.Settings.AppSettings old, Core.Settings.AppSettings updated)
     {
@@ -107,8 +115,15 @@ public sealed class LiveBackdropControl : UserControl
         bool live = OverrideLive ?? s.LiveBackground;
         bool glass = OverrideGlass ?? s.GlassUi;
         bool want = Animate && !_paused && (live || glass) && Kit.Motion && Views.MainWindow.IsActive;
-        if (want) _timer.Start();
-        else { _timer.Stop(); _canvas.Invalidate(); }
+        if (want)
+        {
+            _timer.Start();
+        }
+        else
+        {
+            _timer.Stop();
+            _canvas.Invalidate();
+        }
     }
 
     private void OnDraw(CanvasControl sender, CanvasDrawEventArgs args)

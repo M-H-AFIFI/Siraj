@@ -104,7 +104,6 @@ public sealed partial class SkyCard : UserControl
             PhaseIconRotation.Angle = _isSunIcon ? (t * 6.0) % 360.0 : 9.0 * Math.Sin(t * BadgeRockRadPerSec);
             if (_pulsingPill)
             {
-                // 1200ms reverse cycle between 0.35 and 0.85 alpha.
                 double phase = (t % 2.4) / 1.2;
                 if (phase > 1.0) phase = 2.0 - phase;
                 double eased = phase * phase * (3.0 - 2.0 * phase);
@@ -171,8 +170,15 @@ public sealed partial class SkyCard : UserControl
     {
         if (_frames == null) return;
         bool visible = XamlRoot?.IsHostVisible ?? false;
-        if (visible && Views.MainWindow.IsActive && MotionWanted) _frames.Start();
-        else { _frames.Stop(); Canvas.Invalidate(); }
+        if (visible && Views.MainWindow.IsActive && MotionWanted)
+        {
+            _frames.Start();
+        }
+        else
+        {
+            _frames.Stop();
+            Canvas.Invalidate();
+        }
     }
 
     private void OnTick()
@@ -189,7 +195,6 @@ public sealed partial class SkyCard : UserControl
         LabelText.CharacterSpacing = isRtl ? 0 : 45;
         GregorianText.CharacterSpacing = loc.Language == "ar" ? 0 : 25;
 
-        // Calendar capsule dates and tonight's 21:00 moon phase.
         GregorianText.Text = HijriText.Gregorian(today, loc.Language, eastern);
         var hijri = clock.Hijri.Year == 0 ? HijriCalendars.Current.ToHijri(today) : clock.Hijri;
         HijriCapsuleText.Text = HijriText.Format(hijri, loc.Language, eastern);

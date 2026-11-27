@@ -16,6 +16,7 @@ internal static partial class Win32
     public const int WM_TIMECHANGE = 0x001E;
     public const int WM_SETTINGCHANGE = 0x001A;
     public const int WM_DISPLAYCHANGE = 0x007E;
+    public const int WM_DPICHANGED = 0x02E0;
     public const int WM_WINDOWPOSCHANGING = 0x0046;
     public const int WM_NCHITTEST = 0x0084;
     public const int PBT_APMRESUMEAUTOMATIC = 0x0012;
@@ -27,7 +28,7 @@ internal static partial class Win32
     public const int NIF_MESSAGE = 0x1, NIF_ICON = 0x2, NIF_TIP = 0x4, NIF_SHOWTIP = 0x80;
     public const int NOTIFYICON_VERSION_4 = 4;
 
-    public const uint MF_STRING = 0x0, MF_SEPARATOR = 0x800, MF_GRAYED = 0x1, MF_CHECKED = 0x8;
+    public const uint MF_STRING = 0x0, MF_POPUP = 0x10, MF_SEPARATOR = 0x800, MF_GRAYED = 0x1, MF_CHECKED = 0x8;
     public const uint TPM_RETURNCMD = 0x0100, TPM_RIGHTBUTTON = 0x0002, TPM_LAYOUTRTL = 0x8000, TPM_BOTTOMALIGN = 0x20;
 
     public const int GWL_STYLE = -16, GWL_EXSTYLE = -20, GWLP_HWNDPARENT = -8;
@@ -37,7 +38,9 @@ internal static partial class Win32
 
     public static readonly IntPtr HWND_BOTTOM = new(1);
     public static readonly IntPtr HWND_TOPMOST = new(-1);
+    public static readonly IntPtr HWND_NOTOPMOST = new(-2);
     public const uint SWP_NOSIZE = 0x1, SWP_NOMOVE = 0x2, SWP_NOACTIVATE = 0x10, SWP_NOZORDER = 0x4, SWP_FRAMECHANGED = 0x20, SWP_SHOWWINDOW = 0x40, SWP_NOOWNERZORDER = 0x0200;
+    public const uint MONITOR_DEFAULTTONEAREST = 2;
 
     public const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
     public const int DWMWA_BORDER_COLOR = 34;
@@ -248,7 +251,7 @@ internal static partial class Win32
         var tray = FindWindow("Shell_TrayWnd", null);
         if (tray == IntPtr.Zero) return null;
         if (!GetWindowRect(tray, out var trayRect)) return null;
-        var mon = MonitorFromWindow(tray, 2 /* MONITOR_DEFAULTTONEAREST */);
+        var mon = MonitorFromWindow(tray, MONITOR_DEFAULTTONEAREST);
         var info = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
         if (!GetMonitorInfo(mon, ref info)) return null;
         var notify = FindWindowEx(tray, IntPtr.Zero, "TrayNotifyWnd", null);
@@ -353,6 +356,21 @@ internal static partial class Win32
     [DllImport("comctl32.dll")]
     public static extern IntPtr DefSubclassProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
 
+    // Strips caption/frame flags after OverlappedPresenter handles WM_STYLECHANGING so borderless popups have no white 3px border.
+    public static IntPtr ForceBorderlessPopupStyle(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam)
+    {
+        var result = DefSubclassProc(hwnd, msg, wParam, lParam);
+        unsafe
+        {
+            var change = (STYLESTRUCT*)lParam;
+            if (wParam.ToInt32() == GWL_STYLE)
+                change->styleNew = (uint)((change->styleNew & ~(WS_CAPTION | WS_THICKFRAME | WS_SYSMENU)) | WS_POPUP);
+            else if (wParam.ToInt32() == GWL_EXSTYLE)
+                change->styleNew = (uint)(change->styleNew & ~(WS_EX_WINDOWEDGE | WS_EX_DLGMODALFRAME));
+        }
+        return result;
+    }
+
     public const uint GW_HWNDPREV = 3;
     public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
     public const uint EVENT_OBJECT_REORDER = 0x8004;
@@ -405,14 +423,14 @@ internal static partial class Win32
     public static RECT WorkAreaOf(IntPtr hwnd)
     {
         var info = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
-        GetMonitorInfo(MonitorFromWindow(hwnd, 2 /* MONITOR_DEFAULTTONEAREST */), ref info);
+        GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), ref info);
         return info.rcWork;
     }
 
     public static RECT WorkAreaAt(int x, int y)
     {
         var info = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
-        GetMonitorInfo(MonitorFromPoint(new POINT { X = x, Y = y }, 2), ref info);
+        GetMonitorInfo(MonitorFromPoint(new POINT { X = x, Y = y }, MONITOR_DEFAULTTONEAREST), ref info);
         return info.rcWork;
     }
 

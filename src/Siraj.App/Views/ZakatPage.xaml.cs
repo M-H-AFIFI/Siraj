@@ -138,13 +138,12 @@ public sealed partial class ZakatPage : Page
         return grid;
     }
 
-    // The left-to-right mark keeps an Arabic symbol after the amount on an English page: a text block
-    // takes its direction from the first strong letter, which would otherwise be the symbol's.
+    // Prefix LRM on LTR pages so an Arabic currency symbol does not flip layout direction.
     private static string Money(double value, ZakatCurrency currency)
     {
         var loc = Loc.Current;
         string amount = value.ToString("N2", CultureInfo.InvariantCulture);
-        // Arabic-Indic digits take the Arabic separators (٬ and ٫), not a Latin comma and point.
+        // Use Arabic thousands/decimal separators with Eastern Arabic digits.
         if (Core.Text.Digits.UseEastern(App.Settings.Current.NumeralSystem, loc.Language))
             amount = loc.Digitize(amount.Replace(",", "\u066C").Replace(".", "\u066B"));
         return (loc.IsRtl ? "" : "\u200E") + amount + " " + currency.Symbol;

@@ -31,7 +31,7 @@ internal sealed class TrayIcon : IDisposable
             lpszClassName = Marshal.StringToHGlobalUni(className),
         };
         Win32.RegisterClassEx(ref wc);
-        // A real (never shown) top-level window: message-only windows do not receive the broadcasts.
+        // Top-level hidden window; message-only windows do not receive system broadcasts.
         _hwnd = Win32.CreateWindowEx(0, className, "Siraj", 0, 0, 0, 0, 0, IntPtr.Zero, IntPtr.Zero, wc.hInstance, IntPtr.Zero);
         _taskbarCreated = Win32.RegisterWindowMessage("TaskbarCreated");
         LoadIcon();
@@ -95,7 +95,7 @@ internal sealed class TrayIcon : IDisposable
             }
             if (msg == _taskbarCreated && _taskbarCreated != 0)
             {
-                // Explorer restarted and the notification area came back empty.
+                // Re-register tray icon after Explorer restarts.
                 LoadIcon();
                 Add();
                 TaskbarCreated?.Invoke();
@@ -109,7 +109,7 @@ internal sealed class TrayIcon : IDisposable
                     App.Dispatcher.TryEnqueue(() => TimeShifted?.Invoke());
                     break;
                 case Win32.WM_SETTINGCHANGE:
-                    // The time zone setting arrives as "intl" or with no section name at all.
+                    // Timezone changes fire WM_SETTINGCHANGE with "intl" or an empty section.
                     TimeZoneInfo.ClearCachedData();
                     App.Dispatcher.TryEnqueue(() => TimeShifted?.Invoke());
                     break;
@@ -144,7 +144,7 @@ internal sealed class TrayIcon : IDisposable
             foreach (var face in Widgets.WidgetFaces.All)
                 Win32.AppendMenu(widgets, Win32.MF_STRING, (nuint)(IdWidgetBase + i++), Label(loc[face.TitleKey]));
             string widgetsLabel = loc.IsRtl ? "\u200F\u00A0\u00A0" + loc["win_tray_add_widget"] : loc["win_tray_add_widget"];
-            Win32.AppendMenu(menu, 0x10 /* MF_POPUP */, (nuint)widgets, widgetsLabel);
+            Win32.AppendMenu(menu, Win32.MF_POPUP, (nuint)widgets, widgetsLabel);
             uint tbFlags = Win32.MF_STRING | (App.Settings.Current.TaskbarWidget.Enabled ? Win32.MF_CHECKED : 0);
             Win32.AppendMenu(menu, tbFlags, IdTaskbar, Label(loc["win_taskbar_title"]));
             if (App.Updates?.AvailableRelease is { } rel
@@ -166,14 +166,21 @@ internal sealed class TrayIcon : IDisposable
             {
                 switch (id)
                 {
-                    case IdOpen: App.ShowMainWindow(); break;
-                    case IdStop: App.Adhan.Stop(); break;
+                    case IdOpen:
+                        App.ShowMainWindow();
+                        break;
+                    case IdStop:
+                        App.Adhan.Stop();
+                        break;
                     case IdTaskbar:
                         App.Settings.Update(s => s with { TaskbarWidget = s.TaskbarWidget with { Enabled = !s.TaskbarWidget.Enabled } });
                         break;
-                    case IdUpdate: App.ShowMainWindow("settings"); break;
-                    case IdSettings: App.ShowMainWindow("settings"); break;
-                    case IdQuit: App.Quit(); break;
+                    case IdUpdate or IdSettings:
+                        App.ShowMainWindow("settings");
+                        break;
+                    case IdQuit:
+                        App.Quit();
+                        break;
                     case >= IdWidgetBase when id - IdWidgetBase < Widgets.WidgetFaces.All.Length:
                         var face = Widgets.WidgetFaces.All[id - IdWidgetBase];
                         App.Widgets.Add(face.Id, face.Dress);

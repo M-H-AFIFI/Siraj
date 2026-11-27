@@ -57,7 +57,7 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        // Closing the last window must not end the process: the adhan lives on in the tray.
+        // Keep running in the tray after the main window closes.
         DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
         Dispatcher = DispatcherQueue.GetForCurrentThread();
 
@@ -71,33 +71,18 @@ public partial class App : Application
         Theme = new ThemeService();
         Theme.Apply();
         Clock = new PrayerClock(Dispatcher);
-        ApplyPreviewTime();
-        Adhan = new AdhanService(Dispatcher);
 #if DEBUG
-        if (StartArgs.FirstOrDefault(a => a.StartsWith("--adhan-shot=")) is { } adhanArg &&
-            StartArgs.FirstOrDefault(a => a.StartsWith("--shot=")) is { } adhanShot)
-        {
-            var raw = adhanArg["--adhan-shot=".Length..];
-            var p = Enum.TryParse<Core.Prayer.PrayerType>(raw, ignoreCase: true, out var parsed)
-                ? parsed : Core.Prayer.PrayerType.Fajr;
-            var prayerTime = Clock.Day?.Times.FirstOrDefault(t => t.Type == p)?.Time ?? Clock.Now;
-            bool finished = StartArgs.Contains("--adhan-finished");
-            AdhanAlertWindow.ShowDebugShot(p, prayerTime, adhanShot["--shot=".Length..], finished);
-            return;
-        }
-        if (StartArgs.Contains("--taskbar-flyout-shot") &&
-            StartArgs.FirstOrDefault(a => a.StartsWith("--shot=")) is { } flyoutShot)
-        {
-            TaskbarWidget = new TaskbarWidgetController();
-            var flyout = new TaskbarFlyoutWindow(TaskbarWidget);
-            flyout.ShowDebugShot(flyoutShot["--shot=".Length..]);
-            return;
-        }
+        ApplyPreviewTime();
 #endif
+        Adhan = new AdhanService(Dispatcher);
         Quran = new QuranService();
         QuranPlayer = new Quran.QuranPlayer(Dispatcher);
         Media = new MediaHubService(Dispatcher);
-        QuranPlayer.Changed += () => { if (QuranPlayer.IsPlaying && Media.IsPlaying) Media.Pause(); };
+        QuranPlayer.Changed += () =>
+        {
+            if (QuranPlayer.IsPlaying && Media.IsPlaying)
+                Media.Pause();
+        };
         Tray = new TrayIcon();
         Tray.TimeShifted += () =>
         {
@@ -120,13 +105,9 @@ public partial class App : Application
         }
 
         Widgets.Restore();
-        bool headlessShot = StartArgs.Any(a => a.StartsWith("--shot="));
         Updates = new UpdateService(Dispatcher, justUpdated: StartArgs.Contains("--updated"));
-        if (!headlessShot)
-        {
-            TaskbarWidget.Start();
-            Updates.StartBackgroundCheck();
-        }
+        TaskbarWidget.Start();
+        Updates.StartBackgroundCheck();
 
         var activation = AppInstance.GetCurrent().GetActivatedEventArgs();
         if (activation.Kind == ExtendedActivationKind.AppNotification && activation.Data is AppNotificationActivatedEventArgs toast)
@@ -139,16 +120,17 @@ public partial class App : Application
         }
     }
 
+#if DEBUG
     private static void ApplyPreviewTime()
     {
         var arg = StartArgs.FirstOrDefault(a => a.StartsWith("--sky-time="));
         if (arg != null && DateTimeOffset.TryParse(arg["--sky-time=".Length..], out var at))
         {
             Clock.PreviewOffset = at - DateTimeOffset.Now;
-            // The clock worked the day out from the real time when it was made.
             Clock.Recompute();
         }
     }
+#endif
 
     private static void OnSettingsChanged(AppSettings old, AppSettings updated)
     {
@@ -174,10 +156,7 @@ public partial class App : Application
                 TaskbarWidget?.Refresh();
             }
             if (old.TaskbarWidget != updated.TaskbarWidget || old.SetupDone != updated.SetupDone)
-            {
-                bool headlessShot = StartArgs.Any(a => a.StartsWith("--shot="));
-                if (!headlessShot) TaskbarWidget?.Apply(updated.TaskbarWidget);
-            }
+                TaskbarWidget?.Apply(updated.TaskbarWidget);
             Tray.Update(TrayIcon.Tooltip(Clock));
         });
     }

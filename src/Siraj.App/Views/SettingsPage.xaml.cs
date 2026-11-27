@@ -60,7 +60,12 @@ public sealed partial class SettingsPage : Page
     private void OnSettingsChanged(AppSettings old, AppSettings updated) => DispatcherQueue.TryEnqueue(() =>
     {
         if (old.Location != updated.Location) UpdatePlace();
-        if (old.Palette != updated.Palette) { BuildSwatches(); BuildPreviewCard(); BuildSceneGrid(); }
+        if (old.Palette != updated.Palette)
+        {
+            BuildSwatches();
+            BuildPreviewCard();
+            BuildSceneGrid();
+        }
         if (old.LiveScene != updated.LiveScene || old.LiveBackground != updated.LiveBackground ||
             old.LiveIntensity != updated.LiveIntensity || old.LiveSkySync != updated.LiveSkySync ||
             old.GlassUi != updated.GlassUi || old.GlassFinish != updated.GlassFinish ||

@@ -19,7 +19,6 @@
             <ColumnDefinition x:Name="SideColumn" Width="0" />
         </Grid.ColumnDefinitions>
 
-        <!-- Where the reader is, and how the pages are shown. -->
         <Border Grid.ColumnSpan="2" Margin="16,6,16,8" CornerRadius="20" Padding="12,8,12,8"
                 Background="{ThemeResource SirajGlassElevatedBrush}" BorderBrush="{ThemeResource SirajGlassBorderBrush}" BorderThickness="1">
             <Grid ColumnSpacing="10">
@@ -50,8 +49,7 @@
             </Grid>
         </Border>
 
-        <!-- The open Mushaf: the right-hand page is the odd one, as in print, the two meeting at the spine.
-             A leaf being turned is drawn on the layer over them. -->
+        <!-- Odd page on the right (RTL Mushaf layout); TurnLayer draws the page-turn overlay. -->
         <Grid x:Name="Pages" Grid.Row="1" Padding="16,0,16,8" FlowDirection="LeftToRight" Background="Transparent"
               PointerWheelChanged="OnWheel" PointerPressed="OnPagesPressed" PointerMoved="OnPagesMoved"
               PointerReleased="OnPagesReleased" PointerCanceled="OnPagesReleased" PointerCaptureLost="OnPagesReleased">
@@ -62,7 +60,6 @@
             <canvas:CanvasControl x:Name="TurnLayer" Draw="OnTurnDraw" ClearColor="Transparent" IsHitTestVisible="False" Visibility="Collapsed" />
         </Grid>
 
-        <!-- The chosen ayah: its text, its tafsir, and what can be done with it. -->
         <Border x:Name="Side" Grid.Row="1" Grid.Column="1" Style="{StaticResource SirajCard}" Margin="0,0,16,8" Padding="0" Visibility="Collapsed">
             <Grid>
                 <Grid.RowDefinitions>
@@ -101,7 +98,6 @@
             </Grid>
         </Border>
 
-        <!-- The recitation. -->
         <Border Grid.Row="2" Grid.ColumnSpan="2" Margin="16,0,16,12" CornerRadius="22" Padding="14,9"
                 Background="{ThemeResource SirajGlassElevatedBrush}" BorderBrush="{ThemeResource SirajGlassBorderBrush}" BorderThickness="1">
             <Grid ColumnSpacing="10">

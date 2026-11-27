@@ -26,12 +26,20 @@ internal sealed class TransparentBackdrop : SystemBackdrop
         // A clear brush needs no theme/active configuration; skipping base prevents ArgumentException on borderless tool windows.
     }
 
+    private const int DQTYPE_THREAD_CURRENT = 2;
+    private const int DQTAT_COM_STA = 2;
+
     private static Windows.UI.Composition.Compositor Compositor()
     {
         if (_compositor != null) return _compositor;
         if (Windows.System.DispatcherQueue.GetForCurrentThread() == null)
         {
-            var options = new DispatcherQueueOptions { dwSize = Marshal.SizeOf<DispatcherQueueOptions>(), threadType = 2, apartmentType = 2 };
+            var options = new DispatcherQueueOptions
+            {
+                dwSize = Marshal.SizeOf<DispatcherQueueOptions>(),
+                threadType = DQTYPE_THREAD_CURRENT,
+                apartmentType = DQTAT_COM_STA,
+            };
             CreateDispatcherQueueController(options, out _);
         }
         return _compositor = new Windows.UI.Composition.Compositor();
@@ -41,8 +49,8 @@ internal sealed class TransparentBackdrop : SystemBackdrop
     private struct DispatcherQueueOptions
     {
         public int dwSize;
-        public int threadType;     // DQTYPE_THREAD_CURRENT
-        public int apartmentType;  // DQTAT_COM_STA
+        public int threadType;
+        public int apartmentType;
     }
 
     [DllImport("CoreMessaging.dll")]

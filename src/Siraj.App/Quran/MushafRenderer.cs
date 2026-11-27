@@ -29,7 +29,7 @@ internal sealed class QcfFace : IDisposable
 
     private (int Index, float Advance, Rect Ink) Glyph(char c)
     {
-        // A page is built off the UI thread and drawn on it.
+        // Pages are built on background threads and drawn on the UI thread.
         lock (_glyphs)
         {
             if (_glyphs.TryGetValue(c, out var g)) return g;
@@ -50,7 +50,7 @@ internal sealed class QcfFace : IDisposable
 
     public int Index(char c) => Glyph(c).Index;
 
-    public (float Height, float Centre) Ink(string glyphs)
+    public (float Height, float Center) Ink(string glyphs)
     {
         double top = double.MaxValue, bottom = double.MinValue;
         foreach (var c in glyphs)
@@ -61,8 +61,7 @@ internal sealed class QcfFace : IDisposable
             bottom = Math.Max(bottom, ink.Y + ink.Height);
         }
         if (top == double.MaxValue) return (0, 0);
-        // Win2D measures a glyph's draw bounds down from the top of the ascent, not from the baseline:
-        // taken as is, they put the Basmalah half a line high and the surah band over the top of the page.
+        // Win2D DrawBounds are measured from the ascent top rather than the baseline.
         return ((float)(bottom - top), (float)((top + bottom) / 2 - Ascent));
     }
 
@@ -134,7 +133,7 @@ internal static class MushafRenderer
             }
             var face = new QcfFace(assets.PageFont(page));
             Faces.AddFirst((page, face));
-            // A reader keeps a handful of pages near; more fonts held is waste.
+            // Evict oldest page fonts past the cache cap.
             while (Faces.Count > KeptPages)
             {
                 Faces.Last!.Value.Face.Dispose();
@@ -144,9 +143,17 @@ internal static class MushafRenderer
         }
     }
 
-    public static QcfFace Basmalah(QuranAssets assets) { lock (Gate) return _basmalah ??= new QcfFace(assets.BasmalahFont); }
+    public static QcfFace Basmalah(QuranAssets assets)
+    {
+        lock (Gate)
+            return _basmalah ??= new QcfFace(assets.BasmalahFont);
+    }
 
-    public static QcfFace Banner() { lock (Gate) return _banner ??= new QcfFace(AppPaths.Asset("Quran", "quran_surah_header.ttf")); }
+    public static QcfFace Banner()
+    {
+        lock (Gate)
+            return _banner ??= new QcfFace(AppPaths.Asset("Quran", "quran_surah_header.ttf"));
+    }
 
     public static PageLayout? Build(MushafPage page, QcfGlyphs table, QuranAssets assets)
     {
@@ -188,7 +195,7 @@ internal static class MushafRenderer
         foreach (var line in layout.Lines)
         {
             float slotTop = topOffset + (line.Line.LineNumber - layout.FirstLine) * slotHeight;
-            float slotCentre = slotTop + slotHeight / 2;
+            float slotCenter = slotTop + slotHeight / 2;
             if (line.Line.Type == MushafLineType.SurahName && line.Line.Surah is { } surah)
             {
                 var banner = Banner();
@@ -197,7 +204,7 @@ internal static class MushafRenderer
                 if (em <= 0) continue;
                 var ink = banner.Ink(glyph);
                 float s = ink.Height > 0 ? Math.Min(block * BannerColumnFraction / em, slotHeight * DecoratedSlotFill / ink.Height) : block * BannerColumnFraction / em;
-                ornaments.Add(new PlacedRun(banner, glyph, [(width - em * s) / 2], slotCentre - ink.Centre * s, s));
+                ornaments.Add(new PlacedRun(banner, glyph, [(width - em * s) / 2], slotCenter - ink.Center * s, s));
             }
             else if (line.Line.Type == MushafLineType.Basmallah && line.Words.Count == 0)
             {
@@ -214,14 +221,14 @@ internal static class MushafRenderer
                     x -= bsml.Advance(glyphsText[k]) * s;
                     xs[k] = x;
                 }
-                ornaments.Add(new PlacedRun(bsml, glyphsText, xs, slotCentre - ink.Centre * s, s));
+                ornaments.Add(new PlacedRun(bsml, glyphsText, xs, slotCenter - ink.Center * s, s));
             }
             else if (line.Words.Count > 0)
             {
                 float stretch = line.Line.IsCentered || line.Em <= 0 ? 1 : layout.ColumnEm / line.Em;
                 float lineWidth = line.Em * stretch * size;
                 float x = line.Line.IsCentered ? (width + lineWidth) / 2 : columnRight;
-                float baseline = slotCentre + (face.Ascent - face.Descent) / 2 * size;
+                float baseline = slotCenter + (face.Ascent - face.Descent) / 2 * size;
                 foreach (var (word, glyphs, _, marker) in line.Words)
                 {
                     float right = x;
@@ -241,14 +248,14 @@ internal static class MushafRenderer
     public static void Draw(CanvasDrawingSession ds, PlacedPage page, PageLayout layout, MushafColors colors,
         (int Surah, int Ayah)? playing, (int Surah, int Ayah)? selected)
     {
-        void Highlight((int Surah, int Ayah)? ayah, Color colour)
+        void Highlight((int Surah, int Ayah)? ayah, Color color)
         {
             if (ayah == null) return;
             foreach (var w in page.Words)
             {
                 if (w.Word.Surah != ayah.Value.Surah || w.Word.Ayah != ayah.Value.Ayah) continue;
                 float inset = (w.Bottom - w.Top) * 0.10f;
-                ds.FillRoundedRectangle(new Rect(w.Left - 1, w.Top + inset, w.Right - w.Left + 2, w.Bottom - w.Top - 2 * inset), 4, 4, colour);
+                ds.FillRoundedRectangle(new Rect(w.Left - 1, w.Top + inset, w.Right - w.Left + 2, w.Bottom - w.Top - 2 * inset), 4, 4, color);
             }
         }
         Highlight(playing, colors.PlayingHighlight);
@@ -281,7 +288,11 @@ internal static class MushafRenderer
         {
             if (y < w.Top || y > w.Bottom || w.Word.Surah == null || w.Word.Ayah == null) continue;
             float d = x < w.Left ? w.Left - x : x > w.Right ? x - w.Right : 0;
-            if (d < bestDistance) { bestDistance = d; best = w; }
+            if (d < bestDistance)
+            {
+                bestDistance = d;
+                best = w;
+            }
         }
         return best != null && bestDistance < 40 ? (best.Word.Surah!.Value, best.Word.Ayah!.Value) : null;
     }

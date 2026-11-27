@@ -29,7 +29,6 @@
         <!-- The sky runs east to west and never mirrors in RTL. -->
         <canvas:CanvasControl x:Name="Canvas" Draw="OnDraw" FlowDirection="LeftToRight" ClearColor="#FF0A1530" />
 
-        <!-- Top-right (physical) floating period badge. -->
         <Grid VerticalAlignment="Top" Padding="18,14" FlowDirection="LeftToRight" IsHitTestVisible="False">
             <Border x:Name="PhaseChip" HorizontalAlignment="Right" CornerRadius="20" Padding="12,6"
                     Background="#59000000" BorderBrush="#52FFFFFF" BorderThickness="0.8">
@@ -46,7 +45,6 @@
             </Border>
         </Grid>
 
-        <!-- Centered prayer hero below the arc apex. -->
         <StackPanel x:Name="Heading" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,48,20,10">
             <Border x:Name="LabelBadge" HorizontalAlignment="Center" CornerRadius="12" Padding="8,2" Background="Transparent">
                 <Grid HorizontalAlignment="Center">
@@ -95,7 +93,6 @@
                     Style="{StaticResource SirajPrimaryButton}" Click="OnSetLocation" />
         </StackPanel>
 
-        <!-- Floating calendar capsule over the reflecting pool. -->
         <StackPanel x:Name="CalendarFooter" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="16,0,16,12" Spacing="3">
             <Button x:Name="GregorianButton" HorizontalAlignment="Center" Style="{StaticResource CalendarCapsuleButton}"
                     Click="OnOpenCalendar">
@@ -109,9 +106,7 @@
             <Button x:Name="HijriCapsule" HorizontalAlignment="Center" Style="{StaticResource CalendarCapsuleButton}"
                     Click="OnOpenCalendar">
                 <Grid CornerRadius="14" Background="#66070B14">
-                    <!-- Soft outer gold aura. -->
                     <Border CornerRadius="14" BorderThickness="2.2" BorderBrush="#1BE5B558" IsHitTestVisible="False" />
-                    <!-- Glassmorphic specular gold border and horizontal gold sheen. -->
                     <Border x:Name="HijriBorder" CornerRadius="14" BorderThickness="1" Padding="10,4,12,4">
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">

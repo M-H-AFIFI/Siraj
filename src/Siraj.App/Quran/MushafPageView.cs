@@ -21,14 +21,13 @@ internal enum PageSide { Single, Left, Right }
 
 internal sealed class MushafPageView : UserControl
 {
-    // Room round the sheet for its shadow and the stack of pages under it; none at the spine, where the pages meet.
+    // Margin around the sheet for shadow and page stack; none on the spine edge.
     private const float Outer = 10, Top = 4, Bottom = 14;
-    // The bands above and below the text block: the surah and juz, and the page number.
     private const float HeadBand = 30, FootBand = 28, TextSide = 6;
 
     private static readonly Dictionary<int, Task<PageLayout?>> Layouts = new();
     private static readonly LinkedList<int> LayoutOrder = new();
-    private static CanvasTextFormat? _captionLeft, _captionRight, _captionCentre;
+    private static CanvasTextFormat? _captionLeft, _captionRight, _captionCenter;
 
     private readonly CanvasControl _canvas;
     private int _page;
@@ -68,8 +67,12 @@ internal sealed class MushafPageView : UserControl
     {
         _canvas = new CanvasControl { ClearColor = Microsoft.UI.Colors.Transparent, FlowDirection = FlowDirection.LeftToRight };
         _canvas.Draw += OnDraw;
-        _canvas.SizeChanged += (_, _) => { _placed = null; _canvas.Invalidate(); };
-        // The canvas has no background of its own to be pressed on; the grid behind it has.
+        _canvas.SizeChanged += (_, _) =>
+        {
+            _placed = null;
+            _canvas.Invalidate();
+        };
+        // Transparent grid captures taps because CanvasControl has no hit-testable background.
         var host = new Grid { Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent), FlowDirection = FlowDirection.LeftToRight };
         host.Children.Add(_canvas);
         host.Tapped += OnTapped;
@@ -110,12 +113,19 @@ internal sealed class MushafPageView : UserControl
             }
             var task = Task.Run(() =>
             {
-                try { return MushafRenderer.Build(App.Quran.Database.Page(page), App.Quran.Glyphs, App.Quran.Assets); }
-                catch (Exception e) { Log.Error($"building page {page}", e); return null; }
+                try
+                {
+                    return MushafRenderer.Build(App.Quran.Database.Page(page), App.Quran.Glyphs, App.Quran.Assets);
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"building page {page}", e);
+                    return null;
+                }
             });
             Layouts[page] = task;
             LayoutOrder.AddFirst(page);
-            // The pages either side of the spread are enough; MushafRenderer keeps their fonts open.
+            // Cache pages around the current spread; MushafRenderer keeps their fonts loaded.
             while (LayoutOrder.Count > MushafRenderer.KeptPages - 2)
             {
                 Layouts.Remove(LayoutOrder.Last!.Value);
@@ -195,7 +205,6 @@ internal sealed class MushafPageView : UserControl
         if (sheet.Width < 10 || sheet.Height < 10) return;
         using var shape = SheetShape(ds, sheet);
         DrawStack(ds, sheet);
-        // The sheet lifts a little off the desk.
         using (var mask = new CanvasCommandList(ds))
         {
             using (var m = mask.CreateDrawingSession()) m.FillGeometry(shape, Microsoft.UI.Colors.Black);
@@ -233,7 +242,6 @@ internal sealed class MushafPageView : UserControl
         var line = Color.FromArgb((byte)(_colors.IsDark ? 70 : 45), _colors.Ink.R, _colors.Ink.G, _colors.Ink.B);
         for (int i = leaves; i >= 1; i--)
         {
-            // Left of a left-hand (or single) page, right of a right-hand one.
             float dx = (_side == PageSide.Right ? 1 : -1) * 2.2f * i;
             var r = new Rect(sheet.X + dx, sheet.Y + 0.9 * i, sheet.Width, sheet.Height - 0.9 * i);
             using var g = SheetShape(ds, r);
@@ -249,8 +257,7 @@ internal sealed class MushafPageView : UserControl
         ds.FillGeometry(shape, c.Paper);
         float x = (float)sheet.X, y = (float)sheet.Y, w = (float)sheet.Width, h = (float)sheet.Height;
 
-        // The paper curves down into the binding (on the right of a page read alone): darker at the
-        // spine, and light catches the outer edge where it turns up.
+        // Gutter shadow along the spine and highlight along the outer edge.
         {
             bool spineLeft = _side == PageSide.Right;
             float depth = w * 0.11f;
@@ -265,7 +272,6 @@ internal sealed class MushafPageView : UserControl
             float inner = spineLeft ? x + depth : x + w - depth;
             using var gutter = new CanvasLinearGradientBrush(ds, stops) { StartPoint = new Vector2(spineX, 0), EndPoint = new Vector2(inner, 0) };
             ds.FillRectangle(spineLeft ? x : x + w - depth, y, depth, h, gutter);
-            // Light catches the outer edge where the paper turns up.
             float lip = Math.Min(14, w * 0.03f);
             var lipStops = new[]
             {
@@ -278,7 +284,6 @@ internal sealed class MushafPageView : UserControl
         }
         ds.DrawGeometry(shape, Color.FromArgb(40, c.Ink.R, c.Ink.G, c.Ink.B), 1);
 
-        // The surah and the juz above the text, the page's number below it.
         var caption = Color.FromArgb(191, c.Ink.R, c.Ink.G, c.Ink.B);
         Formats();
         float band = w - 36;
@@ -286,7 +291,7 @@ internal sealed class MushafPageView : UserControl
         {
             using (var juz = new CanvasTextLayout(ds, _juz, _captionLeft, band, 20)) ds.DrawTextLayout(juz, x + 18, y + 9, caption);
             using (var head = new CanvasTextLayout(ds, _header, _captionRight, band, 20)) ds.DrawTextLayout(head, x + 18, y + 9, caption);
-            using var foot = new CanvasTextLayout(ds, _footer, _captionCentre, w, 20);
+            using var foot = new CanvasTextLayout(ds, _footer, _captionCenter, w, 20);
             ds.DrawTextLayout(foot, x, y + h - FootBand + 6, caption);
         }
 
@@ -310,7 +315,7 @@ internal sealed class MushafPageView : UserControl
     private static void Formats()
     {
         if (_captionLeft != null) return;
-        // Outfit, the app's face, from the install folder; Arabic falls back to the system's.
+        // Use bundled Outfit font; Arabic falls back to the system font.
         string family = AppPaths.Asset("Fonts", "Outfit.ttf") + "#Outfit";
         CanvasTextFormat Make(CanvasHorizontalAlignment align) => new()
         {
@@ -318,7 +323,7 @@ internal sealed class MushafPageView : UserControl
         };
         _captionLeft = Make(CanvasHorizontalAlignment.Left);
         _captionRight = Make(CanvasHorizontalAlignment.Right);
-        _captionCentre = Make(CanvasHorizontalAlignment.Center);
+        _captionCenter = Make(CanvasHorizontalAlignment.Center);
     }
 
     private static Color Shade(Color c, float by) => Color.FromArgb(255,

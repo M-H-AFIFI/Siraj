@@ -222,7 +222,11 @@ public sealed partial class FastingPage : Page
         head.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         head.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         head.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        head.Children.Add(Step(false, loc["calendar_prev_month"], () => { _month = _month.AddMonths(-1); FillCalendar(); }));
+        head.Children.Add(Step(false, loc["calendar_prev_month"], () =>
+        {
+            _month = _month.AddMonths(-1);
+            FillCalendar();
+        }));
         var title = new StackPanel { Spacing = 2, HorizontalAlignment = HorizontalAlignment.Center };
         var month = Kit.Text(HijriText.Gregorian(_month, lang, Eastern, "MMMM yyyy"), "SirajHeading");
         month.HorizontalAlignment = HorizontalAlignment.Center;
@@ -237,7 +241,11 @@ public sealed partial class FastingPage : Page
         title.Children.Add(hijriText);
         Grid.SetColumn(title, 1);
         head.Children.Add(title);
-        var next = Step(true, loc["calendar_next_month"], () => { _month = _month.AddMonths(1); FillCalendar(); });
+        var next = Step(true, loc["calendar_next_month"], () =>
+        {
+            _month = _month.AddMonths(1);
+            FillCalendar();
+        });
         Grid.SetColumn(next, 2);
         head.Children.Add(next);
         stack.Children.Add(head);
@@ -278,7 +286,7 @@ public sealed partial class FastingPage : Page
 
     private static Button Step(bool forward, string name, Action click)
     {
-        // The arrows follow the reading direction: "next" points the way the text runs.
+        // Mirror prev/next chevrons in RTL.
         bool right = forward != Loc.Current.IsRtl;
         var button = new Button
         {

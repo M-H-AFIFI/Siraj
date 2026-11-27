@@ -55,7 +55,7 @@ public sealed partial class ReaderPage : Page
             _page = last.Page;
         }
         BackIcon.IconKey = loc.IsRtl ? "arrow_forward" : "arrow_back";
-        // The icon-only controls carry their names for the tooltip and for screen readers alike.
+        // Set both tooltip and AutomationProperties.Name for icon-only buttons.
         Label(BackButton, loc["win_back"]);
         Label(SpreadToggle, loc["win_two_pages"]);
         Label(PaperButton, loc["settings_mushaf_appearance_header"]);
@@ -116,8 +116,15 @@ public sealed partial class ReaderPage : Page
         {
             int right = _page % 2 == 1 ? _page : _page - 1;
             RightPage.Show(right);
-            if (right + 1 <= QuranDatabase.PageCount) { LeftPage.Show(right + 1); LeftPage.Visibility = Visibility.Visible; }
-            else LeftPage.Visibility = Visibility.Collapsed;
+            if (right + 1 <= QuranDatabase.PageCount)
+            {
+                LeftPage.Show(right + 1);
+                LeftPage.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                LeftPage.Visibility = Visibility.Collapsed;
+            }
         }
         else
         {
@@ -135,7 +142,7 @@ public sealed partial class ReaderPage : Page
         SubtitleText.Text = $"{loc.Format("quran_page_label", loc.Number(_page))}{loc.Sep}{loc.Format("quran_juz_label", loc.Number(QuranDatabase.JuzOfPage(_page)))}";
         App.Quran.SavePosition(_page, first.Surah, first.NumberInSurah);
         RefreshHighlights();
-        // The leaves either side, made ready so a turn shows them at once.
+        // Prefetch adjacent spreads for immediate page turns.
         int spread = SpreadOf(_page), step = two ? 2 : 1;
         for (int k = -step; k < 2 * step; k++) if (k < 0 || k >= step) MushafPageView.Prefetch(spread + k);
     }
@@ -145,13 +152,24 @@ public sealed partial class ReaderPage : Page
         if (e.OriginalSource is TextBox or NumberBox) return;
         switch (e.Key)
         {
-            // The Mushaf is read right to left: its next page lies to the left.
-            case VirtualKey.Left or VirtualKey.PageDown or VirtualKey.Down or VirtualKey.Space: Forward(); break;
-            case VirtualKey.Right or VirtualKey.PageUp or VirtualKey.Up: Back(); break;
-            case VirtualKey.Home: TurnTo(1); break;
-            case VirtualKey.End: TurnTo(QuranDatabase.PageCount); break;
-            case VirtualKey.Escape: CloseSide(); break;
-            default: return;
+            // RTL Mushaf: left/down advances forward, right/up goes back.
+            case VirtualKey.Left or VirtualKey.PageDown or VirtualKey.Down or VirtualKey.Space:
+                Forward();
+                break;
+            case VirtualKey.Right or VirtualKey.PageUp or VirtualKey.Up:
+                Back();
+                break;
+            case VirtualKey.Home:
+                TurnTo(1);
+                break;
+            case VirtualKey.End:
+                TurnTo(QuranDatabase.PageCount);
+                break;
+            case VirtualKey.Escape:
+                CloseSide();
+                break;
+            default:
+                return;
         }
         e.Handled = true;
     }
@@ -248,7 +266,7 @@ public sealed partial class ReaderPage : Page
         if (id == App.Settings.Current.ReciterId) return;
         App.Settings.Update(s => s with { ReciterId = id });
         UpdateReciterAvatar();
-        // A change of voice carries on from the same ayah.
+        // Restart from the current ayah when switching reciters.
         if (App.QuranPlayer.Current is { } at && App.QuranPlayer.IsPlaying) App.QuranPlayer.Play(at.Surah, at.Ayah);
     }
 
@@ -269,7 +287,6 @@ public sealed partial class ReaderPage : Page
         else if (player.IsActive) player.Resume();
         else
         {
-            // From the chosen ayah, or the first on the page.
             var start = _selected ?? FirstAyahOnPage();
             player.Play(start.Surah, start.Ayah);
         }
@@ -289,7 +306,6 @@ public sealed partial class ReaderPage : Page
     private void OnPlayer()
     {
         UpdatePlayer();
-        // The pages follow the recitation.
         if (App.QuranPlayer.Current is { } at)
         {
             int page = App.Quran.Database.PageOf(at.Surah, at.Ayah);
@@ -328,14 +344,22 @@ public sealed partial class ReaderPage : Page
         foreach (var (key, label) in new[] { ("System", "settings_mushaf_theme_system_title"), ("Light", "settings_mushaf_theme_light_title"), ("Dark", "settings_mushaf_theme_dark_title") })
         {
             var item = new RadioMenuFlyoutItem { Text = loc[label], GroupName = "theme", IsChecked = App.Settings.Current.QuranTheme == key };
-            item.Click += (_, _) => { App.Settings.Update(s => s with { QuranTheme = key }); ApplyColors(); };
+            item.Click += (_, _) =>
+            {
+                App.Settings.Update(s => s with { QuranTheme = key });
+                ApplyColors();
+            };
             PaperMenu.Items.Add(item);
         }
         PaperMenu.Items.Add(new MenuFlyoutSeparator());
         foreach (var (key, label) in new[] { ("Creamy", "settings_mushaf_color_yellowish_title"), ("White", "settings_mushaf_color_white_title"), ("Sepia", "settings_mushaf_color_sepia_title") })
         {
             var item = new RadioMenuFlyoutItem { Text = loc[label], GroupName = "paper", IsChecked = App.Settings.Current.QuranPaper == key };
-            item.Click += (_, _) => { App.Settings.Update(s => s with { QuranPaper = key }); ApplyColors(); };
+            item.Click += (_, _) =>
+            {
+                App.Settings.Update(s => s with { QuranPaper = key });
+                ApplyColors();
+            };
             PaperMenu.Items.Add(item);
         }
         ToolTipService.SetToolTip(PaperButton, loc["settings_mushaf_appearance_header"]);

@@ -70,7 +70,7 @@ internal static class AdhanSkyRenderer
             ds.FillEllipse(bloomCenter, w * 1.04f, w * 0.56f, bloom);
         }
 
-        // Subtle dark veil behind white text on bright daytime skies.
+        // Darken daytime skies slightly behind white foreground text.
         if (spec.IsDaytime)
         {
             var titleAnchor = new Vector2(w * 0.50f, h * 0.56f);

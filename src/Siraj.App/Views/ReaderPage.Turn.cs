@@ -22,7 +22,7 @@ public sealed partial class ReaderPage
     private bool _turnForward;
     private int _turnFrom, _turnTo;
     private bool _turnReady;
-    // In the curl's terms: 0 is the spread before a forward turn, 1 the spread after it.
+    // 0 is the starting spread before a forward turn; 1 is the target spread.
     private double _turnProgress;
     private double? _settleTo;
     private double _animFrom, _animMs;
@@ -60,9 +60,13 @@ public sealed partial class ReaderPage
         page = Math.Clamp(page, 1, QuranDatabase.PageCount);
         if (_curl != null)
         {
-            // The hand has the leaf; a key or the wheel waits until it is let go.
+            // Ignore keyboard/wheel turns while a pointer drag is active.
             if (_dragId != null) return;
-            if (SpreadOf(page) == SpreadOf(_turnTo)) { _pendingPage = null; return; }
+            if (SpreadOf(page) == SpreadOf(_turnTo))
+            {
+                _pendingPage = null;
+                return;
+            }
             _pendingPage = page;
             Hurry();
             return;
@@ -90,14 +94,14 @@ public sealed partial class ReaderPage
         _turnReady = false;
         _turnProgress = forward ? 0 : 1;
         _settleTo = dragged ? null : forward ? 1 : 0;
-        // Until the pages it turns to are ready, the layer holds the spread as it was.
+        // Hold the previous spread on the overlay while the target pages render.
         _curl = forward
             ? new PageCurl { Leaf = leaf, Single = !two, Front = two ? oldLeft : oldRight, Landing = two ? oldRight : null, IsDarkPaper = dark, Progress = 0 }
             : new PageCurl { Leaf = leaf, Single = !two, Under = two ? oldLeft : oldRight, Back = two ? oldRight : null, IsDarkPaper = dark, Progress = 1 };
         TurnLayer.Visibility = Visibility.Visible;
         TurnLayer.Invalidate();
         StartRendering();
-        // The real pages change only once the picture of them covers them, or the new spread flashes first.
+        // Wait until the overlay frame is on screen before swapping the underlying pages.
         await LayerShown();
         if (id != _turnId || _curl == null) return;
 
@@ -177,7 +181,11 @@ public sealed partial class ReaderPage
 
     private void OnRendering(object? sender, object e)
     {
-        if (_curl == null) { StopRendering(); return; }
+        if (_curl == null)
+        {
+            StopRendering();
+            return;
+        }
         if (_hideIn > 0)
         {
             if (--_hideIn == 0) EndTurn();
@@ -186,7 +194,7 @@ public sealed partial class ReaderPage
         if (!_turnReady || _settleTo is not { } to || _dragId != null) return;
         double f = Math.Clamp(Ms(_animStart) / _animMs, 0, 1);
         double outward = 1 - Math.Pow(1 - f, 3);
-        // A turn by itself is lifted briskly and laid down softly; let go by the hand, it only slows.
+        // Programmatic turns use blended ease-in-out; released drags decelerate smoothly.
         double eased = _animEaseInOut ? 0.35 * outward + 0.65 * (f < 0.5 ? 4 * f * f * f : 1 - Math.Pow(-2 * f + 2, 3) / 2) : outward;
         _turnProgress = _animFrom + (to - _animFrom) * eased;
         _curl.Progress = _turnProgress;
@@ -209,7 +217,7 @@ public sealed partial class ReaderPage
             }
             return;
         }
-        // Laid back: the real pages return to where they were, and the picture stays a few frames while they draw.
+        // Canceled turn: restore the previous spread and keep the overlay for 3 frames while it redraws.
         _pendingPage = null;
         ShowPage(_turnFrom);
         _hideIn = 3;
@@ -233,9 +241,9 @@ public sealed partial class ReaderPage
     private void FinishTurnNow()
     {
         if (_curl == null) return;
-        bool cancelled = _settleTo is { } to && (_turnForward ? to <= 0 : to >= 1);
+        bool canceled = _settleTo is { } to && (_turnForward ? to <= 0 : to >= 1);
         EndTurn();
-        if (cancelled) ShowPage(_turnFrom);
+        if (canceled) ShowPage(_turnFrom);
         if (_pendingPage is { } next)
         {
             _pendingPage = null;
@@ -247,7 +255,7 @@ public sealed partial class ReaderPage
     private void OnTurnDraw(CanvasControl sender, CanvasDrawEventArgs args)
     {
         _curl?.Draw(args.DrawingSession);
-        // Let the pages change on the next frame, when this one is on the screen.
+        // Swap underlying pages after this frame is presented.
         if (_layerShown is { } shown)
         {
             _layerShown = null;
@@ -276,10 +284,14 @@ public sealed partial class ReaderPage
         if (!_dragTurn)
         {
             if (Math.Abs(dx) < 14 || Math.Abs(dx) < 1.4 * Math.Abs(dy)) return;
-            // Pulled to the right, the left-hand leaf comes over: the next page of an Arabic book.
+            // RTL Mushaf: dragging right lifts the left page to advance forward.
             bool forward = dx > 0;
             int target = forward ? ForwardOf(_page) : BackOf(_page);
-            if (SpreadOf(target) == SpreadOf(_page)) { _dragId = null; return; }
+            if (SpreadOf(target) == SpreadOf(_page))
+            {
+                _dragId = null;
+                return;
+            }
             if (!Kit.Motion)
             {
                 _dragId = null;
@@ -314,7 +326,7 @@ public sealed partial class ReaderPage
         if (!_dragTurn) return;
         _dragTurn = false;
         Pages.ReleasePointerCapture(e.Pointer);
-        // A quick throw finishes the turn whatever the distance; a slow hand needs to have taken it a third of the way.
+        // Complete the turn on a fast flick or once dragged past one third.
         double towards = _turnForward ? _dragVelocity : -_dragVelocity;
         if (Ms(_dragLastTick) > 120) towards = 0;
         double done = _turnForward ? _turnProgress : 1 - _turnProgress;
@@ -327,13 +339,21 @@ public sealed partial class ReaderPage
 
     private void OnWheel(object sender, PointerRoutedEventArgs e)
     {
-        // A notch of a mouse wheel turns a leaf; a touchpad's small steps add up to one.
+        // Accumulate small touchpad deltas into a single page turn.
         int delta = e.GetCurrentPoint(Pages).Properties.MouseWheelDelta;
         if (Ms(_wheelAt) > 400) _wheel = 0;
         _wheelAt = Stopwatch.GetTimestamp();
         _wheel += delta;
-        if (_wheel <= -100) { _wheel = 0; Forward(); }
-        else if (_wheel >= 100) { _wheel = 0; Back(); }
+        if (_wheel <= -100)
+        {
+            _wheel = 0;
+            Forward();
+        }
+        else if (_wheel >= 100)
+        {
+            _wheel = 0;
+            Back();
+        }
         e.Handled = true;
     }
 }

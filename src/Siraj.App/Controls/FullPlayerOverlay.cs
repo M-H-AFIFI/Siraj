@@ -171,8 +171,18 @@ public sealed class FullPlayerOverlay : UserControl
             Padding = new Thickness(24),
             Child = _card,
         };
-        _backdrop.Tapped += (s, e) => { if (ReferenceEquals(e.OriginalSource, _backdrop)) Close(); };
-        KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape) { Close(); e.Handled = true; } };
+        _backdrop.Tapped += (s, e) =>
+        {
+            if (ReferenceEquals(e.OriginalSource, _backdrop)) Close();
+        };
+        KeyDown += (_, e) =>
+        {
+            if (e.Key == Windows.System.VirtualKey.Escape)
+            {
+                Close();
+                e.Handled = true;
+            }
+        };
         Content = _backdrop;
 
         Loaded += (_, _) =>
@@ -235,7 +245,11 @@ public sealed class FullPlayerOverlay : UserControl
 
     private void Refresh()
     {
-        if (!App.Media.HasMedia) { Close(); return; }
+        if (!App.Media.HasMedia)
+        {
+            Close();
+            return;
+        }
         var loc = Loc.Current;
         bool isRadio = App.Media.Kind == MediaKind.Radio;
 
@@ -271,8 +285,15 @@ public sealed class FullPlayerOverlay : UserControl
 
         _playIcon.IconKey = App.Media.IsPlaying ? "pause" : "play";
         _scrubber.IsPlaying = App.Media.IsPlaying;
-        if (Visibility == Visibility.Visible && App.Media.IsPlaying && Kit.Motion) _breathe?.Start();
-        else { _breathe?.Stop(); _artHalo.Scale = Vector3.One; }
+        if (Visibility == Visibility.Visible && App.Media.IsPlaying && Kit.Motion)
+        {
+            _breathe?.Start();
+        }
+        else
+        {
+            _breathe?.Stop();
+            _artHalo.Scale = Vector3.One;
+        }
         _scrubberBlock.Visibility = isRadio ? Visibility.Collapsed : Visibility.Visible;
         _shuffleBtn.Visibility = isRadio ? Visibility.Collapsed : Visibility.Visible;
         _prevBtn.Visibility = isRadio ? Visibility.Collapsed : Visibility.Visible;
@@ -393,7 +414,11 @@ public sealed class FullPlayerOverlay : UserControl
                 Content = inner, HorizontalAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(6, 10, 6, 10),
                 CornerRadius = new CornerRadius(14), BorderThickness = new Thickness(1),
             };
-            btn.Click += (_, _) => { App.Media.SetAmbient(sound.Id); SyncSelection(); };
+            btn.Click += (_, _) =>
+            {
+                App.Media.SetAmbient(sound.Id);
+                SyncSelection();
+            };
             buttons[sound.Id] = btn;
             Grid.SetColumn(btn, i % 3);
             Grid.SetRow(btn, i / 3);
@@ -409,7 +434,11 @@ public sealed class FullPlayerOverlay : UserControl
         volRow.Children.Add(slider);
         stack.Children.Add(volRow);
 
-        var off = Ui.Button(loc["ambient_off"], () => { App.Media.SetAmbient(null); SyncSelection(); });
+        var off = Ui.Button(loc["ambient_off"], () =>
+        {
+            App.Media.SetAmbient(null);
+            SyncSelection();
+        });
         off.HorizontalAlignment = HorizontalAlignment.Stretch;
         stack.Children.Add(off);
 
